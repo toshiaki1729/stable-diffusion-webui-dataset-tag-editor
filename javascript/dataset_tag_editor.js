@@ -14,7 +14,7 @@ var dataset_tag_editor_gallery_image_clicked = function () {
     set_button.click()
 }
 
-var dataset_tag_editor_modal_key_handler = function (event) {
+var dataset_tag_editor_key_handler = function (event) {
     dataset_tag_editor_gallery_image_clicked();
 }
 
@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (fullImg_preview_group != null) {
             fullImg_preview_group.forEach(function function_name(e) {
                 if (e && e.parentElement.tagName == 'DIV') {
-                    e.addEventListener('keydown', dataset_tag_editor_modal_key_handler, false)
+                    e.addEventListener('keydown', dataset_tag_editor_key_handler, false)
                 }
             });
         }
