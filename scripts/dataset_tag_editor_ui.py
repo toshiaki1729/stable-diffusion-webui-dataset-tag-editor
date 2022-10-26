@@ -41,25 +41,33 @@ def rearrange_tag_order(filter_tags: List[str], filter_word: str, sort_by: str, 
     return gr.CheckboxGroup.update(choices=dataset_tag_editor.write_tags(tags))
 
 
-def filter_gallery(filter_tags: List[str], filter_word: str, sort_by: str, sort_order: str):
+def filter_gallery_by_checkbox(filter_tags: List[str], filter_word: str, sort_by: str, sort_order: str):
     filter_tags = dataset_tag_editor.read_tags(filter_tags)
+    return filter_gallery(filter_tags=filter_tags, filter_word=filter_word, sort_by=sort_by, sort_order=sort_order)
+
+def filter_gallery(filter_tags: List[str], filter_word: str, sort_by: str, sort_order: str):
     img_paths, tags = dataset_tag_editor.get_filtered_imgpath_and_tags(filter_tags=filter_tags, filter_word=filter_word)
-    filter_tag_text = ', '.join(filter_tags)
+    filter_tag_text = ', '.join(filter_tags) if filter_tags else ''
     tags = arrange_tag_order(tags=tags, sort_by=sort_by, sort_order=sort_order)
+    filter_tags = dataset_tag_editor.write_tags(filter_tags)
+    tags = dataset_tag_editor.write_tags(tags)
+    if filter_tags and len(filter_tags) == 0:
+        filter_tags = None
     return [
         img_paths,
-        gr.CheckboxGroup.update(value=dataset_tag_editor.write_tags(filter_tags), choices=dataset_tag_editor.write_tags(tags)),
+        gr.CheckboxGroup.update(value=filter_tags, choices=tags),
         filter_tag_text,
         filter_tag_text,
         -1
     ]
 
 
-def apply_edit_tags(edit_tags: str, filter_tags: List[str], append_to_begin: bool, filter_word: str):
+def apply_edit_tags(edit_tags: str, filter_tags: List[str], append_to_begin: bool, filter_word: str, sort_by: str, sort_order: str):
     replace_tags = [t.strip() for t in edit_tags.split(',')]
     filter_tags = dataset_tag_editor.read_tags(filter_tags)
     dataset_tag_editor.replace_tags(search_tags = filter_tags, replace_tags = replace_tags, filter_tags = filter_tags, append_to_begin = append_to_begin)
-    return filter_gallery(filter_tags = dataset_tag_editor.write_tags(replace_tags), filter_word = filter_word)
+    replace_tags = [t for t in replace_tags if t]
+    return filter_gallery(filter_tags = replace_tags, filter_word = filter_word, sort_by=sort_by, sort_order=sort_order)
 
 
 def save_all_changes(backup: bool):
@@ -190,7 +198,7 @@ def on_ui_tabs():
         )
 
         cbg_tags.change(
-            fn=filter_gallery,
+            fn=filter_gallery_by_checkbox,
             inputs=[cbg_tags, tb_search_tags, rd_sort_by, rd_sort_order],
             outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index]
         )
@@ -215,7 +223,7 @@ def on_ui_tabs():
 
         btn_apply_edit_tags.click(
             fn=apply_edit_tags,
-            inputs=[tb_edit_tags, cbg_tags, cb_append_tags_to_begin, tb_search_tags],
+            inputs=[tb_edit_tags, cbg_tags, cb_append_tags_to_begin, tb_search_tags, rd_sort_by, rd_sort_order],
             outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index]
         )
 

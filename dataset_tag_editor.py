@@ -31,12 +31,18 @@ class DatasetTagEditor:
     
 
     def write_tags(self, tags: List[str]) -> List[str]:
-        return [f'{tag} [{self.tag_counts.get(tag)}]' for tag in tags]
+        if tags:
+            return [f'{tag} [{self.tag_counts.get(tag)}]' for tag in tags if tag]
+        else:
+            return []
 
 
     def read_tags(self, tags:List[str]) -> List[str]:
-        tags = [re_tags.match(tag).group(1) for tag in tags]
-        return [t for t in tags if t]
+        if tags:
+            tags = [re_tags.match(tag).group(1) for tag in tags if tag]
+            return [t for t in tags if t]
+        else:
+            return []
 
 
     def sort_tags(self, tags: List[str], sort_by: str, sort_order: str) -> List[str]:
