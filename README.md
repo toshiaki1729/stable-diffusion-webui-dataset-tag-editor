@@ -79,11 +79,11 @@ Note. "tag" means each blocks of caption separated by commas.
 ### "Edit Caption of Selected Image" tab
 ![](ss03.png)
 
-- "Tags of Selected Image" textbox
+- "Caption of Selected Image" textbox
   - shows the caption of the selected image in the left gallery
-- "Copy tags" button
+- "Copy caption" button
   - copy the caption above to the textbox below
-- "Edit Tags" textbox
+- "Edit Caption" textbox
   - edit caption here
 - "Apply changes to selected image" button
   - change the caption of selected image into the text in "Edit Tags" textbox

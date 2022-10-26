@@ -171,9 +171,9 @@ def on_ui_tabs():
 
             with gr.Tab(label='Edit Caption of Selected Image'):
                 with gr.Column():
-                    tb_tags_selected_image = gr.Textbox(label='Tags of Selected Image', interactive=False, lines=6)
-                    btn_copy_tags_selected_image = gr.Button(value='Copy tags')
-                    tb_edit_tags_selected_image = gr.Textbox(label='Edit Tags', interactive=True, lines=6)
+                    tb_caption_selected_image = gr.Textbox(label='Caption of Selected Image', interactive=False, lines=6)
+                    btn_copy_caption_selected_image = gr.Button(value='Copy caption')
+                    tb_edit_caption_selected_image = gr.Textbox(label='Edit Caption', interactive=True, lines=6)
                     btn_apply_changes_selected_image = gr.Button(value='Apply changes to selected image')
 
                     gr.HTML("""Changes are not applied to the text files until the "Save all changes" button is pressed.""")
@@ -194,7 +194,7 @@ def on_ui_tabs():
         btn_load_datasets.click(
             fn=lambda:['', -1],
             inputs=[],
-            outputs=[tb_tags_selected_image, lbl_hidden_image_index]
+            outputs=[tb_caption_selected_image, lbl_hidden_image_index]
         )
 
         cbg_tags.change(
@@ -233,7 +233,7 @@ def on_ui_tabs():
                 gr.CheckboxGroup.update(value=None, choices=dataset_tag_editor.write_tags(dataset_tag_editor.get_tags())),
                 '', '', '', '', -1],
             inputs=None,
-            outputs=[gl_dataset_images, cbg_tags, tb_search_tags, tb_selected_tags, tb_edit_tags, tb_tags_selected_image, lbl_hidden_image_index]
+            outputs=[gl_dataset_images, cbg_tags, tb_search_tags, tb_selected_tags, tb_edit_tags, tb_caption_selected_image, lbl_hidden_image_index]
         )
 
         #----------------------------------------------------------------
@@ -243,25 +243,25 @@ def on_ui_tabs():
             fn=gallery_index_changed,
             _js="(x, y, z) => [x, dataset_tag_editor_selected_gallery_index()]",
             inputs=[cbg_tags, lbl_hidden_image_index],
-            outputs=[tb_tags_selected_image, lbl_hidden_image_index]
+            outputs=[tb_caption_selected_image, lbl_hidden_image_index]
         )
 
-        btn_copy_tags_selected_image.click(
+        btn_copy_caption_selected_image.click(
             fn=lambda a:a,
-            inputs=[tb_tags_selected_image],
-            outputs=[tb_edit_tags_selected_image]
+            inputs=[tb_caption_selected_image],
+            outputs=[tb_edit_caption_selected_image]
         )
 
         btn_apply_changes_selected_image.click(
             fn=change_tags_selected_image,
             _js="(a, b, c, d, e) => [a, b, c, d, dataset_tag_editor_selected_gallery_index()]",
-            inputs=[tb_edit_tags_selected_image, cbg_tags, rd_sort_by, rd_sort_order, lbl_hidden_image_index],
+            inputs=[tb_edit_caption_selected_image, cbg_tags, rd_sort_by, rd_sort_order, lbl_hidden_image_index],
             outputs=[cbg_tags, lbl_hidden_image_index]
         )
         btn_apply_changes_selected_image.click(
             fn=lambda a:a,
-            inputs=[tb_edit_tags_selected_image],
-            outputs=[tb_tags_selected_image]
+            inputs=[tb_edit_caption_selected_image],
+            outputs=[tb_caption_selected_image]
         )
 
     return [(dataset_tag_editor_interface, "Dataset Tag Editor", "dataset_tag_editor_interface")]

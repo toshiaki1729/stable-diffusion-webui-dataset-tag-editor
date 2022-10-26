@@ -81,11 +81,11 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 ### "Edit Caption of Selected Image" タブ
 ![](ss03.png)
 
-- "Tags of Selected Image" テキストボックス
+- "Caption of Selected Image" テキストボックス
   - 左で選択した画像のキャプションを表示します。
-- "Copy tags" ボタン
+- "Copy caption" ボタン
   - 上のキャプションを下のテキストボックスにコピーします。
-- "Edit Tags" テキストボックス
+- "Edit Caption" テキストボックス
   - ここでキャプションの編集が可能です。
 - "Apply changes to selected image" ボタン
   - 選択している画像のキャプションを "Edit Tags" の内容に変更します。
