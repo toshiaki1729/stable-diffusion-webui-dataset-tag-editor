@@ -76,7 +76,7 @@ def save_all_changes(backup: bool):
 
 
 # ================================================================
-# Callbacks for "Edit Tags of Selected Image" tab
+# Callbacks for "Edit Caption of Selected Image" tab
 # ================================================================
 
 def gallery_index_changed(filter_tags: List[str], idx: int):
@@ -169,7 +169,7 @@ def on_ui_tabs():
                         &emsp;Result = "X, C, E"&emsp;(A->"", B->X, D->"")<br>
                         """)
 
-            with gr.Tab(label='Edit Tags of Selected Image'):
+            with gr.Tab(label='Edit Caption of Selected Image'):
                 with gr.Column():
                     tb_tags_selected_image = gr.Textbox(label='Tags of Selected Image', interactive=False, lines=6)
                     btn_copy_tags_selected_image = gr.Button(value='Copy tags')
@@ -237,7 +237,7 @@ def on_ui_tabs():
         )
 
         #----------------------------------------------------------------
-        # Edit Tags of Selected Image tab
+        # Edit Caption of Selected Image tab
 
         btn_hidden_set_index.click(
             fn=gallery_index_changed,

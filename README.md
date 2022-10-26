@@ -31,7 +31,7 @@ Note. "tag" means each blocks of caption separated by commas.
 2. Load them
 3. Select tags you want to edit in "Filter and Edit Tags" tab
 4. Replace / remove them or append new tags to captions
-5. Use "Edit Tags of Selected Image" tab if you want to edit the caption individually
+5. Use "Edit Caption of Selected Image" tab if you want to edit the caption individually
 
 
 ## Description of Display
@@ -76,7 +76,7 @@ Note. "tag" means each blocks of caption separated by commas.
 
 
 
-### "Edit Tags of Selected Image" tab
+### "Edit Caption of Selected Image" tab
 ![](ss03.png)
 
 - "Tags of Selected Image" textbox

@@ -33,7 +33,7 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 2. データセットを読み込む
 3. "Filter and Edit Tags" タブで編集したいタグを選択する
 4. それらを置換・削除したり新しいタグを追加する
-5. キャプションを個別に編集したい場合は "Edit Tags of Selected Image" タブを使用する
+5. キャプションを個別に編集したい場合は "Edit Caption of Selected Image" タブを使用する
 
 
 ## 表示内容
@@ -78,7 +78,7 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 
 
 
-### "Edit Tags of Selected Image" タブ
+### "Edit Caption of Selected Image" タブ
 ![](ss03.png)
 
 - "Tags of Selected Image" テキストボックス
