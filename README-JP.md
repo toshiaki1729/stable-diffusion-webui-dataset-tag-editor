@@ -34,6 +34,7 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 3. "Filter and Edit Tags" タブで編集したいタグを選択する
 4. それらを置換・削除したり新しいタグを追加する
 5. キャプションを個別に編集したい場合は "Edit Caption of Selected Image" タブを使用する
+6. "Save all changes" ボタンをクリックして保存する
 
 
 ## 表示内容
@@ -74,7 +75,7 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
     - 末尾にタグを追加することでキャプションに新たなタグを追加できます。
       - タグが追加される位置はキャプションの先頭もしくは末尾で、下のチェックボックスで変更できます。
 - "Apply changes to filtered images" ボタン
-  - 絞り込まれている画像に、タグの変更を適用できます。
+  - 絞り込まれている画像に、タグの変更を適用します。
 
 
 

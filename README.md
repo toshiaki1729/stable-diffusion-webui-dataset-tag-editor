@@ -32,6 +32,7 @@ Note. "tag" means each blocks of caption separated by commas.
 3. Select tags you want to edit in "Filter and Edit Tags" tab
 4. Replace / remove them or append new tags to captions
 5. Use "Edit Caption of Selected Image" tab if you want to edit the caption individually
+6. Click "Save all changes" button
 
 
 ## Description of Display
