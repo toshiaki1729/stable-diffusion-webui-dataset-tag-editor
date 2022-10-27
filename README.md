@@ -56,11 +56,11 @@ Note. "tag" means each blocks of caption separated by commas.
 ![](ss02.png)
 
 - "Search Tags" text box
-  - search and filter the tags displayed in below
+  - search and filter the tags displayed below
 - "Clear all filters" button
   - clear filters by tag search and image filter
 - "Sort by / Sort order" radio buttons
-  - change sort order of the tags displayed in below
+  - change sort order of the tags displayed below
 - "Filter Images by Tags" checkboxes
   - filter images displayed in the left gallery by tags
     - also filter tags depending on captions of the displayed images
