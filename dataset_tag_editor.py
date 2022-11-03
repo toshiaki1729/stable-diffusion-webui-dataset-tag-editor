@@ -102,10 +102,8 @@ class DatasetTagEditor:
                 tags = self.img_tag_set_dict.get(path)
                 if not filter_tag_set.issubset(tags):
                     img_paths.remove(path)
-            tag_set = self.construct_tag_set_from(img_paths)
-        else:
-            tag_set = self.get_tag_set()
-
+        
+        tag_set = self.construct_tag_set_from(img_paths)
         img_paths = sorted(img_paths)
 
         if filter_word:
