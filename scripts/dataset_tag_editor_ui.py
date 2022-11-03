@@ -25,24 +25,28 @@ def arrange_tag_order(tags: List[str], sort_by: str, sort_order: str) -> List[st
 
 
 def load_files_from_dir(dir: str, sort_by: str, sort_order: str, recursive: bool):
-    global total_image_num, displayed_image_num, current_tag_filter, current_selection, tmp_selection_img_path_set, selected_image_path
+    global total_image_num, displayed_image_num, current_tag_filter, current_selection, tmp_selection_img_path_set, selected_image_path, selection_selected_image_path
     dataset_tag_editor.load_dataset(img_dir=dir, recursive=recursive)
     img_paths, tags = dataset_tag_editor.get_filtered_imgpath_and_tags()
     tags = arrange_tag_order(tags=tags, sort_by=sort_by, sort_order=sort_order)
-    total_image_num = displayed_image_num = current_selection = len(dataset_tag_editor.get_img_path_set())
+    total_image_num = displayed_image_num = len(dataset_tag_editor.get_img_path_set())
     current_tag_filter = ''
     tmp_selection_img_path_set = set()
+    current_selection = 0
     selected_image_path = ''
+    selection_selected_image_path = ''
     return [
         img_paths,
+        [],
         gr.CheckboxGroup.update(value=None, choices=dataset_tag_editor.write_tags(tags)),
         '',
-        gr.HTML.update(value=f"""
+        f"""
         Displayed Images : {displayed_image_num} / {total_image_num} total<br>
         Current Tag Filter : {current_tag_filter}<br>
         Current Selection Filter : {current_selection} images<br>
         Selected Image : {selected_image_path}
-        """)
+        """,
+        f"""Selected Image : {selection_selected_image_path}"""
     ]
 
 
@@ -51,6 +55,10 @@ def search_tags(filter_tags: List[str], filter_word: str, sort_by: str, sort_ord
     _, tags = dataset_tag_editor.get_filtered_imgpath_and_tags(filter_tags=filter_tags, filter_word=filter_word)
     tags = arrange_tag_order(tags, sort_by=sort_by, sort_order=sort_order)
     return gr.CheckboxGroup.update(choices=dataset_tag_editor.write_tags(tags))
+
+
+def clear_tag_filters(sort_by, sort_order):
+    return filter_gallery(filter_tags=[], filter_word='', sort_by=sort_by, sort_order=sort_order) + ['']
 
 
 def rearrange_tag_order(filter_tags: List[str], filter_word: str, sort_by: str, sort_order: str):
@@ -82,12 +90,12 @@ def filter_gallery(filter_tags: List[str], filter_word: str, sort_by: str, sort_
         current_tag_filter,
         current_tag_filter,
         -1,
-        gr.HTML.update(value=f"""
+        f"""
         Displayed Images : {displayed_image_num} / {total_image_num} total<br>
         Current Tag Filter : {current_tag_filter}<br>
         Current Selection Filter : {current_selection} images<br>
         Selected Image : {selected_image_path}
-        """)
+        """
         ]
 
 
@@ -121,7 +129,7 @@ def selection_index_changed(idx: int):
         idx = -1
     else:
         selection_selected_image_path = img_paths[idx]
-    return [gr.HTML.update(value=f"""Selected Image : {selection_selected_image_path}"""), idx]
+    return [f"""Selected Image : {selection_selected_image_path}""", idx]
 
 
 def add_image_selection(filter_tags: List[str], idx: int):
@@ -155,7 +163,7 @@ def remove_image_selection(idx: int):
 
     return [
         arrange_selection_order(tmp_selection_img_path_set),
-        gr.HTML.update(value=f"""Selected Image : {selection_selected_image_path}"""),
+        f"""Selected Image : {selection_selected_image_path}""",
         idx
     ]
 
@@ -167,7 +175,7 @@ def clear_image_selection():
     dataset_tag_editor.set_img_filter_img_path()
     return[
         [],
-        gr.HTML.update(value=f"""Selected Image : {selection_selected_image_path}"""),
+        f"""Selected Image : {selection_selected_image_path}""",
         -1
     ]
 
@@ -198,12 +206,12 @@ def gallery_index_changed(filter_tags: List[str], idx: int):
     
     return [
         tags_txt,
-        gr.HTML.update(value=f"""
+        f"""
         Displayed Images : {displayed_image_num} / {total_image_num} total<br>
         Current Tag Filter : {current_tag_filter}<br>
         Current Selection Filter : {current_selection} images<br>
         Selected Image : {selected_image_path}
-        """),
+        """,
         idx
         ]
 
@@ -340,7 +348,7 @@ def on_ui_tabs():
         btn_load_datasets.click(
             fn=load_files_from_dir,
             inputs=[tb_img_directory, rd_sort_by, rd_sort_order, cb_load_recursive],
-            outputs=[gl_dataset_images, cbg_tags, tb_search_tags, txt_filter]
+            outputs=[gl_dataset_images, gl_selected_images, cbg_tags, tb_search_tags, txt_filter, txt_selection]
         )
         btn_load_datasets.click(
             fn=lambda:['', -1],
@@ -379,12 +387,9 @@ def on_ui_tabs():
         )
 
         btn_clear_tag_filters.click(
-            fn=lambda: [
-                dataset_tag_editor.get_img_path_list(),
-                gr.CheckboxGroup.update(value=None, choices=dataset_tag_editor.write_tags(dataset_tag_editor.get_tag_list())),
-                '', '', '', '', -1],
-            inputs=None,
-            outputs=[gl_dataset_images, cbg_tags, tb_search_tags, tb_selected_tags, tb_edit_tags, tb_caption_selected_image, lbl_hidden_image_index]
+            fn=clear_tag_filters,
+            inputs=[rd_sort_by, rd_sort_order],
+            outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter, tb_search_tags]
         )
 
         btn_clear_all_filters.click(
@@ -394,12 +399,9 @@ def on_ui_tabs():
         )
 
         btn_clear_all_filters.click(
-            fn=lambda: [
-                dataset_tag_editor.get_img_path_list(),
-                gr.CheckboxGroup.update(value=None, choices=dataset_tag_editor.write_tags(dataset_tag_editor.get_tag_list())),
-                '', '', '', '', -1],
-            inputs=None,
-            outputs=[gl_dataset_images, cbg_tags, tb_search_tags, tb_selected_tags, tb_edit_tags, tb_caption_selected_image, lbl_hidden_image_index]
+            fn=clear_tag_filters,
+            inputs=[rd_sort_by, rd_sort_order],
+            outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter, tb_search_tags]
         )
 
         #----------------------------------------------------------------
