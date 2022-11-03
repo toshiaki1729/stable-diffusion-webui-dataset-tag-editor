@@ -24,9 +24,9 @@ def arrange_tag_order(tags: List[str], sort_by: str, sort_order: str) -> List[st
     return tags
 
 
-def load_files_from_dir(dir: str, sort_by: str, sort_order: str):
+def load_files_from_dir(dir: str, sort_by: str, sort_order: str, recursive: bool):
     global total_image_num, displayed_image_num, current_tag_filter, current_selection, tmp_selection_img_path_set, selected_image_path
-    dataset_tag_editor.load_dataset(dir)
+    dataset_tag_editor.load_dataset(img_dir=dir, recursive=recursive)
     img_paths, tags = dataset_tag_editor.get_filtered_imgpath_and_tags()
     tags = arrange_tag_order(tags=tags, sort_by=sort_by, sort_order=sort_order)
     total_image_num = displayed_image_num = current_selection = len(dataset_tag_editor.get_img_path_set())
@@ -101,7 +101,7 @@ def apply_edit_tags(edit_tags: str, filter_tags: List[str], append_to_begin: boo
 
 def save_all_changes(backup: bool) -> str:
     saved, total, dir = dataset_tag_editor.save_dataset(backup=backup)
-    return f'Saved text files : {saved}/{total} in {dir}' if total > 0 else ''
+    return f'Saved text files : {saved}/{total} under {dir}' if total > 0 else ''
 
 
 # ================================================================
@@ -249,10 +249,11 @@ def on_ui_tabs():
         with gr.Row().style(equal_height=False):
             with gr.Column(variant='panel'):
                 with gr.Row():
-                    with gr.Column(scale=4):
+                    with gr.Column(scale=3):
                         tb_img_directory = gr.Textbox(label='Dataset directory', placeholder='C:\\directory\\of\\datasets')
                     with gr.Column(scale=1, min_width=80):
                         btn_load_datasets = gr.Button(value='Load')
+                        cb_load_recursive = gr.Checkbox(value=False, label='Load from subdirectories')
                 gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_images_gallery").style(grid=opts.dataset_editor_image_columns)
                 txt_filter = gr.HTML(value=f"""
                 Displayed Images : {displayed_image_num} / {total_image_num} total<br>
@@ -338,7 +339,7 @@ def on_ui_tabs():
 
         btn_load_datasets.click(
             fn=load_files_from_dir,
-            inputs=[tb_img_directory, rd_sort_by, rd_sort_order],
+            inputs=[tb_img_directory, rd_sort_by, rd_sort_order, cb_load_recursive],
             outputs=[gl_dataset_images, cbg_tags, tb_search_tags, txt_filter]
         )
         btn_load_datasets.click(

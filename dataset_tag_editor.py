@@ -6,6 +6,21 @@ from modules.textual_inversion.dataset import re_numbers_at_start
 
 re_tags = re.compile(r'^(.+) \[\d+\]$')
 
+def get_filepath_set(dir: str, recursive: bool) -> set[str]:
+    basenames = os.listdir(dir)
+    paths = {os.path.join(dir, basename) for basename in basenames}
+    if recursive:
+        result = set()
+        for path in paths:
+            if os.path.isdir(path):
+                result = result | get_filepath_set(path, True)
+            elif os.path.isfile(path):
+                result.add(path)
+        return result
+    else:
+        return {path for path in paths if os.path.isfile(path)}
+
+
 class DatasetTagEditor:
     def __init__(self):
         # from modules.textual_inversion.dataset
@@ -14,6 +29,7 @@ class DatasetTagEditor:
         self.img_tag_set_dict = {}
         self.tag_counts = {}
         self.img_filter_img_path_set = set()
+        self.dataset_dir = ''
 
 
     def get_tag_list(self) -> list[str]:
@@ -125,17 +141,19 @@ class DatasetTagEditor:
         return {k for k in self.img_tag_dict.keys() if k}
 
 
-    def load_dataset(self, img_dir: str):
+    def load_dataset(self, img_dir: str, recursive: bool = False):
         self.clear()
         try:
-            f_list = os.listdir(img_dir)
+            filepath_set = get_filepath_set(dir=img_dir, recursive=recursive)
         except:
             return
-        for img_filebasename in f_list:
-            img_path = os.path.join(img_dir, img_filebasename)
+
+        self.dataset_dir = img_dir
+
+        for img_path in filepath_set:
             img_dir = os.path.dirname(img_path)
-            img_filename, img_ext = os.path.splitext(img_filebasename)
-            if os.path.isfile(img_path) and (img_ext == '.png'):
+            img_filename, img_ext = os.path.splitext(os.path.basename(img_path))
+            if img_ext == '.png':
                 text_filename = os.path.join(img_dir, img_filename+'.txt')
                 # from modules/textual_inversion/dataset.py
                 if os.path.exists(text_filename) and os.path.isfile(text_filename):
@@ -193,9 +211,9 @@ class DatasetTagEditor:
             else:
                 saved_num += 1
         
-        print(f'Backup text files: {backup_num}/{len(self.img_tag_dict)} in {img_dir}')
-        print(f'Saved text files: {saved_num}/{len(self.img_tag_dict)} in {img_dir}')
-        return (saved_num, len(self.img_tag_dict), img_dir)
+        print(f'Backup text files: {backup_num}/{len(self.img_tag_dict)} under {self.dataset_dir}')
+        print(f'Saved text files: {saved_num}/{len(self.img_tag_dict)} under {self.dataset_dir}')
+        return (saved_num, len(self.img_tag_dict), self.dataset_dir)
 
 
     def clear(self):
@@ -203,6 +221,7 @@ class DatasetTagEditor:
         self.img_tag_set_dict.clear()
         self.tag_counts.clear()
         self.img_filter_img_path_set.clear()
+        self.dataset_dir = ''
 
 
     def construct_tag_counts(self):
