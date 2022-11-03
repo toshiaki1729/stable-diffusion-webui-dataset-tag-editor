@@ -40,7 +40,7 @@ def load_files_from_dir(dir: str, sort_by: str, sort_order: str):
         gr.HTML.update(value=f"""
         Displayed Images : {displayed_image_num} / {total_image_num} total<br>
         Current Tag Filter : {current_tag_filter}<br>
-        Current Selection : {current_selection} images<br>
+        Current Selection Filter : {current_selection} images<br>
         Selected Image : {selected_image_path}
         """)
     ]
@@ -73,6 +73,7 @@ def filter_gallery(filter_tags: List[str], filter_word: str, sort_by: str, sort_
     tags = arrange_tag_order(tags=tags, sort_by=sort_by, sort_order=sort_order)
     filter_tags = dataset_tag_editor.write_tags(filter_tags)
     tags = dataset_tag_editor.write_tags(tags)
+    current_selection = len(tmp_selection_img_path_set)
     if filter_tags and len(filter_tags) == 0:
         filter_tags = None
     return [
@@ -84,7 +85,7 @@ def filter_gallery(filter_tags: List[str], filter_word: str, sort_by: str, sort_
         gr.HTML.update(value=f"""
         Displayed Images : {displayed_image_num} / {total_image_num} total<br>
         Current Tag Filter : {current_tag_filter}<br>
-        Current Selection : {current_selection} images<br>
+        Current Selection Filter : {current_selection} images<br>
         Selected Image : {selected_image_path}
         """)
         ]
@@ -172,7 +173,7 @@ def clear_image_selection_filter():
 
 
 def apply_image_selection_filter(filter_tags: List[str], filter_word: str, sort_by: str, sort_order: str):
-    global tmp_selection_img_path_set
+    global displayed_image_num, total_image_num, current_tag_filter, current_selection, selected_image_path, tmp_selection_img_path_set
     filter_tags = dataset_tag_editor.read_tags(filter_tags)
     dataset_tag_editor.set_img_filter_img_path(tmp_selection_img_path_set)
     return filter_gallery(filter_tags=filter_tags, filter_word=filter_word, sort_by=sort_by, sort_order=sort_order)
@@ -200,7 +201,7 @@ def gallery_index_changed(filter_tags: List[str], idx: int):
         gr.HTML.update(value=f"""
         Displayed Images : {displayed_image_num} / {total_image_num} total<br>
         Current Tag Filter : {current_tag_filter}<br>
-        Current Selection : {current_selection} images<br>
+        Current Selection Filter : {current_selection} images<br>
         Selected Image : {selected_image_path}
         """),
         idx
@@ -256,7 +257,7 @@ def on_ui_tabs():
                 txt_filter = gr.HTML(value=f"""
                 Displayed Images : {displayed_image_num} / {total_image_num} total<br>
                 Current Tag Filter : {current_tag_filter}<br>
-                Current Selection : {current_selection} images<br>
+                Current Selection Filter : {current_selection} images<br>
                 Selected Image : {selected_image_path}
                 """)
 
