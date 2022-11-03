@@ -7,6 +7,13 @@ from dataset_tag_editor import DatasetTagEditor
 
 dataset_tag_editor = DatasetTagEditor()
 
+total_image_num = 0
+displayed_image_num = 0
+current_tag_filter = ''
+current_selection = 0
+tmp_selection_img_path_set = set()
+selected_image_path = ''
+selection_selected_image_path = ''
 
 # ================================================================
 # Callbacks for "Filter and Edit Tags" tab
@@ -18,12 +25,24 @@ def arrange_tag_order(tags: List[str], sort_by: str, sort_order: str) -> List[st
 
 
 def load_files_from_dir(dir: str, sort_by: str, sort_order: str):
+    global total_image_num, displayed_image_num, current_tag_filter, current_selection, tmp_selection_img_path_set, selected_image_path
     dataset_tag_editor.load_dataset(dir)
-    tags = arrange_tag_order(tags=dataset_tag_editor.get_tags(), sort_by=sort_by, sort_order=sort_order)
+    img_paths, tags = dataset_tag_editor.get_filtered_imgpath_and_tags()
+    tags = arrange_tag_order(tags=tags, sort_by=sort_by, sort_order=sort_order)
+    total_image_num = displayed_image_num = current_selection = len(dataset_tag_editor.get_img_path_set())
+    current_tag_filter = ''
+    tmp_selection_img_path_set = set()
+    selected_image_path = ''
     return [
-        dataset_tag_editor.get_img_path_list(),
+        img_paths,
         gr.CheckboxGroup.update(value=None, choices=dataset_tag_editor.write_tags(tags)),
-        ''
+        '',
+        gr.HTML.update(value=f"""
+        Displayed Images : {displayed_image_num} / {total_image_num} total<br>
+        Current Tag Filter : {current_tag_filter}<br>
+        Current Selection : {current_selection} images<br>
+        Selected Image : {selected_image_path}
+        """)
     ]
 
 
@@ -45,9 +64,12 @@ def filter_gallery_by_checkbox(filter_tags: List[str], filter_word: str, sort_by
     filter_tags = dataset_tag_editor.read_tags(filter_tags)
     return filter_gallery(filter_tags=filter_tags, filter_word=filter_word, sort_by=sort_by, sort_order=sort_order)
 
+
 def filter_gallery(filter_tags: List[str], filter_word: str, sort_by: str, sort_order: str):
+    global displayed_image_num, total_image_num, current_tag_filter, current_selection, selected_image_path
     img_paths, tags = dataset_tag_editor.get_filtered_imgpath_and_tags(filter_tags=filter_tags, filter_word=filter_word)
-    filter_tag_text = ', '.join(filter_tags) if filter_tags else ''
+    current_tag_filter = ', '.join(filter_tags) if filter_tags else ''
+    displayed_image_num = len(img_paths)
     tags = arrange_tag_order(tags=tags, sort_by=sort_by, sort_order=sort_order)
     filter_tags = dataset_tag_editor.write_tags(filter_tags)
     tags = dataset_tag_editor.write_tags(tags)
@@ -56,10 +78,16 @@ def filter_gallery(filter_tags: List[str], filter_word: str, sort_by: str, sort_
     return [
         img_paths,
         gr.CheckboxGroup.update(value=filter_tags, choices=tags),
-        filter_tag_text,
-        filter_tag_text,
-        -1
-    ]
+        current_tag_filter,
+        current_tag_filter,
+        -1,
+        gr.HTML.update(value=f"""
+        Displayed Images : {displayed_image_num} / {total_image_num} total<br>
+        Current Tag Filter : {current_tag_filter}<br>
+        Current Selection : {current_selection} images<br>
+        Selected Image : {selected_image_path}
+        """)
+        ]
 
 
 def apply_edit_tags(edit_tags: str, filter_tags: List[str], append_to_begin: bool, filter_word: str, sort_by: str, sort_order: str):
@@ -70,23 +98,113 @@ def apply_edit_tags(edit_tags: str, filter_tags: List[str], append_to_begin: boo
     return filter_gallery(filter_tags = replace_tags, filter_word = filter_word, sort_by=sort_by, sort_order=sort_order)
 
 
-def save_all_changes(backup: bool):
+def save_all_changes(backup: bool) -> str:
     saved, total, dir = dataset_tag_editor.save_dataset(backup=backup)
-    return f'Saved text files : {saved}/{total} in {dir}'
+    return f'Saved text files : {saved}/{total} in {dir}' if total > 0 else ''
 
+
+# ================================================================
+# Callbacks for "Filter by Selection" tab
+# ================================================================
+
+def arrange_selection_order(paths: List[str]) -> list[str]:
+    return sorted(paths)
+
+
+def selection_index_changed(idx: int):
+    global tmp_selection_img_path_set, selection_selected_image_path
+    idx = int(idx)
+    img_paths = arrange_selection_order(tmp_selection_img_path_set)
+    if idx < 0 or len(img_paths) <= idx:
+        selection_selected_image_path = ''
+        idx = -1
+    else:
+        selection_selected_image_path = img_paths[idx]
+    return [gr.HTML.update(value=f"""Selected Image : {selection_selected_image_path}"""), idx]
+
+
+def add_image_selection(filter_tags: List[str], idx: int):
+    global tmp_selection_img_path_set
+    idx = int(idx)
+    filter_tags = dataset_tag_editor.read_tags(filter_tags)
+    img_paths, _ = dataset_tag_editor.get_filtered_imgpath_and_tags(filter_tags=filter_tags)
+    if idx < 0 or len(img_paths) <= idx:
+        idx = -1
+    else:
+        tmp_selection_img_path_set.add(img_paths[idx])
+    return [arrange_selection_order(tmp_selection_img_path_set), idx]
+
+
+def invert_image_selection():
+    global tmp_selection_img_path_set
+    img_paths = dataset_tag_editor.get_img_path_set()
+    tmp_selection_img_path_set = img_paths - tmp_selection_img_path_set
+    return arrange_selection_order(tmp_selection_img_path_set)
+
+
+def remove_image_selection(idx: int):
+    global tmp_selection_img_path_set, selection_selected_image_path
+    idx = int(idx)
+    img_paths = arrange_selection_order(tmp_selection_img_path_set)
+    if idx < 0 or len(img_paths) <= idx:
+        idx = -1
+    else:
+        tmp_selection_img_path_set.remove(img_paths[idx])
+        selection_selected_image_path = ''
+
+    return [
+        arrange_selection_order(tmp_selection_img_path_set),
+        gr.HTML.update(value=f"""Selected Image : {selection_selected_image_path}"""),
+        idx
+    ]
+
+
+def clear_image_selection_filter():
+    global tmp_selection_img_path_set, selection_selected_image_path
+    tmp_selection_img_path_set.clear()
+    selection_selected_image_path = ''
+    dataset_tag_editor.set_img_filter_img_path()
+    return[
+        [],
+        gr.HTML.update(value=f"""Selected Image : {selection_selected_image_path}"""),
+        -1
+    ]
+
+
+def apply_image_selection_filter(filter_tags: List[str], filter_word: str, sort_by: str, sort_order: str):
+    global tmp_selection_img_path_set
+    filter_tags = dataset_tag_editor.read_tags(filter_tags)
+    dataset_tag_editor.set_img_filter_img_path(tmp_selection_img_path_set)
+    return filter_gallery(filter_tags=filter_tags, filter_word=filter_word, sort_by=sort_by, sort_order=sort_order)
+    
 
 # ================================================================
 # Callbacks for "Edit Caption of Selected Image" tab
 # ================================================================
 
 def gallery_index_changed(filter_tags: List[str], idx: int):
+    global displayed_image_num, total_image_num, current_tag_filter, current_selection, selected_image_path
     idx = int(idx)
     filter_tags = dataset_tag_editor.read_tags(filter_tags)
     img_paths, _ = dataset_tag_editor.get_filtered_imgpath_and_tags(filter_tags=filter_tags)
-    if idx < 0 or len(img_paths) <= idx:
-        return ['', -1]
+    tags_txt = ''
+    if 0 <= idx and idx < len(img_paths):
+        selected_image_path = img_paths[idx]
+        tags_txt = ', '.join(dataset_tag_editor.get_tags_by_image_path(selected_image_path))
     else:
-        return [', '.join(dataset_tag_editor.get_tags_by_image_path(img_paths[idx])), idx]
+        selected_image_path = ''
+        idx = -1
+    
+    return [
+        tags_txt,
+        gr.HTML.update(value=f"""
+        Displayed Images : {displayed_image_num} / {total_image_num} total<br>
+        Current Tag Filter : {current_tag_filter}<br>
+        Current Selection : {current_selection} images<br>
+        Selected Image : {selected_image_path}
+        """),
+        idx
+        ]
 
 
 def change_tags_selected_image(tags_text: str, filter_tags: List[str], sort_by: str, sort_order: str, idx: int):
@@ -109,6 +227,7 @@ def change_tags_selected_image(tags_text: str, filter_tags: List[str], sort_by: 
 # ================================================================
 
 def on_ui_tabs():
+    global displayed_image_num, total_image_num, current_tag_filter, current_selection, selected_image_path, selection_selected_image_path
     with gr.Blocks(analytics_enabled=False) as dataset_tag_editor_interface:
         with gr.Row(visible=False):
             btn_hidden_set_index = gr.Button(elem_id="dataset_tag_editor_set_index")
@@ -134,12 +253,21 @@ def on_ui_tabs():
                     with gr.Column(scale=1, min_width=80):
                         btn_load_datasets = gr.Button(value='Load')
                 gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_images_gallery").style(grid=opts.dataset_editor_image_columns)
+                txt_filter = gr.HTML(value=f"""
+                Displayed Images : {displayed_image_num} / {total_image_num} total<br>
+                Current Tag Filter : {current_tag_filter}<br>
+                Current Selection : {current_selection} images<br>
+                Selected Image : {selected_image_path}
+                """)
+
             with gr.Tab(label='Filter and Edit Tags'):
                 with gr.Column():
                     with gr.Column(variant='panel'):
                         gr.HTML(value='Search tags / Filter images by tags')
                         tb_search_tags = gr.Textbox(label='Search Tags', interactive=True)
-                        btn_clear_tag_filters = gr.Button(value='Clear all filters')
+                        with gr.Row():
+                            btn_clear_tag_filters = gr.Button(value='Clear tag filters')
+                            btn_clear_all_filters = gr.Button(value='Clear ALL filters')
                         with gr.Row():
                             rd_sort_by = gr.Radio(choices=['Alphabetical Order', 'Frequency'], value='Alphabetical Order', interactive=True, label='Sort by')
                             rd_sort_order = gr.Radio(choices=['Ascending', 'Descending'], value='Ascending', interactive=True, label='Sort Order')
@@ -148,7 +276,7 @@ def on_ui_tabs():
                         gr.HTML(value='Edit tags in filtered images')
                         tb_selected_tags = gr.Textbox(label='Selected Tags', interactive=False)
                         tb_edit_tags = gr.Textbox(label='Edit Tags', interactive=True)
-                        btn_apply_edit_tags = gr.Button(value='Apply changes to filtered images')
+                        btn_apply_edit_tags = gr.Button(value='Apply changes to filtered images', variant='primary')
                         cb_append_tags_to_begin = gr.Checkbox(value=False, label='Append additional tags to the beginning')
 
                         gr.HTML(value="""
@@ -168,13 +296,35 @@ def on_ui_tabs():
                         &emsp;Original Text = "A, B, C, D, E"&emsp;Selected Tags = "A, B, D"&emsp;Edit Tags = ", X, "<br>
                         &emsp;Result = "X, C, E"&emsp;(A->"", B->X, D->"")<br>
                         """)
+            
+            with gr.Tab(label='Filter by Selection'):
+                with gr.Row(visible=False):
+                    btn_hidden_set_selection_index = gr.Button(elem_id="dataset_tag_editor_set_selection_index")
+                    lbl_hidden_selection_image_index = gr.Label(value=-1)
+                gr.HTML("""Select images from the left gallery.""")
+                
+                with gr.Column(variant='panel'):
+                    with gr.Row():
+                        btn_add_image_selection = gr.Button(value='Add selection [Enter]', elem_id='dataset_tag_editor_btn_add_image_selection')    
+
+                    gl_selected_images = gr.Gallery(label='Filter Images', elem_id="dataset_tag_editor_selection_images_gallery").style(grid=opts.dataset_editor_image_columns)
+                    txt_selection = gr.HTML(value=f"""Selected Image : {selection_selected_image_path}""")
+
+                    with gr.Row():
+                        btn_invert_image_selection = gr.Button(value='Invert selection')
+                        btn_remove_image_selection = gr.Button(value='Remove selection')
+
+                with gr.Row():
+                    btn_clear_image_selection_filter = gr.Button(value='Clear selection filter')
+                    btn_apply_image_selection_filter = gr.Button(value='Apply selection filter', variant='primary')
+                    
 
             with gr.Tab(label='Edit Caption of Selected Image'):
                 with gr.Column():
                     tb_caption_selected_image = gr.Textbox(label='Caption of Selected Image', interactive=False, lines=6)
                     btn_copy_caption_selected_image = gr.Button(value='Copy caption')
                     tb_edit_caption_selected_image = gr.Textbox(label='Edit Caption', interactive=True, lines=6)
-                    btn_apply_changes_selected_image = gr.Button(value='Apply changes to selected image')
+                    btn_apply_changes_selected_image = gr.Button(value='Apply changes to selected image', variant='primary')
 
                     gr.HTML("""Changes are not applied to the text files until the "Save all changes" button is pressed.""")
         
@@ -189,7 +339,7 @@ def on_ui_tabs():
         btn_load_datasets.click(
             fn=load_files_from_dir,
             inputs=[tb_img_directory, rd_sort_by, rd_sort_order],
-            outputs=[gl_dataset_images, cbg_tags, tb_search_tags]
+            outputs=[gl_dataset_images, cbg_tags, tb_search_tags, txt_filter]
         )
         btn_load_datasets.click(
             fn=lambda:['', -1],
@@ -200,7 +350,7 @@ def on_ui_tabs():
         cbg_tags.change(
             fn=filter_gallery_by_checkbox,
             inputs=[cbg_tags, tb_search_tags, rd_sort_by, rd_sort_order],
-            outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index]
+            outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter]
         )
 
         rd_sort_by.change(
@@ -224,16 +374,73 @@ def on_ui_tabs():
         btn_apply_edit_tags.click(
             fn=apply_edit_tags,
             inputs=[tb_edit_tags, cbg_tags, cb_append_tags_to_begin, tb_search_tags, rd_sort_by, rd_sort_order],
-            outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index]
+            outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter]
         )
 
         btn_clear_tag_filters.click(
             fn=lambda: [
                 dataset_tag_editor.get_img_path_list(),
-                gr.CheckboxGroup.update(value=None, choices=dataset_tag_editor.write_tags(dataset_tag_editor.get_tags())),
+                gr.CheckboxGroup.update(value=None, choices=dataset_tag_editor.write_tags(dataset_tag_editor.get_tag_list())),
                 '', '', '', '', -1],
             inputs=None,
             outputs=[gl_dataset_images, cbg_tags, tb_search_tags, tb_selected_tags, tb_edit_tags, tb_caption_selected_image, lbl_hidden_image_index]
+        )
+
+        btn_clear_all_filters.click(
+            fn=clear_image_selection_filter,
+            inputs=None,
+            outputs=[gl_selected_images, txt_selection, lbl_hidden_selection_image_index]
+        )
+
+        btn_clear_all_filters.click(
+            fn=lambda: [
+                dataset_tag_editor.get_img_path_list(),
+                gr.CheckboxGroup.update(value=None, choices=dataset_tag_editor.write_tags(dataset_tag_editor.get_tag_list())),
+                '', '', '', '', -1],
+            inputs=None,
+            outputs=[gl_dataset_images, cbg_tags, tb_search_tags, tb_selected_tags, tb_edit_tags, tb_caption_selected_image, lbl_hidden_image_index]
+        )
+
+        #----------------------------------------------------------------
+        # Filter by Selection tab
+
+        btn_hidden_set_selection_index.click(
+            fn=selection_index_changed,
+            _js="(x) => [dataset_tag_editor_selected_selection_index()]",
+            inputs=[lbl_hidden_selection_image_index],
+            outputs=[txt_selection, lbl_hidden_selection_image_index]
+        )
+
+        btn_add_image_selection.click(
+            fn=add_image_selection,
+            _js="(x, y) => [x, dataset_tag_editor_selected_gallery_index()]",
+            inputs=[cbg_tags, lbl_hidden_image_index],
+            outputs=[gl_selected_images, lbl_hidden_image_index]
+        )
+
+        btn_invert_image_selection.click(
+            fn=invert_image_selection,
+            inputs=None,
+            outputs=gl_selected_images
+        )
+
+        btn_remove_image_selection.click(
+            fn=remove_image_selection,
+            _js="(x) => [dataset_tag_editor_selected_selection_index()]",
+            inputs=[lbl_hidden_selection_image_index],
+            outputs=[gl_selected_images,txt_selection,lbl_hidden_selection_image_index]
+        )
+
+        btn_clear_image_selection_filter.click(
+            fn=clear_image_selection_filter,
+            inputs=None,
+            outputs=[gl_selected_images,txt_selection,lbl_hidden_selection_image_index]
+        )
+
+        btn_apply_image_selection_filter.click(
+            fn=apply_image_selection_filter,
+            inputs=[cbg_tags, tb_search_tags, rd_sort_by, rd_sort_order],
+            outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter]
         )
 
         #----------------------------------------------------------------
@@ -241,9 +448,9 @@ def on_ui_tabs():
 
         btn_hidden_set_index.click(
             fn=gallery_index_changed,
-            _js="(x, y, z) => [x, dataset_tag_editor_selected_gallery_index()]",
+            _js="(x, y) => [x, dataset_tag_editor_selected_gallery_index()]",
             inputs=[cbg_tags, lbl_hidden_image_index],
-            outputs=[tb_caption_selected_image, lbl_hidden_image_index]
+            outputs=[tb_caption_selected_image, txt_filter, lbl_hidden_image_index]
         )
 
         btn_copy_caption_selected_image.click(

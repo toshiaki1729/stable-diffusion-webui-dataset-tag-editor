@@ -10,33 +10,42 @@ class DatasetTagEditor:
     def __init__(self):
         # from modules.textual_inversion.dataset
         self.re_word = re.compile(shared.opts.dataset_filename_word_regex) if len(shared.opts.dataset_filename_word_regex) > 0 else None
-        self.img_tag_dict = dict()
-        self.tag_counts = dict()
+        self.img_tag_dict = {}
+        self.img_tag_set_dict = {}
+        self.tag_counts = {}
+        self.img_filter_img_path_set = set()
 
 
-    def get_tags(self):
-        if len(self.tag_counts) == 0 and len(self.img_tag_dict) == 0:
+    def get_tag_list(self) -> list[str]:
+        if len(self.tag_counts) == 0 and len(self.img_tag_dict) > 0:
             self.construct_tag_counts()
         return [key for key in self.tag_counts.keys()]
 
 
-    def get_tags_by_image_path(self, imgpath: str) -> Optional[List[str]]:
+    def get_tag_set(self) -> set[str]:
+        if len(self.tag_counts) == 0 and len(self.img_tag_dict) > 0:
+            self.construct_tag_counts()
+        return {key for key in self.tag_counts.keys()}
+
+
+    def get_tags_by_image_path(self, imgpath: str) -> Optional[list[str]]:
         return self.img_tag_dict.get(imgpath)
 
     
     def set_tags_by_image_path(self, imgpath: str, tags: List[str]):
         self.img_tag_dict[imgpath] = tags
+        self.img_tag_set_dict[imgpath] = {t for t in tags if t}
         self.construct_tag_counts()
     
 
-    def write_tags(self, tags: List[str]) -> List[str]:
+    def write_tags(self, tags: List[str]) -> list[str]:
         if tags:
             return [f'{tag} [{self.tag_counts.get(tag)}]' for tag in tags if tag]
         else:
             return []
 
 
-    def read_tags(self, tags:List[str]) -> List[str]:
+    def read_tags(self, tags:List[str]) -> list[str]:
         if tags:
             tags = [re_tags.match(tag).group(1) for tag in tags if tag]
             return [t for t in tags if t]
@@ -44,48 +53,50 @@ class DatasetTagEditor:
             return []
 
 
-    def sort_tags(self, tags: List[str], sort_by: str, sort_order: str) -> List[str]:
+    def sort_tags(self, tags: List[str], sort_by: str, sort_order: str) -> list[str]:
         if sort_by == 'Alphabetical Order':
             if sort_order == 'Ascending':
-                tags.sort(reverse=False)
-                return tags
+                return sorted(tags, reverse=False)
             elif sort_order == 'Descending':
-                tags.sort(reverse=True)
-                return tags
+                return sorted(tags, reverse=True)
         elif sort_by == 'Frequency':
             if sort_order == 'Ascending':
-                tags.sort(key=lambda t:(self.tag_counts.get(t), t), reverse=False)
-                return tags
+                return sorted(tags, key=lambda t:(self.tag_counts.get(t), t), reverse=False)
             elif sort_order == 'Descending':
-                tags.sort(reverse=False)
-                tags.sort(key=lambda t:(-self.tag_counts.get(t), t), reverse=False)
-                return tags
+                return sorted(tags, key=lambda t:(-self.tag_counts.get(t), t), reverse=False)
         return []
 
 
-    def get_filtered_imgpath_and_tags(self, filter_tags: Optional[List[str]] = None, filter_word: Optional[str] = None) -> Tuple[List[str], List[str]]:
-        img_paths = []
-
-        if filter_tags and len(filter_tags) > 0:
-            for path, tags in self.img_tag_dict.items():
-                flag = True
-                for v in filter_tags:
-                    if v not in tags:
-                        flag = False
-                        break
-                if flag:
-                    img_paths.append(path)
-            tag_list = self.construct_tag_list_from(img_paths)
+    def set_img_filter_img_path(self, path:Optional[set[str]] = None):
+        if path:
+            self.img_filter_img_path_set = self.get_img_path_set() & path
         else:
-            tag_list = self.get_tags()
-            img_paths = self.get_img_path_list()
+            self.img_filter_img_path_set = self.get_img_path_set()
+
+
+    def get_img_filter_img_path(self) -> set[str]:
+        return self.img_filter_img_path_set
+
+
+    def get_filtered_imgpath_and_tags(self, filter_tags: Optional[List[str]] = None, filter_word: Optional[str] = None) -> Tuple[list[str], set[str]]:
+        img_paths = self.get_img_filter_img_path().copy()
+        if filter_tags and len(filter_tags) > 0:
+            filter_tag_set = set(filter_tags)
+            for path in self.get_img_filter_img_path():
+                tags = self.img_tag_set_dict.get(path)
+                if not filter_tag_set.issubset(tags):
+                    img_paths.remove(path)
+            tag_set = self.construct_tag_set_from(img_paths)
+        else:
+            tag_set = self.get_tag_set()
+
+        img_paths = sorted(img_paths)
 
         if filter_word:
             # all tags with filter_word
-            result = [tag for tag in tag_list if filter_word in tag]
-            return (img_paths, result)
-        else:
-            return (img_paths, tag_list)
+            tag_set = {tag for tag in tag_set if filter_word in tag}
+        
+        return (img_paths, tag_set)
 
 
     def replace_tags(self, search_tags: List[str], replace_tags: List[str], filter_tags: Optional[List[str]] = None, append_to_begin: bool = False):
@@ -101,16 +112,17 @@ class DatasetTagEditor:
         for img_path in img_paths:
             tags_removed = [t for t in self.img_tag_dict.get(img_path) if t not in tags_to_remove]
             tags_replaced = [tags_to_replace.get(t) if t in tags_to_replace.keys() else t for t in tags_removed]
-            self.img_tag_dict[img_path] = tags_to_append + tags_replaced if append_to_begin else tags_replaced + tags_to_append
+            self.set_tags_by_image_path(img_path, tags_to_append + tags_replaced if append_to_begin else tags_replaced + tags_to_append)
         
         self.construct_tag_counts()
 
 
-    def get_img_path_list(self) -> List[str]:
-        keys = []
-        for key in self.img_tag_dict.keys():
-            keys.append(key)
-        return keys
+    def get_img_path_list(self) -> list[str]:
+        return [k for k in self.img_tag_dict.keys() if k]
+
+
+    def get_img_path_set(self) -> set[str]:
+        return {k for k in self.img_tag_dict.keys() if k}
 
 
     def load_dataset(self, img_dir: str):
@@ -135,15 +147,20 @@ class DatasetTagEditor:
                     if self.re_word:
                         tokens = self.re_word.findall(filename_text)
                         filename_text = (shared.opts.dataset_filename_join_string or "").join(tokens)
-
-                self.img_tag_dict[img_path] = [t.strip() for t in filename_text.split(',')]
+                
+                self.set_tags_by_image_path(img_path, [t.strip() for t in filename_text.split(',')])
 
         self.construct_tag_counts()
-
+        self.set_img_filter_img_path()
  
+
     def save_dataset(self, backup: bool) -> Tuple[int, int, str]:
+        if len(self.img_tag_dict) == 0:
+            return (0, 0, '')
+
         saved_num = 0
         backup_num = 0
+        img_dir = ''
         for img_path, tags in self.img_tag_dict.items():
             img_dir = os.path.dirname(img_path)
             img_path_noext, _ = os.path.splitext(os.path.basename(img_path))
@@ -166,7 +183,6 @@ class DatasetTagEditor:
                         print(f"A backup file of {txt_path} cannot be created.")
                     else:
                         backup_num += 1
-            
             # save
             try:
                 with open(txt_path, "w", encoding="utf8") as file:
@@ -184,11 +200,13 @@ class DatasetTagEditor:
 
     def clear(self):
         self.img_tag_dict.clear()
+        self.img_tag_set_dict.clear()
         self.tag_counts.clear()
+        self.img_filter_img_path_set.clear()
 
 
     def construct_tag_counts(self):
-        self.tag_counts = dict()
+        self.tag_counts = {}
         for tags in self.img_tag_dict.values():
             for tag in tags:
                 if tag in self.tag_counts.keys():
@@ -197,7 +215,6 @@ class DatasetTagEditor:
                     self.tag_counts[tag] = 1
 
 
-    def construct_tag_list_from(self, img_paths: List[str]) -> List[str]:
+    def construct_tag_set_from(self, img_paths: List[str]) -> set[str]:
         # unique tags
-        tags = set(tag for path in img_paths for tag in self.img_tag_dict.get(path))
-        return [t for t in tags]
+        return {tag for path in img_paths for tag in self.img_tag_set_dict.get(path) if tag}
