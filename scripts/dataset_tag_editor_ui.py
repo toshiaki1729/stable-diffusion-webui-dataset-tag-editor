@@ -173,7 +173,7 @@ def clear_image_selection_filter():
 
 
 def apply_image_selection_filter(filter_tags: List[str], filter_word: str, sort_by: str, sort_order: str):
-    global displayed_image_num, total_image_num, current_tag_filter, current_selection, selected_image_path, tmp_selection_img_path_set
+    global tmp_selection_img_path_set
     filter_tags = dataset_tag_editor.read_tags(filter_tags)
     dataset_tag_editor.set_img_filter_img_path(tmp_selection_img_path_set)
     return filter_gallery(filter_tags=filter_tags, filter_word=filter_word, sort_by=sort_by, sort_order=sort_order)
