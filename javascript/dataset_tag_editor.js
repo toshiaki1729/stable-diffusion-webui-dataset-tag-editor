@@ -51,6 +51,16 @@ var dataset_tag_editor_selection_image_clicked = function () {
 }
 
 var dataset_tag_editor_selection_key_handler = function (e) {
+    switch(e.key)
+    {
+        case 'Delete':
+            var button = gradioApp().getElementById('dataset_tag_editor_btn_remove_image_selection');
+            if (button) {
+                button.click();
+            }
+            e.preventDefault();
+            break;
+    }
     dataset_tag_editor_selection_image_clicked();
 }
 

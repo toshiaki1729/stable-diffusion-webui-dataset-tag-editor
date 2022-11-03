@@ -160,7 +160,7 @@ def remove_image_selection(idx: int):
     ]
 
 
-def clear_image_selection_filter():
+def clear_image_selection():
     global tmp_selection_img_path_set, selection_selected_image_path
     tmp_selection_img_path_set.clear()
     selection_selected_image_path = ''
@@ -312,12 +312,11 @@ def on_ui_tabs():
                     txt_selection = gr.HTML(value=f"""Selected Image : {selection_selected_image_path}""")
 
                     with gr.Row():
+                        btn_remove_image_selection = gr.Button(value='Remove selection [Delete]', elem_id='dataset_tag_editor_btn_remove_image_selection')
                         btn_invert_image_selection = gr.Button(value='Invert selection')
-                        btn_remove_image_selection = gr.Button(value='Remove selection')
+                        btn_clear_image_selection = gr.Button(value='Clear selection')
 
-                with gr.Row():
-                    btn_clear_image_selection_filter = gr.Button(value='Clear selection filter')
-                    btn_apply_image_selection_filter = gr.Button(value='Apply selection filter', variant='primary')
+                btn_apply_image_selection_filter = gr.Button(value='Apply selection filter', variant='primary')
                     
 
             with gr.Tab(label='Edit Caption of Selected Image'):
@@ -388,7 +387,7 @@ def on_ui_tabs():
         )
 
         btn_clear_all_filters.click(
-            fn=clear_image_selection_filter,
+            fn=clear_image_selection,
             inputs=None,
             outputs=[gl_selected_images, txt_selection, lbl_hidden_selection_image_index]
         )
@@ -432,8 +431,8 @@ def on_ui_tabs():
             outputs=[gl_selected_images,txt_selection,lbl_hidden_selection_image_index]
         )
 
-        btn_clear_image_selection_filter.click(
-            fn=clear_image_selection_filter,
+        btn_clear_image_selection.click(
+            fn=clear_image_selection,
             inputs=None,
             outputs=[gl_selected_images,txt_selection,lbl_hidden_selection_image_index]
         )
