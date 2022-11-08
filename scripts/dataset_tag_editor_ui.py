@@ -1,7 +1,8 @@
+from __future__ import annotations
+from typing import List
 from modules import shared
 from modules import script_callbacks
 from modules.shared import opts
-from typing import List
 import gradio as gr
 from dataset_tag_editor import DatasetTagEditor
 
