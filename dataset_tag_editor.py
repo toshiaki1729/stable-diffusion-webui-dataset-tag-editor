@@ -1,13 +1,12 @@
-from __future__ import annotations
 import os
 import re
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Set
 from modules import shared
 from modules.textual_inversion.dataset import re_numbers_at_start
 
 re_tags = re.compile(r'^(.+) \[\d+\]$')
 
-def get_filepath_set(dir: str, recursive: bool) -> set[str]:
+def get_filepath_set(dir: str, recursive: bool) -> Set[str]:
     basenames = os.listdir(dir)
     paths = {os.path.join(dir, basename) for basename in basenames}
     if recursive:
@@ -33,19 +32,19 @@ class DatasetTagEditor:
         self.dataset_dir = ''
 
 
-    def get_tag_list(self) -> list[str]:
+    def get_tag_list(self) -> List[str]:
         if len(self.tag_counts) == 0 and len(self.img_tag_dict) > 0:
             self.construct_tag_counts()
         return [key for key in self.tag_counts.keys()]
 
 
-    def get_tag_set(self) -> set[str]:
+    def get_tag_set(self) -> Set[str]:
         if len(self.tag_counts) == 0 and len(self.img_tag_dict) > 0:
             self.construct_tag_counts()
         return {key for key in self.tag_counts.keys()}
 
 
-    def get_tags_by_image_path(self, imgpath: str) -> Optional[list[str]]:
+    def get_tags_by_image_path(self, imgpath: str) -> Optional[List[str]]:
         return self.img_tag_dict.get(imgpath)
 
     
@@ -55,14 +54,14 @@ class DatasetTagEditor:
         self.construct_tag_counts()
     
 
-    def write_tags(self, tags: List[str]) -> list[str]:
+    def write_tags(self, tags: List[str]) -> List[str]:
         if tags:
             return [f'{tag} [{self.tag_counts.get(tag)}]' for tag in tags if tag]
         else:
             return []
 
 
-    def read_tags(self, tags:List[str]) -> list[str]:
+    def read_tags(self, tags:List[str]) -> List[str]:
         if tags:
             tags = [re_tags.match(tag).group(1) for tag in tags if tag]
             return [t for t in tags if t]
@@ -70,7 +69,7 @@ class DatasetTagEditor:
             return []
 
 
-    def sort_tags(self, tags: List[str], sort_by: str, sort_order: str) -> list[str]:
+    def sort_tags(self, tags: List[str], sort_by: str, sort_order: str) -> List[str]:
         if sort_by == 'Alphabetical Order':
             if sort_order == 'Ascending':
                 return sorted(tags, reverse=False)
@@ -84,18 +83,18 @@ class DatasetTagEditor:
         return []
 
 
-    def set_img_filter_img_path(self, path:Optional[set[str]] = None):
+    def set_img_filter_img_path(self, path:Optional[Set[str]] = None):
         if path:
             self.img_filter_img_path_set = self.get_img_path_set() & path
         else:
             self.img_filter_img_path_set = self.get_img_path_set()
 
 
-    def get_img_filter_img_path(self) -> set[str]:
+    def get_img_filter_img_path(self) -> Set[str]:
         return self.img_filter_img_path_set
 
 
-    def get_filtered_imgpath_and_tags(self, filter_tags: Optional[List[str]] = None, filter_word: Optional[str] = None) -> Tuple[list[str], set[str]]:
+    def get_filtered_imgpath_and_tags(self, filter_tags: Optional[List[str]] = None, filter_word: Optional[str] = None) -> Tuple[List[str], Set[str]]:
         img_paths = self.get_img_filter_img_path().copy()
         if filter_tags and len(filter_tags) > 0:
             filter_tag_set = set(filter_tags)
@@ -132,11 +131,11 @@ class DatasetTagEditor:
         self.construct_tag_counts()
 
 
-    def get_img_path_list(self) -> list[str]:
+    def get_img_path_list(self) -> List[str]:
         return [k for k in self.img_tag_dict.keys() if k]
 
 
-    def get_img_path_set(self) -> set[str]:
+    def get_img_path_set(self) -> Set[str]:
         return {k for k in self.img_tag_dict.keys() if k}
 
 
@@ -233,6 +232,6 @@ class DatasetTagEditor:
                     self.tag_counts[tag] = 1
 
 
-    def construct_tag_set_from(self, img_paths: List[str]) -> set[str]:
+    def construct_tag_set_from(self, img_paths: List[str]) -> Set[str]:
         # unique tags
         return {tag for path in img_paths for tag in self.img_tag_set_dict.get(path) if tag}
