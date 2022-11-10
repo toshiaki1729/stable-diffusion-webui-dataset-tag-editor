@@ -1,7 +1,7 @@
+from typing import List
 from modules import shared
 from modules import script_callbacks
 from modules.shared import opts
-from typing import List
 import gradio as gr
 from dataset_tag_editor import DatasetTagEditor
 
@@ -116,7 +116,7 @@ def save_all_changes(backup: bool) -> str:
 # Callbacks for "Filter by Selection" tab
 # ================================================================
 
-def arrange_selection_order(paths: List[str]) -> list[str]:
+def arrange_selection_order(paths: List[str]) -> List[str]:
     return sorted(paths)
 
 
