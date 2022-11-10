@@ -141,9 +141,12 @@ class DatasetTagEditor:
 
     def load_dataset(self, img_dir: str, recursive: bool = False):
         self.clear()
+        print(f'Loading dataset from {img_dir}')
         try:
             filepath_set = get_filepath_set(dir=img_dir, recursive=recursive)
-        except:
+        except Exception as e:
+            print(e)
+            print('Loading dataset has been aborted.')
             return
 
         self.dataset_dir = img_dir
@@ -168,6 +171,7 @@ class DatasetTagEditor:
 
         self.construct_tag_counts()
         self.set_img_filter_img_path()
+        print(f'Loading dataset has been Completed')
  
 
     def save_dataset(self, backup: bool) -> Tuple[int, int, str]:
