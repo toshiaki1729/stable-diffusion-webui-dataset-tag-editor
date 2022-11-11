@@ -59,6 +59,8 @@ class DTEModifiedGallery{
     }
 
     getSelectedIndex() {
+        if (!this.#elem) return -1;
+
         let buttons = this.#elem.querySelectorAll('[style="display: block;"].tabitem .gallery-item')
         let button = this.#elem.querySelector('[style="display: block;"].tabitem .gallery-item.\\!ring-2')
     
