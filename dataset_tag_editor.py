@@ -155,12 +155,8 @@ class DatasetTagEditor:
         for img_path in filepath_set:
             img_dir = os.path.dirname(img_path)
             img_filename, img_ext = os.path.splitext(os.path.basename(img_path))
-            if img_ext == '.txt':
-                continue
-            try:
-                img = Image.open(img_path)
-            except:
-                img.close()
+            ext_supported = {e for e, str in Image.registered_extensions().items() if str in Image.OPEN}
+            if img_ext not in ext_supported:
                 continue
 
             text_filename = os.path.join(img_dir, img_filename+'.txt')
