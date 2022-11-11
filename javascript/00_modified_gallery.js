@@ -57,8 +57,14 @@ class DTEModifiedGallery{
         }
         
     }
-    
-    updateView(){
 
+    getSelectedIndex() {
+        let buttons = this.#elem.querySelectorAll('[style="display: block;"].tabitem .gallery-item')
+        let button = this.#elem.querySelector('[style="display: block;"].tabitem .gallery-item.\\!ring-2')
+    
+        let result = -1
+        buttons.forEach(function (v, i) { if (v == button) { result = i } })
+    
+        return result
     }
 }

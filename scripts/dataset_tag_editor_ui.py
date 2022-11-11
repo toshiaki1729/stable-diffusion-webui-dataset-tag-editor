@@ -239,7 +239,7 @@ def on_ui_tabs():
     global displayed_image_num, total_image_num, current_tag_filter, current_selection, selected_image_path, selection_selected_image_path
     with gr.Blocks(analytics_enabled=False) as dataset_tag_editor_interface:
         with gr.Row(visible=False):
-            btn_hidden_set_index = gr.Button(elem_id="dataset_tag_editor_set_index")
+            btn_hidden_set_index = gr.Button(elem_id="dataset_tag_editor_btn_hidden_set_index")
             lbl_hidden_image_index = gr.Label(value=-1)
 
         gr.HTML(value="""
@@ -262,7 +262,7 @@ def on_ui_tabs():
                     with gr.Column(scale=1, min_width=80):
                         btn_load_datasets = gr.Button(value='Load')
                         cb_load_recursive = gr.Checkbox(value=False, label='Load from subdirectories')
-                gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_images_gallery").style(grid=opts.dataset_editor_image_columns)
+                gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_dataset_gallery").style(grid=opts.dataset_editor_image_columns)
                 txt_filter = gr.HTML(value=f"""
                 Displayed Images : {displayed_image_num} / {total_image_num} total<br>
                 Current Tag Filter : {current_tag_filter}<br>
@@ -309,7 +309,7 @@ def on_ui_tabs():
             
             with gr.Tab(label='Filter by Selection'):
                 with gr.Row(visible=False):
-                    btn_hidden_set_selection_index = gr.Button(elem_id="dataset_tag_editor_set_selection_index")
+                    btn_hidden_set_selection_index = gr.Button(elem_id="dataset_tag_editor_btn_hidden_set_selection_index")
                     lbl_hidden_selection_image_index = gr.Label(value=-1)
                 gr.HTML("""Select images from the left gallery.""")
                 
@@ -317,7 +317,7 @@ def on_ui_tabs():
                     with gr.Row():
                         btn_add_image_selection = gr.Button(value='Add selection [Enter]', elem_id='dataset_tag_editor_btn_add_image_selection')    
 
-                    gl_selected_images = gr.Gallery(label='Filter Images', elem_id="dataset_tag_editor_selection_images_gallery").style(grid=opts.dataset_editor_image_columns)
+                    gl_selected_images = gr.Gallery(label='Filter Images', elem_id="dataset_tag_editor_selection_gallery").style(grid=opts.dataset_editor_image_columns)
                     txt_selection = gr.HTML(value=f"""Selected Image : {selection_selected_image_path}""")
 
                     with gr.Row():
@@ -351,9 +351,9 @@ def on_ui_tabs():
             outputs=[gl_dataset_images, gl_selected_images, cbg_tags, tb_search_tags, txt_filter, txt_selection]
         )
         btn_load_datasets.click(
-            fn=lambda:['', -1],
+            fn=lambda:['', '', '',  -1],
             inputs=[],
-            outputs=[tb_caption_selected_image, lbl_hidden_image_index]
+            outputs=[tb_selected_tags, tb_edit_tags, tb_caption_selected_image, lbl_hidden_image_index]
         )
 
         cbg_tags.change(
@@ -409,14 +409,14 @@ def on_ui_tabs():
 
         btn_hidden_set_selection_index.click(
             fn=selection_index_changed,
-            _js="(x) => [dataset_tag_editor_selected_selection_index()]",
+            _js="(x) => [dataset_tag_editor_gl_selected_images_selected_index()]",
             inputs=[lbl_hidden_selection_image_index],
             outputs=[txt_selection, lbl_hidden_selection_image_index]
         )
 
         btn_add_image_selection.click(
             fn=add_image_selection,
-            _js="(x, y) => [x, dataset_tag_editor_selected_gallery_index()]",
+            _js="(x, y) => [x, dataset_tag_editor_gl_dataset_images_selected_index()]",
             inputs=[cbg_tags, lbl_hidden_image_index],
             outputs=[gl_selected_images, lbl_hidden_image_index]
         )
@@ -429,7 +429,7 @@ def on_ui_tabs():
 
         btn_remove_image_selection.click(
             fn=remove_image_selection,
-            _js="(x) => [dataset_tag_editor_selected_selection_index()]",
+            _js="(x) => [dataset_tag_editor_gl_selected_images_selected_index()]",
             inputs=[lbl_hidden_selection_image_index],
             outputs=[gl_selected_images,txt_selection,lbl_hidden_selection_image_index]
         )
@@ -451,7 +451,7 @@ def on_ui_tabs():
 
         btn_hidden_set_index.click(
             fn=gallery_index_changed,
-            _js="(x, y) => [x, dataset_tag_editor_selected_gallery_index()]",
+            _js="(x, y) => [x, dataset_tag_editor_gl_dataset_images_selected_index()]",
             inputs=[cbg_tags, lbl_hidden_image_index],
             outputs=[tb_caption_selected_image, txt_filter, lbl_hidden_image_index]
         )
@@ -464,7 +464,7 @@ def on_ui_tabs():
 
         btn_apply_changes_selected_image.click(
             fn=change_tags_selected_image,
-            _js="(a, b, c, d, e) => [a, b, c, d, dataset_tag_editor_selected_gallery_index()]",
+            _js="(a, b, c, d, e) => [a, b, c, d, dataset_tag_editor_gl_dataset_images_selected_index()]",
             inputs=[tb_edit_caption_selected_image, cbg_tags, rd_sort_by, rd_sort_order, lbl_hidden_image_index],
             outputs=[cbg_tags, lbl_hidden_image_index]
         )
