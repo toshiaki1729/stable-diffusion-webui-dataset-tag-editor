@@ -14,7 +14,7 @@ DeepBooru interrogator で生成したような、カンマ区切り形式のキ
 
 ## インストール方法
 ### WebUIのExtensionsタブからインストールする
-"Install from URL" タブに `https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-editor.git` をコピーしてインストールできます。
+"Install from URL" タブに `https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-editor.git` をコピーしてインストールできます。  
 "Availables" タブにこの拡張機能が表示されている場合は、ワンクリックでインストール可能です。
 
 ### 手動でインストールする
