@@ -1,9 +1,13 @@
 from typing import List
-from modules import shared
-from modules import script_callbacks
-from modules.shared import opts
+from modules import shared, script_callbacks
+from modules.shared import opts, cmd_opts
 import gradio as gr
 from dataset_tag_editor import DatasetTagEditor
+from modules.ui import gr_show
+from PIL import Image
+
+if cmd_opts.deepdanbooru:
+    from modules.deepbooru import get_deepbooru_tags
 
 dataset_tag_editor = DatasetTagEditor()
 
@@ -24,6 +28,21 @@ def arrange_tag_order(tags: List[str], sort_by: str, sort_order: str) -> List[st
     return tags
 
 
+def get_current_txt_filter():
+    global total_image_num, displayed_image_num, current_tag_filter, current_selection, selected_image_path
+    return f"""
+    Displayed Images : {displayed_image_num} / {total_image_num} total<br>
+    Current Tag Filter : {current_tag_filter}<br>
+    Current Selection Filter : {current_selection} images<br>
+    Selected Image : {selected_image_path}
+    """
+
+
+def get_current_txt_selection():
+    global selection_selected_image_path
+    return f"""Selected Image : {selection_selected_image_path}"""
+
+
 def load_files_from_dir(dir: str, sort_by: str, sort_order: str, recursive: bool):
     global total_image_num, displayed_image_num, current_tag_filter, current_selection, tmp_selection_img_path_set, selected_image_path, selection_selected_image_path
     dataset_tag_editor.load_dataset(img_dir=dir, recursive=recursive)
@@ -40,13 +59,8 @@ def load_files_from_dir(dir: str, sort_by: str, sort_order: str, recursive: bool
         [],
         gr.CheckboxGroup.update(value=None, choices=dataset_tag_editor.write_tags(tags)),
         '',
-        f"""
-        Displayed Images : {displayed_image_num} / {total_image_num} total<br>
-        Current Tag Filter : {current_tag_filter}<br>
-        Current Selection Filter : {current_selection} images<br>
-        Selected Image : {selected_image_path}
-        """,
-        f"""Selected Image : {selection_selected_image_path}"""
+        get_current_txt_filter(),
+        get_current_txt_selection()
     ]
 
 
@@ -90,19 +104,14 @@ def filter_gallery(filter_tags: List[str], filter_word: str, sort_by: str, sort_
         current_tag_filter,
         current_tag_filter,
         -1,
-        f"""
-        Displayed Images : {displayed_image_num} / {total_image_num} total<br>
-        Current Tag Filter : {current_tag_filter}<br>
-        Current Selection Filter : {current_selection} images<br>
-        Selected Image : {selected_image_path}
-        """
+        get_current_txt_filter()
         ]
 
 
-def apply_edit_tags(edit_tags: str, filter_tags: List[str], append_to_begin: bool, filter_word: str, sort_by: str, sort_order: str):
+def apply_edit_tags(edit_tags: str, filter_tags: List[str], prepend: bool, filter_word: str, sort_by: str, sort_order: str):
     replace_tags = [t.strip() for t in edit_tags.split(',')]
     filter_tags = dataset_tag_editor.read_tags(filter_tags)
-    dataset_tag_editor.replace_tags(search_tags = filter_tags, replace_tags = replace_tags, filter_tags = filter_tags, append_to_begin = append_to_begin)
+    dataset_tag_editor.replace_tags(search_tags = filter_tags, replace_tags = replace_tags, filter_tags = filter_tags, prepend = prepend)
     replace_tags = [t for t in replace_tags if t]
     return filter_gallery(filter_tags = replace_tags, filter_word = filter_word, sort_by=sort_by, sort_order=sort_order)
 
@@ -129,7 +138,7 @@ def selection_index_changed(idx: int):
         idx = -1
     else:
         selection_selected_image_path = img_paths[idx]
-    return [f"""Selected Image : {selection_selected_image_path}""", idx]
+    return [get_current_txt_selection(), idx]
 
 
 def add_image_selection(filter_tags: List[str], idx: int):
@@ -163,7 +172,7 @@ def remove_image_selection(idx: int):
 
     return [
         arrange_selection_order(tmp_selection_img_path_set),
-        f"""Selected Image : {selection_selected_image_path}""",
+        get_current_txt_selection(),
         idx
     ]
 
@@ -175,7 +184,7 @@ def clear_image_selection():
     dataset_tag_editor.set_img_filter_img_path()
     return[
         [],
-        f"""Selected Image : {selection_selected_image_path}""",
+        get_current_txt_selection(),
         -1
     ]
 
@@ -206,12 +215,7 @@ def gallery_index_changed(filter_tags: List[str], idx: int):
     
     return [
         tags_txt,
-        f"""
-        Displayed Images : {displayed_image_num} / {total_image_num} total<br>
-        Current Tag Filter : {current_tag_filter}<br>
-        Current Selection Filter : {current_selection} images<br>
-        Selected Image : {selected_image_path}
-        """,
+        get_current_txt_filter(),
         idx
         ]
 
@@ -230,6 +234,26 @@ def change_tags_selected_image(tags_text: str, filter_tags: List[str], sort_by: 
         _, tags = dataset_tag_editor.get_filtered_imgpath_and_tags(filter_tags=filter_tags)
         tags = arrange_tag_order(tags=tags, sort_by=sort_by, sort_order=sort_order)
         return [gr.CheckboxGroup.update(value=dataset_tag_editor.write_tags(filter_tags), choices=dataset_tag_editor.write_tags(tags)), idx]
+
+
+def interrogate_selected_image_clip():
+    global selected_image_path
+    try:
+        img = Image.open(selected_image_path)
+    except:
+        return ''
+    else:
+        return shared.interrogator.interrogate(img)
+
+def interrogate_selected_image_booru():
+    global selected_image_path
+    try:
+        img = Image.open(selected_image_path)
+    except:
+        return ''
+    else:
+        return get_deepbooru_tags(img)
+
 
 # ================================================================
 # Script Callbacks
@@ -262,13 +286,9 @@ def on_ui_tabs():
                     with gr.Column(scale=1, min_width=80):
                         btn_load_datasets = gr.Button(value='Load')
                         cb_load_recursive = gr.Checkbox(value=False, label='Load from subdirectories')
+
                 gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_dataset_gallery").style(grid=opts.dataset_editor_image_columns)
-                txt_filter = gr.HTML(value=f"""
-                Displayed Images : {displayed_image_num} / {total_image_num} total<br>
-                Current Tag Filter : {current_tag_filter}<br>
-                Current Selection Filter : {current_selection} images<br>
-                Selected Image : {selected_image_path}
-                """)
+                txt_filter = gr.HTML(value=get_current_txt_filter())
 
             with gr.Tab(label='Filter and Edit Tags'):
                 with gr.Column():
@@ -287,13 +307,13 @@ def on_ui_tabs():
                         tb_selected_tags = gr.Textbox(label='Selected Tags', interactive=False)
                         tb_edit_tags = gr.Textbox(label='Edit Tags', interactive=True)
                         btn_apply_edit_tags = gr.Button(value='Apply changes to filtered images', variant='primary')
-                        cb_append_tags_to_begin = gr.Checkbox(value=False, label='Append additional tags to the beginning')
+                        cb_prepend_tags = gr.Checkbox(value=False, label='Prepend additional tags')
 
                         gr.HTML(value="""
                         1. The selected tags are displayed in comma separated style.<br>
                         2. When changes are applied, all tags in each displayed images are replaced.<br>
                         3. If you change some tags into blank, they will be erased.<br>
-                        4. If you add some tags to the end, they will be appended to the end/beginning of the text file.<br>
+                        4. If you add some tags to the end, they will be added to the end/beginning of the text file.<br>
                         5. Changes are not applied to the text files until the "Save all changes" button is pressed.<br>
                         <b>ex A.</b><br>
                         &emsp;Original Text = "A, A, B, C"&emsp;Selected Tags = "B, A"&emsp;Edit Tags = "X, Y"<br>
@@ -301,7 +321,7 @@ def on_ui_tabs():
                         <b>ex B.</b><br>
                         &emsp;Original Text = "A, B, C"&emsp;Selected Tags = "(nothing)"&emsp;Edit Tags = "X, Y"<br>
                         &emsp;Result = "A, B, C, X, Y"&emsp;(add X and Y to the end (default))<br>
-                        &emsp;Result = "X, Y, A, B, C"&emsp;(add X and Y to the beginning ("Append additional tags to the beginning" checked))<br>
+                        &emsp;Result = "X, Y, A, B, C"&emsp;(add X and Y to the beginning ("Prepend additional tags" checked))<br>
                         <b>ex C.</b><br>
                         &emsp;Original Text = "A, B, C, D, E"&emsp;Selected Tags = "A, B, D"&emsp;Edit Tags = ", X, "<br>
                         &emsp;Result = "X, C, E"&emsp;(A->"", B->X, D->"")<br>
@@ -318,7 +338,7 @@ def on_ui_tabs():
                         btn_add_image_selection = gr.Button(value='Add selection [Enter]', elem_id='dataset_tag_editor_btn_add_image_selection')    
 
                     gl_selected_images = gr.Gallery(label='Filter Images', elem_id="dataset_tag_editor_selection_gallery").style(grid=opts.dataset_editor_image_columns)
-                    txt_selection = gr.HTML(value=f"""Selected Image : {selection_selected_image_path}""")
+                    txt_selection = gr.HTML(value=get_current_txt_selection())
 
                     with gr.Row():
                         btn_remove_image_selection = gr.Button(value='Remove selection [Delete]', elem_id='dataset_tag_editor_btn_remove_image_selection')
@@ -329,13 +349,28 @@ def on_ui_tabs():
                     
 
             with gr.Tab(label='Edit Caption of Selected Image'):
-                with gr.Column():
-                    tb_caption_selected_image = gr.Textbox(label='Caption of Selected Image', interactive=False, lines=6)
-                    btn_copy_caption_selected_image = gr.Button(value='Copy caption')
-                    tb_edit_caption_selected_image = gr.Textbox(label='Edit Caption', interactive=True, lines=6)
-                    btn_apply_changes_selected_image = gr.Button(value='Apply changes to selected image', variant='primary')
+                with gr.Tab(label='Read Caption from Selected Image'):
+                    tb_caption_selected_image = gr.Textbox(label='Caption of Selected Image', interactive=True, lines=6)
+                    with gr.Row():
+                        btn_copy_caption = gr.Button(value='Copy and Overwrite')
+                        btn_prepend_caption = gr.Button(value='Prepend')
+                        btn_append_caption = gr.Button(value='Append')
+                    
+                with gr.Tab(label='Interrogate Selected Image'):
+                    with gr.Row():
+                        btn_interrogate_clip = gr.Button(value='Interrogate with CLIP')
+                        if cmd_opts.deepdanbooru:
+                            btn_interrogate_booru = gr.Button(value='Interrogate with DeepDanbooru')
+                    tb_interrogate_selected_image = gr.Textbox(label='Interrogate result', interactive=True, lines=6)
+                    with gr.Row():
+                        btn_copy_interrogate = gr.Button(value='Copy and Overwrite')
+                        btn_prepend_interrogate = gr.Button(value='Prepend')
+                        btn_append_interrogate = gr.Button(value='Append')
 
-                    gr.HTML("""Changes are not applied to the text files until the "Save all changes" button is pressed.""")
+                tb_edit_caption_selected_image = gr.Textbox(label='Edit Caption', interactive=True, lines=6)
+                btn_apply_changes_selected_image = gr.Button(value='Apply changes to selected image', variant='primary')
+
+                gr.HTML("""Changes are not applied to the text files until the "Save all changes" button is pressed.""")
         
         #----------------------------------------------------------------
         # Filter and Edit Tags tab
@@ -382,7 +417,7 @@ def on_ui_tabs():
 
         btn_apply_edit_tags.click(
             fn=apply_edit_tags,
-            inputs=[tb_edit_tags, cbg_tags, cb_append_tags_to_begin, tb_search_tags, rd_sort_by, rd_sort_order],
+            inputs=[tb_edit_tags, cbg_tags, cb_prepend_tags, tb_search_tags, rd_sort_by, rd_sort_order],
             outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter]
         )
 
@@ -456,11 +491,55 @@ def on_ui_tabs():
             outputs=[tb_caption_selected_image, txt_filter, lbl_hidden_image_index]
         )
 
-        btn_copy_caption_selected_image.click(
+        btn_copy_caption.click(
             fn=lambda a:a,
             inputs=[tb_caption_selected_image],
             outputs=[tb_edit_caption_selected_image]
         )
+
+        btn_append_caption.click(
+            fn=lambda a, b : b + (', ' if a and b else '') + a,
+            inputs=[tb_caption_selected_image, tb_edit_caption_selected_image],
+            outputs=[tb_edit_caption_selected_image]
+        )
+
+        btn_prepend_caption.click(
+            fn=lambda a, b : a + (', ' if a and b else '') + b,
+            inputs=[tb_caption_selected_image, tb_edit_caption_selected_image],
+            outputs=[tb_edit_caption_selected_image]
+        )
+
+        btn_interrogate_clip.click(
+            fn=interrogate_selected_image_clip,
+            inputs=None,
+            outputs=[tb_interrogate_selected_image]
+        )
+
+        if cmd_opts.deepdanbooru:
+            btn_interrogate_booru.click(
+                fn=interrogate_selected_image_booru,
+                inputs=None,
+                outputs=[tb_interrogate_selected_image]
+            )
+
+        btn_copy_interrogate.click(
+            fn=lambda a:a,
+            inputs=[tb_interrogate_selected_image],
+            outputs=[tb_edit_caption_selected_image]
+        )
+
+        btn_append_interrogate.click(
+            fn=lambda a, b : b + (', ' if a and b else '') + a,
+            inputs=[tb_interrogate_selected_image, tb_edit_caption_selected_image],
+            outputs=[tb_edit_caption_selected_image]
+        )
+        
+        btn_prepend_interrogate.click(
+            fn=lambda a, b : a + (', ' if a and b else '') + b,
+            inputs=[tb_interrogate_selected_image, tb_edit_caption_selected_image],
+            outputs=[tb_edit_caption_selected_image]
+        )
+
 
         btn_apply_changes_selected_image.click(
             fn=change_tags_selected_image,
@@ -468,6 +547,7 @@ def on_ui_tabs():
             inputs=[tb_edit_caption_selected_image, cbg_tags, rd_sort_by, rd_sort_order, lbl_hidden_image_index],
             outputs=[cbg_tags, lbl_hidden_image_index]
         )
+        
         btn_apply_changes_selected_image.click(
             fn=lambda a:a,
             inputs=[tb_edit_caption_selected_image],
