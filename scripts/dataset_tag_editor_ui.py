@@ -2,12 +2,7 @@ from typing import List
 from modules import shared, script_callbacks
 from modules.shared import opts, cmd_opts
 import gradio as gr
-from dataset_tag_editor import DatasetTagEditor
-from modules.ui import gr_show
-from PIL import Image
-
-if cmd_opts.deepdanbooru:
-    from modules.deepbooru import get_deepbooru_tags
+from dataset_tag_editor import DatasetTagEditor, interrogate_image_clip, interrogate_image_booru, InterrogateMethod
 
 dataset_tag_editor = DatasetTagEditor()
 
@@ -43,9 +38,16 @@ def get_current_txt_selection():
     return f"""Selected Image : {selection_selected_image_path}"""
 
 
-def load_files_from_dir(dir: str, sort_by: str, sort_order: str, recursive: bool):
+def load_files_from_dir(dir: str, sort_by: str, sort_order: str, recursive: bool, load_caption_from_filename: bool, use_interrogator: str, use_clip: bool):
     global total_image_num, displayed_image_num, current_tag_filter, current_selection, tmp_selection_img_path_set, selected_image_path, selection_selected_image_path
-    dataset_tag_editor.load_dataset(img_dir=dir, recursive=recursive)
+    
+    interrogate_method = InterrogateMethod.NONE
+    if use_interrogator == 'Prefill Empty Captions':
+        interrogate_method = InterrogateMethod.PREFILL
+    elif use_interrogator == 'Overwrite All':
+        interrogate_method = InterrogateMethod.OVERWRITE
+
+    dataset_tag_editor.load_dataset(img_dir=dir, recursive=recursive, load_caption_from_filename=load_caption_from_filename, interrogate_method=interrogate_method, use_clip=use_clip)
     img_paths, tags = dataset_tag_editor.get_filtered_imgpath_and_tags()
     tags = arrange_tag_order(tags=tags, sort_by=sort_by, sort_order=sort_order)
     total_image_num = displayed_image_num = len(dataset_tag_editor.get_img_path_set())
@@ -238,21 +240,11 @@ def change_tags_selected_image(tags_text: str, filter_tags: List[str], sort_by: 
 
 def interrogate_selected_image_clip():
     global selected_image_path
-    try:
-        img = Image.open(selected_image_path)
-    except:
-        return ''
-    else:
-        return shared.interrogator.interrogate(img)
+    return interrogate_image_clip(selected_image_path)
 
 def interrogate_selected_image_booru():
     global selected_image_path
-    try:
-        img = Image.open(selected_image_path)
-    except:
-        return ''
-    else:
-        return get_deepbooru_tags(img)
+    return interrogate_image_booru(selected_image_path)
 
 
 # ================================================================
@@ -285,7 +277,12 @@ def on_ui_tabs():
                         tb_img_directory = gr.Textbox(label='Dataset directory', placeholder='C:\\directory\\of\\datasets')
                     with gr.Column(scale=1, min_width=80):
                         btn_load_datasets = gr.Button(value='Load')
-                        cb_load_recursive = gr.Checkbox(value=False, label='Load from subdirectories')
+                with gr.Row():    
+                    cb_load_caption_from_filename = gr.Checkbox(value=True, label='Load caption from filename if no text file')
+                    with gr.Column(variant='panel'):
+                        rb_use_interrogator = gr.Radio(choices=['No', 'Prefill Empty Captions', 'Overwrite All'], value='No', label='Use interrogator on loading')
+                        cb_use_clip_to_prefill = gr.Checkbox(value=False, label='Use CLIP')
+                    cb_load_recursive = gr.Checkbox(value=False, label='Load from subdirectories')
 
                 gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_dataset_gallery").style(grid=opts.dataset_editor_image_columns)
                 txt_filter = gr.HTML(value=get_current_txt_filter())
@@ -361,7 +358,7 @@ def on_ui_tabs():
                         btn_interrogate_clip = gr.Button(value='Interrogate with CLIP')
                         if cmd_opts.deepdanbooru:
                             btn_interrogate_booru = gr.Button(value='Interrogate with DeepDanbooru')
-                    tb_interrogate_selected_image = gr.Textbox(label='Interrogate result', interactive=True, lines=6)
+                    tb_interrogate_selected_image = gr.Textbox(label='Interrogate Result', interactive=True, lines=6)
                     with gr.Row():
                         btn_copy_interrogate = gr.Button(value='Copy and Overwrite')
                         btn_prepend_interrogate = gr.Button(value='Prepend')
@@ -382,7 +379,7 @@ def on_ui_tabs():
 
         btn_load_datasets.click(
             fn=load_files_from_dir,
-            inputs=[tb_img_directory, rd_sort_by, rd_sort_order, cb_load_recursive],
+            inputs=[tb_img_directory, rd_sort_by, rd_sort_order, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_clip_to_prefill],
             outputs=[gl_dataset_images, gl_selected_images, cbg_tags, tb_search_tags, txt_filter, txt_selection]
         )
         btn_load_datasets.click(

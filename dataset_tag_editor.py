@@ -2,23 +2,58 @@ import os
 import re
 from typing import Optional, List, Tuple, Set
 from modules import shared
+from modules.shared import opts, cmd_opts
 from modules.textual_inversion.dataset import re_numbers_at_start
 from PIL import Image
+from enum import Enum
+
+if cmd_opts.deepdanbooru:
+    import modules.deepbooru as deepbooru
 
 re_tags = re.compile(r'^(.+) \[\d+\]$')
 
+
+class InterrogateMethod(Enum):
+    NONE = 0
+    PREFILL = 1
+    OVERWRITE = 2
+
+
+def interrogate_image_clip(path):
+    try:
+        img = Image.open(path)
+    except:
+        return ''
+    else:
+        return shared.interrogator.interrogate(img)
+
+
+def interrogate_image_booru(path):
+    try:
+        img = Image.open(path)
+    except:
+        return ''
+    else:
+        return deepbooru.get_deepbooru_tags(img)
+
+
 def get_filepath_set(dir: str, recursive: bool) -> Set[str]:
-    basenames = os.listdir(dir)
-    paths = {os.path.join(dir, basename) for basename in basenames}
     if recursive:
+        dirs_to_see = [dir]
         result = set()
-        for path in paths:
-            if os.path.isdir(path):
-                result = result | get_filepath_set(path, True)
-            elif os.path.isfile(path):
-                result.add(path)
+        while len(dirs_to_see) > 0:
+            current_dir = dirs_to_see.pop()
+            basenames = os.listdir(current_dir)
+            paths = {os.path.join(current_dir, basename) for basename in basenames}
+            for path in paths:
+                if os.path.isdir(path):
+                    dirs_to_see.append(path)
+                elif os.path.isfile(path):
+                    result.add(path)
         return result
     else:
+        basenames = os.listdir(dir)
+        paths = {os.path.join(dir, basename) for basename in basenames}
         return {path for path in paths if os.path.isfile(path)}
 
 
@@ -140,7 +175,8 @@ class DatasetTagEditor:
         return {k for k in self.img_tag_dict.keys() if k}
 
 
-    def load_dataset(self, img_dir: str, recursive: bool = False):
+
+    def load_dataset(self, img_dir: str, recursive: bool = False, load_caption_from_filename: bool = True, interrogate_method: InterrogateMethod = InterrogateMethod.NONE, use_clip: bool = True):
         self.clear()
         print(f'Loading dataset from {img_dir}')
         try:
@@ -152,26 +188,62 @@ class DatasetTagEditor:
 
         self.dataset_dir = img_dir
 
-        for img_path in filepath_set:
-            img_dir = os.path.dirname(img_path)
-            img_filename, img_ext = os.path.splitext(os.path.basename(img_path))
-            ext_supported = {e for e, str in Image.registered_extensions().items() if str in Image.OPEN}
-            if img_ext not in ext_supported:
-                continue
+        if not (use_clip or cmd_opts.deepdanbooru):
+            print('Cannot interrogate without --deepdanbooru commandline option.')
 
-            text_filename = os.path.join(img_dir, img_filename+'.txt')
-            # from modules/textual_inversion/dataset.py
-            if os.path.exists(text_filename) and os.path.isfile(text_filename):
-                with open(text_filename, "r", encoding="utf8") as ftxt:
-                    filename_text = ftxt.read()
-            else:
-                filename_text = img_filename
-                filename_text = re.sub(re_numbers_at_start, '', filename_text)
-                if self.re_word:
-                    tokens = self.re_word.findall(filename_text)
-                    filename_text = (shared.opts.dataset_filename_join_string or "").join(tokens)
+        print(f'Total {len(filepath_set)} files under the directory including not image files.')
+
+        def load_images(filepath_set: set[str]):
+            for img_path in filepath_set:
+                img_dir = os.path.dirname(img_path)
+                img_filename, img_ext = os.path.splitext(os.path.basename(img_path))
+                ext_supported = {e for e, str in Image.registered_extensions().items() if str in Image.OPEN}
+                if img_ext not in ext_supported:
+                    continue
+                text_filename = os.path.join(img_dir, img_filename+'.txt')
+                caption_text = ''
+                if interrogate_method != InterrogateMethod.OVERWRITE:
+                    # from modules/textual_inversion/dataset.py, modified
+                    if os.path.exists(text_filename) and os.path.isfile(text_filename):
+                        with open(text_filename, "r", encoding="utf8") as ftxt:
+                            caption_text = ftxt.read()
+                    elif load_caption_from_filename:
+                        caption_text = img_filename
+                        caption_text = re.sub(re_numbers_at_start, '', caption_text)
+                        if self.re_word:
+                            tokens = self.re_word.findall(caption_text)
+                            caption_text = (shared.opts.dataset_filename_join_string or "").join(tokens)
+                
+                if interrogate_method == InterrogateMethod.OVERWRITE or (not caption_text and interrogate_method == InterrogateMethod.PREFILL):
+                    try:
+                        img = Image.open(img_path)
+                    except Exception as e:
+                        print(e)
+                    else:
+                        if use_clip:
+                            caption_text = shared.interrogator.generate_caption(img)
+                        elif cmd_opts.deepdanbooru:
+                            caption_text = deepbooru.get_tags_from_process(img)
+                
+                self.set_tags_by_image_path(img_path, [t.strip() for t in caption_text.split(',')])
+
+        try:
+            if interrogate_method != InterrogateMethod.NONE:
+                if use_clip:
+                    shared.interrogator.load()
+                elif cmd_opts.deepdanbooru:
+                    db_opts = deepbooru.create_deepbooru_opts()
+                    db_opts[deepbooru.OPT_INCLUDE_RANKS] = False
+                    deepbooru.create_deepbooru_process(opts.interrogate_deepbooru_score_threshold, db_opts)
+
+            load_images(filepath_set = filepath_set)
             
-            self.set_tags_by_image_path(img_path, [t.strip() for t in filename_text.split(',')])
+        finally:
+            if interrogate_method != InterrogateMethod.NONE:
+                if use_clip:
+                    shared.interrogator.send_blip_to_ram()
+                elif cmd_opts.deepdanbooru:
+                    deepbooru.release_process()
 
         self.construct_tag_counts()
         self.set_img_filter_img_path()
