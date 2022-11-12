@@ -70,6 +70,7 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
         - "Overwrite" / "Prepend" / "Append": 生成したキャプションで上書き/先頭に追加/末尾に追加します。
 - "Dataset Images" ギャラリー
   - 教師画像の確認と選択ができます。
+  - 表示する列数はwebUIの "Settings" タブから変更できます。
 
 ***
 
