@@ -21,7 +21,7 @@ class InterrogateMethod(Enum):
 
 def interrogate_image_clip(path):
     try:
-        img = Image.open(path)
+        img = Image.open(path).convert('RGB')
     except:
         return ''
     else:
@@ -30,7 +30,7 @@ def interrogate_image_clip(path):
 
 def interrogate_image_booru(path):
     try:
-        img = Image.open(path)
+        img = Image.open(path).convert('RGB')
     except:
         return ''
     else:
@@ -216,7 +216,7 @@ class DatasetTagEditor:
                 
                 if interrogate_method == InterrogateMethod.OVERWRITE or (not caption_text and interrogate_method == InterrogateMethod.PREFILL):
                     try:
-                        img = Image.open(img_path)
+                        img = Image.open(img_path).convert('RGB')
                     except Exception as e:
                         print(e)
                     else:
