@@ -290,7 +290,10 @@ def on_ui_tabs():
                             rb_use_interrogator = gr.Radio(choices=['No', 'If Empty', 'Overwrite', 'Prepend', 'Append'], value='No', label='Use Interrogator Caption')
                             with gr.Row():
                                 cb_use_clip_to_prefill = gr.Checkbox(value=False, label='Use BLIP')
-                                cb_use_booru_to_prefill = gr.Checkbox(value=False, label='Use DeepDanbooru')
+                                if cmd_opts.deepdanbooru:
+                                    cb_use_booru_to_prefill = gr.Checkbox(value=False, label='Use DeepDanbooru')
+                                else:
+                                    cb_use_booru_to_prefill = gr.Checkbox(value=False, label='Use DeepDanbooru', interactive=False)
                 
                 gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_dataset_gallery").style(grid=opts.dataset_editor_image_columns)
                 txt_filter = gr.HTML(value=get_current_txt_filter())
