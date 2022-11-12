@@ -11,6 +11,12 @@ It works well with text captions in comma-separated style (such as the tags gene
 Caption in the filenames of images can be loaded, but edited captions can only be saved in the form of text files.
 
 ## Installation
+### Extensions tab on WebUI
+Copy `https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-editor.git` into "Install from URL" tab.
+
+Also, if you see this extension listed, you can install from "Available" tab with a single click.
+
+### Install Manually
 To install, clone the repository into the `extensions` directory and restart the web UI.
 
 On the web UI directory, run the following command to install:
@@ -24,15 +30,21 @@ Note. "tag" means each blocks of caption separated by commas.
 - Search tags
 - Filter images by tags and edit those captions
 - Batch replace/remove/append tags
+- Use interrogators
 
 
 ## Usage
 1. Make dataset using web UI
-2. Load them
-3. Select tags you want to edit in "Filter and Edit Tags" tab
-4. Replace / remove them or append new tags to captions
-5. Use "Edit Caption of Selected Image" tab if you want to edit the caption individually
-6. Click "Save all changes" button
+1. Load them
+    - use interrogator if needed
+1. Edit their captions
+    - filter images you want to edit by tags in "Filter and Edit Tags" tab
+      - search tags and filter images by tags
+      - replace / remove them or append new tags to their captions
+    - filter images manually in "Filter by Selection" tab
+    - edit captions individually in "Edit Caption of Selected Image" tab
+      - you also can use interrogator here
+1. Click "Save all changes" button
 
 
 ## Description of Display
@@ -47,18 +59,24 @@ Note. "tag" means each blocks of caption separated by commas.
 - "Results" text box
   - shows save results
 - "Dataset Directory" text box
-  - input the directory of training images
+  - input the directory of training images and load them by clicking "Load" button
+  - loading options are below
+  - you can make caption on loading by using interrogator if needed
 - "Dataset Images" gallery
   - to view and select images
+  - the number of colums can be changed in "Settings" tab
 
+***
 
 ### "Filter and Edit Tags" tab
 ![](ss02.png)
 
 - "Search Tags" text box
   - search and filter the tags displayed below
-- "Clear all filters" button
-  - clear filters by tag search and image filter
+- "Clear tag filters" button
+  - clear tag search and filter by tags
+- "Clear ALL filters" button
+  - clear all filters including selection filter in next tab
 - "Sort by / Sort order" radio buttons
   - change sort order of the tags displayed below
 - "Filter Images by Tags" checkboxes
@@ -71,19 +89,45 @@ Note. "tag" means each blocks of caption separated by commas.
     - each tags will be replaced by the tags in "same place"
     - erase tags by changing it into blank
     - you can append some tags to captions by add new tags at the end
-      - the tags will be appended at the beggining/end of text files depending on the checkbox below
+      - the tags will be added to the beggining/end of text files depending on the checkbox below
 - "Apply changes to filtered images" button
   - apply the tag changes only to displayed images
 
+***
 
-
-### "Edit Caption of Selected Image" tab
+### "Filter by Selection" tab
 ![](ss03.png)
 
+- "Add selection" button
+  - to include selected dataset image in selection
+  - "Enter" is shortcut key
+  - Tips: you can change the selected image in gallery using arrow keys
+- "Remove selection" button
+  - to remove selected image from selection
+  - "Delete" is shortcut key
+- "Invert selection" button
+  - select all images in the entire dataset that have not been selected
+- "Clear selection" button
+  - to remove all current selection, not to clear current filter
+- "Apply selection filter" button
+  - apply selection filter on displaying dataset images
+
+***
+
+### "Edit Caption of Selected Image" tab
+![](ss04.png) ![](ss05.png)
+
+#### "Read Caption from Selected Image" tab
 - "Caption of Selected Image" textbox
-  - shows the caption of the selected image in the left gallery
-- "Copy caption" button
-  - copy the caption above to the textbox below
+  - shows the caption of the selected image in the dataset gallery
+
+#### "Read Caption from Selected Image" tab
+- "Interrogate Result" textbox
+  - shows the results
+
+#### Common
+- "Copy and Overwrite / Prepend / Apppend" button
+  - copy/prepend/append the content in the textbox above to the textbox below
 - "Edit Caption" textbox
   - edit caption here
 - "Apply changes to selected image" button

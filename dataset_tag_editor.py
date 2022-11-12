@@ -181,6 +181,9 @@ class DatasetTagEditor:
     def load_dataset(self, img_dir: str, recursive: bool = False, load_caption_from_filename: bool = True, interrogate_method: InterrogateMethod = InterrogateMethod.NONE, use_booru: bool = True, use_clip: bool = False):
         self.clear()
         print(f'Loading dataset from {img_dir}')
+        if recursive:
+            print(f'Also loading from subdirectories.')
+        
         try:
             filepath_set = get_filepath_set(dir=img_dir, recursive=recursive)
         except Exception as e:

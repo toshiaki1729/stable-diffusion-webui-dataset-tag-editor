@@ -285,7 +285,7 @@ def on_ui_tabs():
                     with gr.Row():
                         with gr.Column():
                             cb_load_recursive = gr.Checkbox(value=False, label='Load from subdirectories')
-                            cb_load_caption_from_filename = gr.Checkbox(value=True, label='Load caption from filename if no text file')
+                            cb_load_caption_from_filename = gr.Checkbox(value=True, label='Load caption from filename if no text file exists')
                         with gr.Column():
                             rb_use_interrogator = gr.Radio(choices=['No', 'If Empty', 'Overwrite', 'Prepend', 'Append'], value='No', label='Use Interrogator Caption')
                             with gr.Row():
