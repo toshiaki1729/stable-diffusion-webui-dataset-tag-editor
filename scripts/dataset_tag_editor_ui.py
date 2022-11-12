@@ -283,7 +283,7 @@ def on_ui_tabs():
                             cb_load_recursive = gr.Checkbox(value=False, label='Load from subdirectories')
                             cb_load_caption_from_filename = gr.Checkbox(value=True, label='Load caption from filename if no text file')
                         with gr.Column():
-                            rb_use_interrogator = gr.Radio(choices=['No', 'If Empty', 'Overwrite'], value='No', label='Use interrogator caption')
+                            rb_use_interrogator = gr.Radio(choices=['No', 'If Empty', 'Overwrite'], value='No', label='Use Interrogator Caption')
                             cb_use_clip_to_prefill = gr.Checkbox(value=False, label='Use BLIP interrogator')
                 
                 gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_dataset_gallery").style(grid=opts.dataset_editor_image_columns)
