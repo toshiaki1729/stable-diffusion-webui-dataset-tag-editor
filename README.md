@@ -114,14 +114,14 @@ Note. "tag" means each blocks of caption separated by commas.
 
 ***
 
-### "Interrogate Selected Image" tab
+### "Edit Caption of Selected Image" tab
 ![](ss04.png) ![](ss05.png)
 
 #### "Read Caption from Selected Image" tab
 - "Caption of Selected Image" textbox
   - shows the caption of the selected image in the dataset gallery
 
-#### "Read Caption from Selected Image" tab
+#### "Interrogate Selected Image" tab
 - "Interrogate Result" textbox
   - shows the result of interrogator
 
