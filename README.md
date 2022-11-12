@@ -114,7 +114,7 @@ Note. "tag" means each blocks of caption separated by commas.
 
 ***
 
-### "Edit Caption of Selected Image" tab
+### "Interrogate Selected Image" tab
 ![](ss04.png) ![](ss05.png)
 
 #### "Read Caption from Selected Image" tab
@@ -123,7 +123,7 @@ Note. "tag" means each blocks of caption separated by commas.
 
 #### "Read Caption from Selected Image" tab
 - "Interrogate Result" textbox
-  - shows the results
+  - shows the result of interrogator
 
 #### Common
 - "Copy and Overwrite / Prepend / Apppend" button
