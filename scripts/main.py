@@ -2,7 +2,7 @@ from typing import List
 from modules import shared, script_callbacks
 from modules.shared import opts, cmd_opts
 import gradio as gr
-from dataset_tag_editor import DatasetTagEditor, interrogate_image_clip, interrogate_image_booru, InterrogateMethod
+from scripts.dataset_tag_editor.dataset_tag_editor import DatasetTagEditor, interrogate_image_clip, interrogate_image_booru, InterrogateMethod
 
 dataset_tag_editor = DatasetTagEditor()
 
