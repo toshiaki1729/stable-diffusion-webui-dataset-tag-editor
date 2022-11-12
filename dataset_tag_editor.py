@@ -17,6 +17,8 @@ class InterrogateMethod(Enum):
     NONE = 0
     PREFILL = 1
     OVERWRITE = 2
+    PREPEND = 3
+    APPEND = 4
 
 
 def interrogate_image_clip(path):
@@ -176,7 +178,7 @@ class DatasetTagEditor:
 
 
 
-    def load_dataset(self, img_dir: str, recursive: bool = False, load_caption_from_filename: bool = True, interrogate_method: InterrogateMethod = InterrogateMethod.NONE, use_clip: bool = True):
+    def load_dataset(self, img_dir: str, recursive: bool = False, load_caption_from_filename: bool = True, interrogate_method: InterrogateMethod = InterrogateMethod.NONE, use_booru: bool = True, use_clip: bool = False):
         self.clear()
         print(f'Loading dataset from {img_dir}')
         try:
@@ -188,8 +190,8 @@ class DatasetTagEditor:
 
         self.dataset_dir = img_dir
 
-        if not (use_clip or cmd_opts.deepdanbooru):
-            print('Cannot interrogate without --deepdanbooru commandline option.')
+        if use_booru and not cmd_opts.deepdanbooru:
+            print('Cannot use DeepDanbooru without --deepdanbooru commandline option.')
 
         print(f'Total {len(filepath_set)} files under the directory including not image files.')
 
@@ -214,16 +216,26 @@ class DatasetTagEditor:
                             tokens = self.re_word.findall(caption_text)
                             caption_text = (shared.opts.dataset_filename_join_string or "").join(tokens)
                 
-                if interrogate_method == InterrogateMethod.OVERWRITE or (not caption_text and interrogate_method == InterrogateMethod.PREFILL):
+                if interrogate_method != InterrogateMethod.NONE and ((interrogate_method != InterrogateMethod.PREFILL) or (interrogate_method == InterrogateMethod.PREFILL and not caption_text)):
                     try:
                         img = Image.open(img_path).convert('RGB')
                     except Exception as e:
                         print(e)
                     else:
+                        interrogate_text = ''
                         if use_clip:
-                            caption_text = shared.interrogator.generate_caption(img)
-                        elif cmd_opts.deepdanbooru:
-                            caption_text = deepbooru.get_tags_from_process(img)
+                            interrogate_text += shared.interrogator.generate_caption(img)
+                            
+                        if use_booru and cmd_opts.deepdanbooru:
+                            tmp = deepbooru.get_tags_from_process(img)
+                            interrogate_text += (', ' if interrogate_text and tmp else '') + tmp
+
+                        if interrogate_method == InterrogateMethod.OVERWRITE:
+                            caption_text = interrogate_text
+                        elif interrogate_method == InterrogateMethod.PREPEND:
+                            caption_text = interrogate_text + (', ' if interrogate_text and caption_text else '') + caption_text
+                        else:
+                            caption_text += (', ' if interrogate_text and caption_text else '') + interrogate_text
                 
                 self.set_tags_by_image_path(img_path, [t.strip() for t in caption_text.split(',')])
 
@@ -231,7 +243,7 @@ class DatasetTagEditor:
             if interrogate_method != InterrogateMethod.NONE:
                 if use_clip:
                     shared.interrogator.load()
-                elif cmd_opts.deepdanbooru:
+                if use_booru and cmd_opts.deepdanbooru:
                     db_opts = deepbooru.create_deepbooru_opts()
                     db_opts[deepbooru.OPT_INCLUDE_RANKS] = False
                     deepbooru.create_deepbooru_process(opts.interrogate_deepbooru_score_threshold, db_opts)
@@ -242,7 +254,7 @@ class DatasetTagEditor:
             if interrogate_method != InterrogateMethod.NONE:
                 if use_clip:
                     shared.interrogator.send_blip_to_ram()
-                elif cmd_opts.deepdanbooru:
+                if use_booru and cmd_opts.deepdanbooru:
                     deepbooru.release_process()
 
         self.construct_tag_counts()

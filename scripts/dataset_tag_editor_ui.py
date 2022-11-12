@@ -38,7 +38,7 @@ def get_current_txt_selection():
     return f"""Selected Image : {selection_selected_image_path}"""
 
 
-def load_files_from_dir(dir: str, sort_by: str, sort_order: str, recursive: bool, load_caption_from_filename: bool, use_interrogator: str, use_clip: bool):
+def load_files_from_dir(dir: str, sort_by: str, sort_order: str, recursive: bool, load_caption_from_filename: bool, use_interrogator: str, use_clip: bool, use_booru: bool):
     global total_image_num, displayed_image_num, current_tag_filter, current_selection, tmp_selection_img_path_set, selected_image_path, selection_selected_image_path
     
     interrogate_method = InterrogateMethod.NONE
@@ -46,8 +46,12 @@ def load_files_from_dir(dir: str, sort_by: str, sort_order: str, recursive: bool
         interrogate_method = InterrogateMethod.PREFILL
     elif use_interrogator == 'Overwrite':
         interrogate_method = InterrogateMethod.OVERWRITE
+    elif use_interrogator == 'Prepend':
+        interrogate_method = InterrogateMethod.PREPEND
+    elif use_interrogator == 'Append':
+        interrogate_method = InterrogateMethod.APPEND
 
-    dataset_tag_editor.load_dataset(img_dir=dir, recursive=recursive, load_caption_from_filename=load_caption_from_filename, interrogate_method=interrogate_method, use_clip=use_clip)
+    dataset_tag_editor.load_dataset(img_dir=dir, recursive=recursive, load_caption_from_filename=load_caption_from_filename, interrogate_method=interrogate_method, use_clip=use_clip, use_booru=use_booru)
     img_paths, tags = dataset_tag_editor.get_filtered_imgpath_and_tags()
     tags = arrange_tag_order(tags=tags, sort_by=sort_by, sort_order=sort_order)
     total_image_num = displayed_image_num = len(dataset_tag_editor.get_img_path_set())
@@ -283,8 +287,10 @@ def on_ui_tabs():
                             cb_load_recursive = gr.Checkbox(value=False, label='Load from subdirectories')
                             cb_load_caption_from_filename = gr.Checkbox(value=True, label='Load caption from filename if no text file')
                         with gr.Column():
-                            rb_use_interrogator = gr.Radio(choices=['No', 'If Empty', 'Overwrite'], value='No', label='Use Interrogator Caption')
-                            cb_use_clip_to_prefill = gr.Checkbox(value=False, label='Use BLIP interrogator')
+                            rb_use_interrogator = gr.Radio(choices=['No', 'If Empty', 'Overwrite', 'Prepend', 'Append'], value='No', label='Use Interrogator Caption')
+                            with gr.Row():
+                                cb_use_clip_to_prefill = gr.Checkbox(value=False, label='Use BLIP')
+                                cb_use_booru_to_prefill = gr.Checkbox(value=False, label='Use DeepDanbooru')
                 
                 gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_dataset_gallery").style(grid=opts.dataset_editor_image_columns)
                 txt_filter = gr.HTML(value=get_current_txt_filter())
@@ -381,7 +387,7 @@ def on_ui_tabs():
 
         btn_load_datasets.click(
             fn=load_files_from_dir,
-            inputs=[tb_img_directory, rd_sort_by, rd_sort_order, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_clip_to_prefill],
+            inputs=[tb_img_directory, rd_sort_by, rd_sort_order, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_clip_to_prefill, cb_use_booru_to_prefill],
             outputs=[gl_dataset_images, gl_selected_images, cbg_tags, tb_search_tags, txt_filter, txt_selection]
         )
         btn_load_datasets.click(
