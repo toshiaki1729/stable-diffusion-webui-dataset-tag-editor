@@ -52,10 +52,10 @@ Note. "tag" means each blocks of caption separated by commas.
 ### Common
 - "Save all changes" buttton
   - save captions to text file
-    - changes will not be applied to the text files until you press the button
+    - changes will not be applied to the text files until you press this button
   - if "Backup original text file" is checked, original text files will be renamed not to be overwritten
     - backup file name will be like filename.000, -.001, -.002, ...
-  - new text file will be created if you are using filename as caption
+  - new text file will be created if not exists
 - "Results" text box
   - shows save results
 - "Dataset Directory" text box
