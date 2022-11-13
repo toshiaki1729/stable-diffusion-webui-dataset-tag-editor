@@ -202,9 +202,16 @@ class DatasetTagEditor:
             for img_path in filepath_set:
                 img_dir = os.path.dirname(img_path)
                 img_filename, img_ext = os.path.splitext(os.path.basename(img_path))
-                ext_supported = {e for e, str in Image.registered_extensions().items() if str in Image.OPEN}
-                if img_ext not in ext_supported:
+                if img_ext == '.txt':
                     continue
+
+                try:
+                    img = Image.open(img_path)
+                except:
+                    continue
+                finally:
+                    img.close()
+                
                 text_filename = os.path.join(img_dir, img_filename+'.txt')
                 caption_text = ''
                 if interrogate_method != InterrogateMethod.OVERWRITE:
