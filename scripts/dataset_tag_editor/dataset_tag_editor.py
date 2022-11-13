@@ -151,7 +151,7 @@ class DatasetTagEditor:
         return (img_paths, tag_set)
 
 
-    def replace_tags(self, search_tags: List[str], replace_tags: List[str], filter_tags: Optional[List[str]] = None, append_to_begin: bool = False):
+    def replace_tags(self, search_tags: List[str], replace_tags: List[str], filter_tags: Optional[List[str]] = None, prepend: bool = False):
         img_paths, _ = self.get_filtered_imgpath_and_tags(filter_tags=filter_tags)
         tags_to_append = replace_tags[len(search_tags):]
         tags_to_remove = search_tags[len(replace_tags):]
@@ -164,7 +164,7 @@ class DatasetTagEditor:
         for img_path in img_paths:
             tags_removed = [t for t in self.img_tag_dict.get(img_path) if t not in tags_to_remove]
             tags_replaced = [tags_to_replace.get(t) if t in tags_to_replace.keys() else t for t in tags_removed]
-            self.set_tags_by_image_path(img_path, tags_to_append + tags_replaced if append_to_begin else tags_replaced + tags_to_append)
+            self.set_tags_by_image_path(img_path, tags_to_append + tags_replaced if prepend else tags_replaced + tags_to_append)
         
         self.construct_tag_counts()
 
