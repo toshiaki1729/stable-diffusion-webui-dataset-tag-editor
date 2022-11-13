@@ -209,7 +209,7 @@ class DatasetTagEditor:
                     img = Image.open(img_path)
                 except:
                     continue
-                finally:
+                else:
                     img.close()
                 
                 text_filename = os.path.join(img_dir, img_filename+'.txt')
@@ -231,6 +231,7 @@ class DatasetTagEditor:
                         img = Image.open(img_path).convert('RGB')
                     except Exception as e:
                         print(e)
+                        print(f'Cannot interrogate file: {img_path}')
                     else:
                         interrogate_text = ''
                         if use_clip:
@@ -246,6 +247,7 @@ class DatasetTagEditor:
                             caption_text = interrogate_text + (', ' if interrogate_text and caption_text else '') + caption_text
                         else:
                             caption_text += (', ' if interrogate_text and caption_text else '') + interrogate_text
+                        img.close()
                 
                 self.set_tags_by_image_path(img_path, [t.strip() for t in caption_text.split(',')])
 
