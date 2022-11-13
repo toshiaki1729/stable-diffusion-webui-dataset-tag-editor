@@ -262,7 +262,7 @@ class DatasetTagEditor:
 
         self.construct_tag_counts()
         self.set_img_filter_img_path()
-        print(f'Loading Completed.')
+        print(f'Loading Completed: {len(self.img_tag_dict)} images found')
  
 
     def save_dataset(self, backup: bool) -> Tuple[int, int, str]:
