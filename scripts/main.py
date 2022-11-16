@@ -300,40 +300,40 @@ def on_ui_tabs():
 
             with gr.Tab(label='Filter and Edit Tags'):
                 with gr.Column():
+                    with gr.Row():
+                        btn_clear_tag_filters = gr.Button(value='Clear tag filters')
+                        btn_clear_all_filters = gr.Button(value='Clear ALL filters')
+                    with gr.Column(variant='panel'):
+                        gr.HTML(value='Edit tags in filtered images (=displayed images)')
+                        tb_selected_tags = gr.Textbox(label='Selected Tags', interactive=False)
+                        tb_edit_tags = gr.Textbox(label='Edit Tags', interactive=True)
+                        cb_prepend_tags = gr.Checkbox(value=False, label='Prepend additional tags')
+                        btn_apply_edit_tags = gr.Button(value='Apply changes to filtered images', variant='primary')
+                        with gr.Accordion(label='Show description of how to edit tags', open=False):
+                            gr.HTML(value="""
+                            1. The selected tags are displayed in comma separated style.<br>
+                            2. When changes are applied, all tags in each displayed images are replaced.<br>
+                            3. If you change some tags into blank, they will be erased.<br>
+                            4. If you add some tags to the end, they will be added to the end/beginning of the text file.<br>
+                            5. Changes are not applied to the text files until the "Save all changes" button is pressed.<br>
+                            <b>ex A.</b><br>
+                            &emsp;Original Text = "A, A, B, C"&emsp;Selected Tags = "B, A"&emsp;Edit Tags = "X, Y"<br>
+                            &emsp;Result = "Y, Y, X, C"&emsp;(B->X, A->Y)<br>
+                            <b>ex B.</b><br>
+                            &emsp;Original Text = "A, B, C"&emsp;Selected Tags = "(nothing)"&emsp;Edit Tags = "X, Y"<br>
+                            &emsp;Result = "A, B, C, X, Y"&emsp;(add X and Y to the end (default))<br>
+                            &emsp;Result = "X, Y, A, B, C"&emsp;(add X and Y to the beginning ("Prepend additional tags" checked))<br>
+                            <b>ex C.</b><br>
+                            &emsp;Original Text = "A, B, C, D, E"&emsp;Selected Tags = "A, B, D"&emsp;Edit Tags = ", X, "<br>
+                            &emsp;Result = "X, C, E"&emsp;(A->"", B->X, D->"")<br>
+                            """)
                     with gr.Column(variant='panel'):
                         gr.HTML(value='Search tags / Filter images by tags')
                         tb_search_tags = gr.Textbox(label='Search Tags', interactive=True)
                         with gr.Row():
-                            btn_clear_tag_filters = gr.Button(value='Clear tag filters')
-                            btn_clear_all_filters = gr.Button(value='Clear ALL filters')
-                        with gr.Row():
                             rd_sort_by = gr.Radio(choices=['Alphabetical Order', 'Frequency'], value='Alphabetical Order', interactive=True, label='Sort by')
                             rd_sort_order = gr.Radio(choices=['Ascending', 'Descending'], value='Ascending', interactive=True, label='Sort Order')
                         cbg_tags = gr.CheckboxGroup(label='Filter Images by Tags', interactive=True)
-                    with gr.Column(variant='panel'):
-                        gr.HTML(value='Edit tags in filtered images')
-                        tb_selected_tags = gr.Textbox(label='Selected Tags', interactive=False)
-                        tb_edit_tags = gr.Textbox(label='Edit Tags', interactive=True)
-                        btn_apply_edit_tags = gr.Button(value='Apply changes to filtered images', variant='primary')
-                        cb_prepend_tags = gr.Checkbox(value=False, label='Prepend additional tags')
-
-                        gr.HTML(value="""
-                        1. The selected tags are displayed in comma separated style.<br>
-                        2. When changes are applied, all tags in each displayed images are replaced.<br>
-                        3. If you change some tags into blank, they will be erased.<br>
-                        4. If you add some tags to the end, they will be added to the end/beginning of the text file.<br>
-                        5. Changes are not applied to the text files until the "Save all changes" button is pressed.<br>
-                        <b>ex A.</b><br>
-                        &emsp;Original Text = "A, A, B, C"&emsp;Selected Tags = "B, A"&emsp;Edit Tags = "X, Y"<br>
-                        &emsp;Result = "Y, Y, X, C"&emsp;(B->X, A->Y)<br>
-                        <b>ex B.</b><br>
-                        &emsp;Original Text = "A, B, C"&emsp;Selected Tags = "(nothing)"&emsp;Edit Tags = "X, Y"<br>
-                        &emsp;Result = "A, B, C, X, Y"&emsp;(add X and Y to the end (default))<br>
-                        &emsp;Result = "X, Y, A, B, C"&emsp;(add X and Y to the beginning ("Prepend additional tags" checked))<br>
-                        <b>ex C.</b><br>
-                        &emsp;Original Text = "A, B, C, D, E"&emsp;Selected Tags = "A, B, D"&emsp;Edit Tags = ", X, "<br>
-                        &emsp;Result = "X, C, E"&emsp;(A->"", B->X, D->"")<br>
-                        """)
             
             with gr.Tab(label='Filter by Selection'):
                 with gr.Row(visible=False):
@@ -355,7 +355,6 @@ def on_ui_tabs():
 
                 btn_apply_image_selection_filter = gr.Button(value='Apply selection filter', variant='primary')
                     
-
             with gr.Tab(label='Edit Caption of Selected Image'):
                 with gr.Tab(label='Read Caption from Selected Image'):
                     tb_caption_selected_image = gr.Textbox(label='Caption of Selected Image', interactive=True, lines=6)
