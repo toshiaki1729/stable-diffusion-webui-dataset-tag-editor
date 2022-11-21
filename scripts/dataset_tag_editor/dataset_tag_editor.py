@@ -198,7 +198,7 @@ class DatasetTagEditor:
 
         print(f'Total {len(filepath_set)} files under the directory including not image files.')
 
-        def load_images(filepath_set: set[str]):
+        def load_images(filepath_set: Set[str]):
             for img_path in filepath_set:
                 img_dir = os.path.dirname(img_path)
                 img_filename, img_ext = os.path.splitext(os.path.basename(img_path))
