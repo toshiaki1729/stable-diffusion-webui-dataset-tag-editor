@@ -6,9 +6,7 @@ from modules.shared import opts, cmd_opts
 from modules.textual_inversion.dataset import re_numbers_at_start
 from PIL import Image
 from enum import Enum
-
-if cmd_opts.deepdanbooru:
-    import modules.deepbooru as deepbooru
+import modules.deepbooru as deepbooru
 
 re_tags = re.compile(r'^(.+) \[\d+\]$')
 
@@ -193,9 +191,6 @@ class DatasetTagEditor:
 
         self.dataset_dir = img_dir
 
-        if use_booru and not cmd_opts.deepdanbooru:
-            print('Cannot use DeepDanbooru without --deepdanbooru commandline option.')
-
         print(f'Total {len(filepath_set)} files under the directory including not image files.')
 
         def load_images(filepath_set: Set[str]):
@@ -237,7 +232,7 @@ class DatasetTagEditor:
                         if use_clip:
                             interrogate_text += shared.interrogator.generate_caption(img)
                             
-                        if use_booru and cmd_opts.deepdanbooru:
+                        if use_booru:
                             tmp = deepbooru.get_tags_from_process(img)
                             interrogate_text += (', ' if interrogate_text and tmp else '') + tmp
 
@@ -255,7 +250,7 @@ class DatasetTagEditor:
             if interrogate_method != InterrogateMethod.NONE:
                 if use_clip:
                     shared.interrogator.load()
-                if use_booru and cmd_opts.deepdanbooru:
+                if use_booru:
                     db_opts = deepbooru.create_deepbooru_opts()
                     db_opts[deepbooru.OPT_INCLUDE_RANKS] = False
                     deepbooru.create_deepbooru_process(opts.interrogate_deepbooru_score_threshold, db_opts)
@@ -266,7 +261,7 @@ class DatasetTagEditor:
             if interrogate_method != InterrogateMethod.NONE:
                 if use_clip:
                     shared.interrogator.send_blip_to_ram()
-                if use_booru and cmd_opts.deepdanbooru:
+                if use_booru:
                     deepbooru.release_process()
 
         self.construct_tag_counts()

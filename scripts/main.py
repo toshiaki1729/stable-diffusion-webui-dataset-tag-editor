@@ -290,10 +290,7 @@ def on_ui_tabs():
                             rb_use_interrogator = gr.Radio(choices=['No', 'If Empty', 'Overwrite', 'Prepend', 'Append'], value='No', label='Use Interrogator Caption')
                             with gr.Row():
                                 cb_use_clip_to_prefill = gr.Checkbox(value=False, label='Use BLIP')
-                                if cmd_opts.deepdanbooru:
-                                    cb_use_booru_to_prefill = gr.Checkbox(value=False, label='Use DeepDanbooru')
-                                else:
-                                    cb_use_booru_to_prefill = gr.Checkbox(value=False, label='Use DeepDanbooru', interactive=False)
+                                cb_use_booru_to_prefill = gr.Checkbox(value=False, label='Use DeepDanbooru')
                 
                 gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_dataset_gallery").style(grid=opts.dataset_editor_image_columns)
                 txt_filter = gr.HTML(value=get_current_txt_filter())
@@ -366,8 +363,7 @@ def on_ui_tabs():
                 with gr.Tab(label='Interrogate Selected Image'):
                     with gr.Row():
                         btn_interrogate_clip = gr.Button(value='Interrogate with BLIP')
-                        if cmd_opts.deepdanbooru:
-                            btn_interrogate_booru = gr.Button(value='Interrogate with DeepDanbooru')
+                        btn_interrogate_booru = gr.Button(value='Interrogate with DeepDanbooru')
                     tb_interrogate_selected_image = gr.Textbox(label='Interrogate Result', interactive=True, lines=6)
                     with gr.Row():
                         btn_copy_interrogate = gr.Button(value='Copy and Overwrite')
@@ -522,12 +518,11 @@ def on_ui_tabs():
             outputs=[tb_interrogate_selected_image]
         )
 
-        if cmd_opts.deepdanbooru:
-            btn_interrogate_booru.click(
-                fn=interrogate_selected_image_booru,
-                inputs=None,
-                outputs=[tb_interrogate_selected_image]
-            )
+        btn_interrogate_booru.click(
+            fn=interrogate_selected_image_booru,
+            inputs=None,
+            outputs=[tb_interrogate_selected_image]
+        )
 
         btn_copy_interrogate.click(
             fn=lambda a:a,
