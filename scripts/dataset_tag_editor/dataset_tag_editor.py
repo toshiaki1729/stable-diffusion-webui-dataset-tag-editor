@@ -233,7 +233,7 @@ class DatasetTagEditor:
                             interrogate_text += shared.interrogator.generate_caption(img)
                             
                         if use_booru:
-                            tmp = deepbooru.get_tags_from_process(img)
+                            tmp = deepbooru.model.tag_multi(img)
                             interrogate_text += (', ' if interrogate_text and tmp else '') + tmp
 
                         if interrogate_method == InterrogateMethod.OVERWRITE:
@@ -251,9 +251,7 @@ class DatasetTagEditor:
                 if use_clip:
                     shared.interrogator.load()
                 if use_booru:
-                    db_opts = deepbooru.create_deepbooru_opts()
-                    db_opts[deepbooru.OPT_INCLUDE_RANKS] = False
-                    deepbooru.create_deepbooru_process(opts.interrogate_deepbooru_score_threshold, db_opts)
+                    deepbooru.model.start()
 
             load_images(filepath_set = filepath_set)
             
@@ -262,7 +260,7 @@ class DatasetTagEditor:
                 if use_clip:
                     shared.interrogator.send_blip_to_ram()
                 if use_booru:
-                    deepbooru.release_process()
+                    deepbooru.model.stop()
 
         self.construct_tag_counts()
         self.set_img_filter_img_path()
