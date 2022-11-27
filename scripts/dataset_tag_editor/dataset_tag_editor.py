@@ -34,7 +34,7 @@ def interrogate_image_booru(path):
     except:
         return ''
     else:
-        return deepbooru.model.tag_multi(img)
+        return deepbooru.model.tag(img)
 
 
 def get_filepath_set(dir: str, recursive: bool) -> Set[str]:
