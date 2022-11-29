@@ -159,6 +159,14 @@ def add_image_selection(filter_tags: List[str], idx: int):
     return [arrange_selection_order(tmp_selection_img_path_set), idx]
 
 
+def add_all_displayed_image_selection(filter_tags: List[str]):
+    global tmp_selection_img_path_set
+    filter_tags = dataset_tag_editor.read_tags(filter_tags)
+    img_paths, _ = dataset_tag_editor.get_filtered_imgpath_and_tags(filter_tags=filter_tags)
+    tmp_selection_img_path_set |= set(img_paths)
+    return arrange_selection_order(tmp_selection_img_path_set)
+
+
 def invert_image_selection():
     global tmp_selection_img_path_set
     img_paths = dataset_tag_editor.get_img_path_set()
@@ -341,6 +349,7 @@ def on_ui_tabs():
                 with gr.Column(variant='panel'):
                     with gr.Row():
                         btn_add_image_selection = gr.Button(value='Add selection [Enter]', elem_id='dataset_tag_editor_btn_add_image_selection')    
+                        btn_add_all_displayed_image_selection = gr.Button(value='Add ALL')    
 
                     gl_selected_images = gr.Gallery(label='Filter Images', elem_id="dataset_tag_editor_selection_gallery").style(grid=opts.dataset_editor_image_columns)
                     txt_selection = gr.HTML(value=get_current_txt_selection())
@@ -457,6 +466,12 @@ def on_ui_tabs():
             _js="(x, y) => [x, dataset_tag_editor_gl_dataset_images_selected_index()]",
             inputs=[cbg_tags, lbl_hidden_image_index],
             outputs=[gl_selected_images, lbl_hidden_image_index]
+        )
+
+        btn_add_all_displayed_image_selection.click(
+            fn=add_all_displayed_image_selection,
+            inputs=cbg_tags,
+            outputs=gl_selected_images
         )
 
         btn_invert_image_selection.click(
