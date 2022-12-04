@@ -117,20 +117,13 @@ class DatasetTagEditor:
         return []
 
 
-    def set_path_filter(self, path:Optional[Set[str]] = None):
-        if path:
-            self.path_filter = PathFilter(path, PathFilter.Mode.INCLUSIVE)
-        else:
-            self.path_filter = PathFilter()
-
-
     def get_filtered_imgpath_and_tags(self, filters: List[Dataset.Filter] = [], filter_word: Optional[str] = None) -> Tuple[List[str], Set[str]]:
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
         
         tag_set = filtered_set.get_tagset()
-        img_paths = sorted(img_paths)
+        img_paths = sorted(filtered_set.datas.keys())
 
         if filter_word:
             # all tags with filter_word
@@ -253,7 +246,6 @@ class DatasetTagEditor:
                     deepbooru.model.stop()
 
         self.construct_tag_counts()
-        self.set_path_filter()
         print(f'Loading Completed: {len(self.dataset)} images found')
  
 
