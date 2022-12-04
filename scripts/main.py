@@ -253,12 +253,12 @@ def change_tags_selected_image(tags_text: str, sort_by: str, sort_order: str, id
     edited_tags = [t.strip() for t in tags_text.split(',')]
 
     if idx < 0 or len(img_paths) <= idx:
-        return [-1]
+        return -1
     else:
         dataset_tag_editor.set_tags_by_image_path(imgpath=img_paths[idx], tags=edited_tags)
         _, tags = dataset_tag_editor.get_filtered_imgpath_and_tags(filters=[tag_filter, tag_filter_neg])
         tags = arrange_tag_order(tags=tags, sort_by=sort_by, sort_order=sort_order)
-        return [idx]
+        return idx
 
 
 def interrogate_selected_image_clip():
@@ -474,7 +474,6 @@ def on_ui_tabs():
 
         btn_add_image_selection.click(
             fn=add_image_selection,
-            _js="(x) => [dataset_tag_editor_gl_dataset_images_selected_index()]",
             inputs=[lbl_hidden_image_index],
             outputs=[gl_selected_images, lbl_hidden_image_index]
         )
@@ -493,7 +492,6 @@ def on_ui_tabs():
 
         btn_remove_image_selection.click(
             fn=remove_image_selection,
-            _js="(x) => [dataset_tag_editor_gl_selected_images_selected_index()]",
             inputs=[lbl_hidden_selection_image_index],
             outputs=[gl_selected_images,txt_selection,lbl_hidden_selection_image_index]
         )
@@ -516,7 +514,7 @@ def on_ui_tabs():
         btn_hidden_set_index.click(
             fn=gallery_index_changed,
             _js="(x) => [dataset_tag_editor_gl_dataset_images_selected_index()]",
-            inputs=lbl_hidden_image_index,
+            inputs=[lbl_hidden_image_index],
             outputs=[tb_caption_selected_image, txt_filter, lbl_hidden_image_index]
         )
 
@@ -571,7 +569,6 @@ def on_ui_tabs():
 
         btn_apply_changes_selected_image.click(
             fn=change_tags_selected_image,
-            _js="(a, b, c, d) => [a, b, c, dataset_tag_editor_gl_dataset_images_selected_index()]",
             inputs=[tb_edit_caption_selected_image, rd_sort_by, rd_sort_order, lbl_hidden_image_index],
             outputs=[lbl_hidden_image_index]
         )
