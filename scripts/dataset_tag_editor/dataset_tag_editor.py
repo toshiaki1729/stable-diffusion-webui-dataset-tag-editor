@@ -8,7 +8,6 @@ from PIL import Image
 from enum import Enum
 import modules.deepbooru as deepbooru
 from scripts.dataset_tag_editor.dataset import Dataset, Data
-from scripts.dataset_tag_editor.filters import PathFilter, TagFilter
 
 re_tags = re.compile(r'^(.+) \[\d+\]$')
 
@@ -39,7 +38,7 @@ def interrogate_image_booru(path):
         return deepbooru.model.tag(img)
 
 
-def get_filepath_set(dir: str, recursive: bool) -> Set[str]:
+def get_filepath_set(dir: str, recursive: bool):
     if recursive:
         dirs_to_see = [dir]
         result = set()
@@ -150,11 +149,11 @@ class DatasetTagEditor:
         self.construct_tag_counts()
 
 
-    def get_img_path_list(self) -> List[str]:
+    def get_img_path_list(self):
         return [k for k in self.dataset.datas.keys() if k]
 
 
-    def get_img_path_set(self) -> Set[str]:
+    def get_img_path_set(self):
         return {k for k in self.dataset.datas.keys() if k}
 
 
@@ -249,7 +248,7 @@ class DatasetTagEditor:
         print(f'Loading Completed: {len(self.dataset)} images found')
  
 
-    def save_dataset(self, backup: bool) -> Tuple[int, int, str]:
+    def save_dataset(self, backup: bool):
         if len(self.dataset) == 0:
             return (0, 0, '')
 
@@ -297,7 +296,6 @@ class DatasetTagEditor:
     def clear(self):
         self.dataset.clear()
         self.tag_counts.clear()
-        self.path_filter = PathFilter()
         self.dataset_dir = ''
 
 
