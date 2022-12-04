@@ -131,7 +131,7 @@ def apply_edit_tags(filter_tags: str, edit_tags: str, prepend: bool, filter_word
     filter_tags = dataset_tag_editor.read_tags(filter_tags)
     tag_filter = TagFilter(set(filter_tags), TagFilter.Logic.AND, TagFilter.Mode.INCLUSIVE)
     dataset_tag_editor.replace_tags(search_tags = filter_tags, replace_tags = replace_tags, filters = [path_filter, tag_filter, tag_filter_neg], prepend = prepend)
-    replace_tags = [t for t in replace_tags if t]
+    tag_filter = TagFilter({t for t in replace_tags if t}, TagFilter.Logic.AND, TagFilter.Mode.INCLUSIVE)
     return filter_gallery(filter_word = filter_word, sort_by=sort_by, sort_order=sort_order)
 
 
