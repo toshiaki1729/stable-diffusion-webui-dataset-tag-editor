@@ -41,7 +41,8 @@ class Dataset:
         return self
 
     def remove_by_path(self, path: str):
-        del self.datas[path]
+        if path in self.datas.keys():
+            del self.datas[path]
 
     def copy(self):
         res = Dataset()
