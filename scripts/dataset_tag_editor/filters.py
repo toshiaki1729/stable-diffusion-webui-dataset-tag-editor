@@ -52,6 +52,8 @@ class TagFilter(Dataset.Filter):
         return dataset
     
     def __str__(self):
+        if len(self.tags) == 0:
+            return ''
         res = ''
         if self.mode == TagFilter.Mode.EXCLUSIVE:
             res += 'NOT '

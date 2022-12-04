@@ -31,7 +31,7 @@ def arrange_tag_order(tags: List[str], sort_by: str, sort_order: str) -> List[st
 def get_current_txt_filter():
     return f"""
     Displayed Images : {displayed_image_num} / {total_image_num} total<br>
-    Current Tag Filter : {tag_filter} AND {tag_filter_neg}<br>
+    Current Tag Filter : {tag_filter} {'' if not tag_filter_neg.tags else f'AND {tag_filter_neg}'}<br>
     Current Selection Filter : {current_selection} images<br>
     Selected Image : {gallery_selected_image_path}
     """
@@ -76,18 +76,18 @@ def load_files_from_dir(dir: str, sort_by: str, sort_order: str, recursive: bool
 
 
 def search_tags(filter_word: str, sort_by: str, sort_order: str):
-    filter_tags = dataset_tag_editor.read_tags(filter_tags)
     _, tags = dataset_tag_editor.get_filtered_imgpath_and_tags(filters=[path_filter, tag_filter, tag_filter_neg], filter_word=filter_word)
     tags = arrange_tag_order(tags, sort_by=sort_by, sort_order=sort_order)
     return gr.CheckboxGroup.update(choices=dataset_tag_editor.write_tags(tags))
 
 
 def clear_tag_filters(sort_by, sort_order):
-    return filter_gallery(filter_tags=[], filter_word='', sort_by=sort_by, sort_order=sort_order) + ['']
+    global tag_filter
+    tag_filter = TagFilter()
+    return filter_gallery(filter_word='', sort_by=sort_by, sort_order=sort_order) + ['']
 
 
 def rearrange_tag_order(filter_word: str, sort_by: str, sort_order: str):
-    filter_tags = dataset_tag_editor.read_tags(filter_tags)
     _, tags = dataset_tag_editor.get_filtered_imgpath_and_tags(filters=[path_filter, tag_filter, tag_filter_neg], filter_word=filter_word)
     tags = arrange_tag_order(tags=tags, sort_by=sort_by, sort_order=sort_order)
     return gr.CheckboxGroup.update(choices=dataset_tag_editor.write_tags(tags))
@@ -125,12 +125,14 @@ def filter_gallery(filter_word: str, sort_by: str, sort_order: str):
         ]
 
 
-def apply_edit_tags(edit_tags: str, filter_tags: List[str], prepend: bool, filter_word: str, sort_by: str, sort_order: str):
+def apply_edit_tags(filter_tags: str, edit_tags: str, prepend: bool, filter_word: str, sort_by: str, sort_order: str):
+    global tag_filter
     replace_tags = [t.strip() for t in edit_tags.split(',')]
     filter_tags = dataset_tag_editor.read_tags(filter_tags)
-    dataset_tag_editor.replace_tags(search_tags = filter_tags, replace_tags = replace_tags, filter_tags = filter_tags, prepend = prepend)
+    tag_filter = TagFilter(set(filter_tags), TagFilter.Logic.AND, TagFilter.Mode.INCLUSIVE)
+    dataset_tag_editor.replace_tags(search_tags = filter_tags, replace_tags = replace_tags, filters = [path_filter, tag_filter, tag_filter_neg], prepend = prepend)
     replace_tags = [t for t in replace_tags if t]
-    return filter_gallery(filter_tags = replace_tags, filter_word = filter_word, sort_by=sort_by, sort_order=sort_order)
+    return filter_gallery(filter_word = filter_word, sort_by=sort_by, sort_order=sort_order)
 
 
 def save_all_changes(backup: bool) -> str:
@@ -246,7 +248,6 @@ def gallery_index_changed(idx: int):
 
 def change_tags_selected_image(tags_text: str, sort_by: str, sort_order: str, idx: int):
     idx = int(idx)
-    filter_tags = dataset_tag_editor.read_tags(filter_tags)
     img_paths, _ = dataset_tag_editor.get_filtered_imgpath_and_tags(filters=[tag_filter, tag_filter_neg])
 
     edited_tags = [t.strip() for t in tags_text.split(',')]
@@ -416,7 +417,7 @@ def on_ui_tabs():
         cbg_tags.change(
             fn=filter_gallery_by_checkbox,
             inputs=[cbg_tags, tb_search_tags, rd_sort_by, rd_sort_order],
-            outputs=[gl_dataset_images, tb_selected_tags, cbg_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter]
+            outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter]
         )
 
         rd_sort_by.change(
@@ -439,14 +440,14 @@ def on_ui_tabs():
 
         btn_apply_edit_tags.click(
             fn=apply_edit_tags,
-            inputs=[tb_edit_tags, cb_prepend_tags, tb_search_tags, rd_sort_by, rd_sort_order],
-            outputs=[gl_dataset_images, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter]
+            inputs=[cbg_tags, tb_edit_tags, cb_prepend_tags, tb_search_tags, rd_sort_by, rd_sort_order],
+            outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter]
         )
 
         btn_clear_tag_filters.click(
             fn=clear_tag_filters,
             inputs=[rd_sort_by, rd_sort_order],
-            outputs=[gl_dataset_images, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter, tb_search_tags]
+            outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter, tb_search_tags]
         )
 
         btn_clear_all_filters.click(
@@ -458,7 +459,7 @@ def on_ui_tabs():
         btn_clear_all_filters.click(
             fn=clear_tag_filters,
             inputs=[rd_sort_by, rd_sort_order],
-            outputs=[gl_dataset_images, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter, tb_search_tags]
+            outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter, tb_search_tags]
         )
 
         #----------------------------------------------------------------
@@ -473,7 +474,7 @@ def on_ui_tabs():
 
         btn_add_image_selection.click(
             fn=add_image_selection,
-            _js="(x, y) => [x, dataset_tag_editor_gl_dataset_images_selected_index()]",
+            _js="(x) => [dataset_tag_editor_gl_dataset_images_selected_index()]",
             inputs=[lbl_hidden_image_index],
             outputs=[gl_selected_images, lbl_hidden_image_index]
         )
@@ -506,7 +507,7 @@ def on_ui_tabs():
         btn_apply_image_selection_filter.click(
             fn=apply_image_selection_filter,
             inputs=[tb_search_tags, rd_sort_by, rd_sort_order],
-            outputs=[gl_dataset_images, tb_selected_tags, cbg_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter]
+            outputs=[gl_dataset_images, cbg_tags, tb_selected_tags, tb_edit_tags, lbl_hidden_image_index, txt_filter]
         )
 
         #----------------------------------------------------------------
@@ -514,7 +515,7 @@ def on_ui_tabs():
 
         btn_hidden_set_index.click(
             fn=gallery_index_changed,
-            _js="(x, y) => [x, dataset_tag_editor_gl_dataset_images_selected_index()]",
+            _js="(x) => [dataset_tag_editor_gl_dataset_images_selected_index()]",
             inputs=lbl_hidden_image_index,
             outputs=[tb_caption_selected_image, txt_filter, lbl_hidden_image_index]
         )
@@ -570,7 +571,7 @@ def on_ui_tabs():
 
         btn_apply_changes_selected_image.click(
             fn=change_tags_selected_image,
-            _js="(a, b, c, d, e) => [a, b, c, d, dataset_tag_editor_gl_dataset_images_selected_index()]",
+            _js="(a, b, c, d) => [a, b, c, dataset_tag_editor_gl_dataset_images_selected_index()]",
             inputs=[tb_edit_caption_selected_image, rd_sort_by, rd_sort_order, lbl_hidden_image_index],
             outputs=[lbl_hidden_image_index]
         )
