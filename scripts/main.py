@@ -163,7 +163,7 @@ def selection_index_changed(idx: int):
 def add_image_selection(idx: int):
     global tmp_selection_img_path_set
     idx = int(idx)
-    img_paths, _ = dataset_tag_editor.get_filtered_imgpath_and_tags(filters=[tag_filter, tag_filter_neg])
+    img_paths, _ = dataset_tag_editor.get_filtered_imgpath_and_tags(filters=[path_filter, tag_filter, tag_filter_neg])
     if idx < 0 or len(img_paths) <= idx:
         idx = -1
     else:
@@ -173,7 +173,7 @@ def add_image_selection(idx: int):
 
 def add_all_displayed_image_selection():
     global tmp_selection_img_path_set
-    img_paths, _ = dataset_tag_editor.get_filtered_imgpath_and_tags(filters=[tag_filter, tag_filter_neg])
+    img_paths, _ = dataset_tag_editor.get_filtered_imgpath_and_tags(filters=[path_filter, tag_filter, tag_filter_neg])
     tmp_selection_img_path_set |= set(img_paths)
     return arrange_selection_order(tmp_selection_img_path_set)
 
@@ -230,7 +230,7 @@ def apply_image_selection_filter(filter_word: str, sort_by: str, sort_order: str
 def gallery_index_changed(idx: int):
     global gallery_selected_image_path
     idx = int(idx)
-    img_paths, _ = dataset_tag_editor.get_filtered_imgpath_and_tags(filters=[tag_filter, tag_filter_neg])
+    img_paths, _ = dataset_tag_editor.get_filtered_imgpath_and_tags(filters=[path_filter, tag_filter, tag_filter_neg])
     tags_txt = ''
     if 0 <= idx and idx < len(img_paths):
         gallery_selected_image_path = img_paths[idx]
@@ -248,7 +248,7 @@ def gallery_index_changed(idx: int):
 
 def change_tags_selected_image(tags_text: str, filter_word:str, sort_by: str, sort_order: str, idx: int):
     idx = int(idx)
-    img_paths, _ = dataset_tag_editor.get_filtered_imgpath_and_tags(filters=[tag_filter, tag_filter_neg])
+    img_paths, _ = dataset_tag_editor.get_filtered_imgpath_and_tags(filters=[path_filter, tag_filter, tag_filter_neg])
 
     edited_tags = [t.strip() for t in tags_text.split(',')]
 
