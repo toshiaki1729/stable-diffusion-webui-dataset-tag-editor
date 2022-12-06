@@ -16,6 +16,8 @@ Copy `https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-editor.
 
 Also, if you see this extension listed, you can install from "Available" tab with a single click.
 
+Please note that if you update this extension from "Extensions" tab, you will need to restart web UI to completely reload.
+
 ### Install Manually
 To install, clone the repository into the `extensions` directory and restart the web UI.
 
