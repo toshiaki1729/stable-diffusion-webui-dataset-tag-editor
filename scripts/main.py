@@ -369,14 +369,14 @@ def on_ui_tabs():
                         4. If you add some tags to the end, they will be added to the end/beginning of the text file.<br>
                         5. Changes are not applied to the text files until the "Save all changes" button is pressed.<br>
                         <b>ex A.</b><br>
-                        &emsp;Original Text = "A, A, B, C"&emsp;Selected Tags = "B, A"&emsp;Edit Tags = "X, Y"<br>
+                        &emsp;Original Text = "A, A, B, C"&emsp;Common Tags = "B, A"&emsp;Edit Tags = "X, Y"<br>
                         &emsp;Result = "Y, Y, X, C"&emsp;(B->X, A->Y)<br>
                         <b>ex B.</b><br>
-                        &emsp;Original Text = "A, B, C"&emsp;Selected Tags = "(nothing)"&emsp;Edit Tags = "X, Y"<br>
+                        &emsp;Original Text = "A, B, C"&emsp;Common Tags = "(nothing)"&emsp;Edit Tags = "X, Y"<br>
                         &emsp;Result = "A, B, C, X, Y"&emsp;(add X and Y to the end (default))<br>
                         &emsp;Result = "X, Y, A, B, C"&emsp;(add X and Y to the beginning ("Prepend additional tags" checked))<br>
                         <b>ex C.</b><br>
-                        &emsp;Original Text = "A, B, C, D, E"&emsp;Selected Tags = "A, B, D"&emsp;Edit Tags = ", X, "<br>
+                        &emsp;Original Text = "A, B, C, D, E"&emsp;Common Tags = "A, B, D"&emsp;Edit Tags = ", X, "<br>
                         &emsp;Result = "X, C, E"&emsp;(A->"", B->X, D->"")<br>
                         """)
                 with gr.Column(variant='panel'):
