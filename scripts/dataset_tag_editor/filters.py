@@ -19,7 +19,7 @@ class TagFilter(Dataset.Filter):
         self.mode = mode
     
     def apply(self, dataset: Dataset):
-        if self.logic == TagFilter.Logic.NONE or self.mode == TagFilter.Logic.NONE:
+        if not self.tags or self.logic == TagFilter.Logic.NONE or self.mode == TagFilter.Logic.NONE:
             return dataset
         
         paths_remove = []

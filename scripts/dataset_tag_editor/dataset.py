@@ -79,3 +79,6 @@ class Dataset:
             tags |= data.tagset
         return tags
 
+    def get_taglist(self):
+        return [t for t in self.get_tagset()]
+

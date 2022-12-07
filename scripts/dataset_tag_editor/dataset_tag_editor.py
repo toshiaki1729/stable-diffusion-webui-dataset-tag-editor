@@ -89,7 +89,7 @@ class DatasetTagEditor:
 
     def write_tags(self, tags: List[str]):
         if tags:
-            return [f'{tag} [{self.tag_counts.get(tag)}]' for tag in tags if tag]
+            return [f'{tag} [{self.tag_counts.get(tag) or 0}]' for tag in tags if tag]
         else:
             return []
 
@@ -116,23 +116,42 @@ class DatasetTagEditor:
         return []
 
 
-    def get_filtered_imgpath_and_tags(self, filters: List[Dataset.Filter] = [], filter_word: Optional[str] = None) -> Tuple[List[str], Set[str]]:
+    def get_filtered_imgpaths(self, filters: List[Dataset.Filter] = []):
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
         
-        tag_set = filtered_set.get_tagset()
         img_paths = sorted(filtered_set.datas.keys())
-
-        if filter_word:
-            # all tags with filter_word
-            tag_set = {tag for tag in tag_set if filter_word in tag}
         
-        return (img_paths, tag_set)
+        return img_paths
 
+
+    def get_filtered_tags(self, filters: List[Dataset.Filter] = [], filter_word: str = '', filter_tags = True):
+        if filter_tags:
+            filtered_set = self.dataset.copy()
+            for filter in filters:
+                filtered_set.filter(filter)
+            tags = filtered_set.get_tagset()
+        else:
+            tags = self.dataset.get_tagset()
+        
+        return {tag for tag in tags if filter_word in tag}
+        
+
+    def get_common_tags(self, filters: List[Dataset.filter] = []):
+        filtered_set = self.dataset.copy()
+        for filter in filters:
+            filtered_set.filter(filter)
+        
+        result = filtered_set.get_tagset()
+        for d in filtered_set.datas.values():
+            result &= d.tagset
+
+        return sorted(result)
+    
 
     def replace_tags(self, search_tags: List[str], replace_tags: List[str], filters: List[Dataset.Filter] = [], prepend: bool = False):
-        img_paths, _ = self.get_filtered_imgpath_and_tags(filters=filters)
+        img_paths = self.get_filtered_imgpaths(filters=filters)
         tags_to_append = replace_tags[len(search_tags):]
         tags_to_remove = search_tags[len(replace_tags):]
         tags_to_replace = {}
@@ -145,6 +164,42 @@ class DatasetTagEditor:
             tags_removed = [t for t in self.dataset.get_data_tags(img_path) if t not in tags_to_remove]
             tags_replaced = [tags_to_replace.get(t) if t in tags_to_replace.keys() else t for t in tags_removed]
             self.set_tags_by_image_path(img_path, tags_to_append + tags_replaced if prepend else tags_replaced + tags_to_append)
+        
+        self.construct_tag_counts()
+
+    def get_replaced_tagset(self, tags: Set[str], search_tags: List[str], replace_tags: List[str]):
+        tags_to_remove = search_tags[len(replace_tags):]
+        tags_to_replace = {}
+        for i in range(min(len(search_tags), len(replace_tags))):
+            if replace_tags[i] is None or replace_tags[i] == '':
+                tags_to_remove.append(search_tags[i])
+            else:
+                tags_to_replace[search_tags[i]] = replace_tags[i]
+        tags_removed = {t for t in tags if t not in tags_to_remove}
+        tags_replaced = {tags_to_replace.get(t) if t in tags_to_replace.keys() else t for t in tags_removed}
+        return {t for t in tags_replaced if t}
+
+
+    def search_and_replace_caption(self, search_text: str, replace_text: str, filters: List[Dataset.Filter] = []):
+        img_paths = self.get_filtered_imgpaths(filters=filters)
+        
+        for img_path in img_paths:
+            caption = ', '.join(self.dataset.get_data_tags(img_path))
+            caption = [t.strip() for t in caption.replace(search_text, replace_text).split(',')]
+            self.set_tags_by_image_path(img_path, caption)
+        
+        self.construct_tag_counts()
+
+
+    def search_and_replace_selected_tags(self, search_text: str, replace_text: str, selected_tags = List[str], filters: List[Dataset.Filter] = []):
+        img_paths = self.get_filtered_imgpaths(filters=filters)
+        
+        selected_tags = set(selected_tags)
+
+        for img_path in img_paths:
+            tags = self.dataset.get_data_tags(img_path)
+            tags = [t.replace(search_text, replace_text) if t in selected_tags else t for t in tags]
+            self.set_tags_by_image_path(img_path, tags)
         
         self.construct_tag_counts()
 
