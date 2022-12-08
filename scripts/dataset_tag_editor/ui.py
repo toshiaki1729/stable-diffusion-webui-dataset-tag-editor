@@ -83,3 +83,4 @@ class TagFilterUI:
     def clear_filter(self):
         self.filter = TagFilter()
         self.filter_word = ''
+        self.selected_tags = []
