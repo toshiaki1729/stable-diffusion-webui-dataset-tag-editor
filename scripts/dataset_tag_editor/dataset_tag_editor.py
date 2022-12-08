@@ -1,6 +1,6 @@
 import os
 import re
-from typing import Optional, List, Tuple, Set
+from typing import List, Set, Optional
 from modules import shared
 from modules.shared import opts, cmd_opts
 from modules.textual_inversion.dataset import re_numbers_at_start
@@ -180,31 +180,59 @@ class DatasetTagEditor:
         return {t for t in tags_replaced if t}
 
 
-    def search_and_replace_caption(self, search_text: str, replace_text: str, filters: List[Dataset.Filter] = []):
+    def search_and_replace_caption(self, search_text: str, replace_text: str, filters: List[Dataset.Filter] = [], use_regex: bool = False):
         img_paths = self.get_filtered_imgpaths(filters=filters)
         
         for img_path in img_paths:
             caption = ', '.join(self.dataset.get_data_tags(img_path))
-            caption = [t.strip() for t in caption.replace(search_text, replace_text).split(',')]
+            if use_regex:
+                caption = [t.strip() for t in re.sub(search_text, replace_text, caption).split(',')]
+            else:
+                caption = [t.strip() for t in caption.replace(search_text, replace_text).split(',')]
             caption = [t for t in caption if t]
             self.set_tags_by_image_path(img_path, caption)
         
         self.construct_tag_counts()
 
 
-    def search_and_replace_selected_tags(self, search_text: str, replace_text: str, selected_tags = List[str], filters: List[Dataset.Filter] = []):
+    def search_and_replace_selected_tags(self, search_text: str, replace_text: str, selected_tags: Optional[Set[str]], filters: List[Dataset.Filter] = [], use_regex: bool = False):
         img_paths = self.get_filtered_imgpaths(filters=filters)
-        
-        selected_tags = set(selected_tags)
 
         for img_path in img_paths:
             tags = self.dataset.get_data_tags(img_path)
-            tags = [t.replace(search_text, replace_text) if t in selected_tags else t for t in tags]
-            tags = [t for t in tags if t]
+            tags = self.search_and_replace_tag_list(search_text, replace_text, tags, selected_tags, use_regex)
             self.set_tags_by_image_path(img_path, tags)
         
         self.construct_tag_counts()
 
+    
+    def search_and_replace_tag_list(self, search_text: str, replace_text: str, tags: List[str], selected_tags: Optional[Set[str]] = None, use_regex: bool = False):
+        if use_regex:
+            if selected_tags is None:
+                tags = [re.sub(search_text, replace_text, t) for t in tags]
+            else:
+                tags = [re.sub(search_text, replace_text, t) if t in selected_tags else t for t in tags]
+        else:
+            if selected_tags is None:
+                tags = [t.replace(search_text, replace_text) for t in tags]
+            else:
+                tags = [t.replace(search_text, replace_text) if t in selected_tags else t for t in tags]
+        return [t for t in tags if t]        
+
+
+    def search_and_replace_tag_set(self, search_text: str, replace_text: str, tags: Set[str], selected_tags: Optional[Set[str]] = None, use_regex: bool = False):
+        if use_regex:
+            if selected_tags is None:
+                tags = {re.sub(search_text, replace_text, t) for t in tags}
+            else:
+                tags = {re.sub(search_text, replace_text, t) if t in selected_tags else t for t in tags}
+        else:
+            if selected_tags is None:
+                tags = {t.replace(search_text, replace_text) for t in tags}
+            else:
+                tags = {t.replace(search_text, replace_text) if t in selected_tags else t for t in tags}
+        return {t for t in tags if t}
+    
 
     def get_img_path_list(self):
         return [k for k in self.dataset.datas.keys() if k]

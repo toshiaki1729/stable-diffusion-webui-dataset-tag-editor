@@ -244,33 +244,22 @@ def apply_edit_tags(search_tags: str, replace_tags: str, prepend: bool):
     return update_filter_and_gallery() + update_common_tags()
 
 
-def search_and_replace(search_text: str, replace_text: str, target_text: str):
+def search_and_replace(search_text: str, replace_text: str, target_text: str, use_regex: bool):
     if target_text == 'Only Selected Tags':
-        selected_tags = tag_filter_ui.selected_tags
-        dataset_tag_editor.search_and_replace_selected_tags(search_text = search_text, replace_text=replace_text, selected_tags=selected_tags, filters=get_filters())
-        tags = set()
-        for t in tag_filter_ui.get_filter().tags:
-            if t in selected_tags:
-                tags.add(t.replace(search_text, replace_text))
-        tag_filter_ui.get_filter().tags = {t for t in tags if t}
+        selected_tags = set(tag_filter_ui.selected_tags)
+        dataset_tag_editor.search_and_replace_selected_tags(search_text = search_text, replace_text=replace_text, selected_tags=selected_tags, filters=get_filters(), use_regex=use_regex)
+        tag_filter_ui.filter.tags = dataset_tag_editor.search_and_replace_tag_set(search_text, replace_text, tag_filter_ui.filter.tags, selected_tags, use_regex)
+        tag_filter_ui_neg.filter.tags = dataset_tag_editor.search_and_replace_tag_set(search_text, replace_text, tag_filter_ui_neg.filter.tags, selected_tags, use_regex)
 
-        tags = set()
-        for t in tag_filter_ui_neg.get_filter().tags:
-            if t in selected_tags:
-                tags.add(t.replace(search_text, replace_text))
-        tag_filter_ui_neg.get_filter().tags = {t for t in tags if t}
+    elif target_text == 'Each Tags':
+        dataset_tag_editor.search_and_replace_selected_tags(search_text = search_text, replace_text=replace_text, selected_tags=None, filters=get_filters(), use_regex=use_regex)
+        tag_filter_ui.filter.tags = dataset_tag_editor.search_and_replace_tag_set(search_text, replace_text, tag_filter_ui.filter.tags, None, use_regex)
+        tag_filter_ui_neg.filter.tags = dataset_tag_editor.search_and_replace_tag_set(search_text, replace_text, tag_filter_ui_neg.filter.tags, None, use_regex)
 
     elif target_text == 'Entire Caption':
-        dataset_tag_editor.search_and_replace_caption(search_text=search_text, replace_text=replace_text, filters=get_filters())
-        tags = set()
-        for t in tag_filter_ui.get_filter().tags:
-            tags.add(t.replace(search_text, replace_text))
-        tag_filter_ui.get_filter().tags = {t for t in tags if t}
-
-        tags = set()
-        for t in tag_filter_ui_neg.get_filter().tags:
-            tags.add(t.replace(search_text, replace_text))
-        tag_filter_ui_neg.get_filter().tags = {t for t in tags if t}
+        dataset_tag_editor.search_and_replace_caption(search_text=search_text, replace_text=replace_text, filters=get_filters(), use_regex=use_regex)
+        tag_filter_ui.filter.tags = dataset_tag_editor.search_and_replace_tag_set(search_text, replace_text, tag_filter_ui.filter.tags, None, use_regex)
+        tag_filter_ui_neg.filter.tags = dataset_tag_editor.search_and_replace_tag_set(search_text, replace_text, tag_filter_ui_neg.filter.tags, None, use_regex)
     
     return update_filter_and_gallery() + update_common_tags()
 
@@ -383,7 +372,8 @@ def on_ui_tabs():
                     gr.HTML('Search and Replace for all images displayed.')
                     tb_sr_search_tags = gr.Textbox(label='Search Text', interactive=True)
                     tb_sr_replace_tags = gr.Textbox(label='Replace Text', interactive=True)
-                    rb_sr_replace_target = gr.Radio(['Only Selected Tags', 'Entire Caption'], value='Only Selected Tags', label='Search and Replace in', interactive=True)
+                    cb_use_regex = gr.Checkbox(label='Use regex')
+                    rb_sr_replace_target = gr.Radio(['Only Selected Tags', 'Each Tags', 'Entire Caption'], value='Only Selected Tags', label='Search and Replace in', interactive=True)
                     tb_sr_selected_tags = gr.Textbox(label='Selected Tags', interactive=False, lines=2)
                     btn_apply_sr_tags = gr.Button(value='Search and Replace', variant='primary')
                     
@@ -498,7 +488,7 @@ def on_ui_tabs():
 
         btn_apply_sr_tags.click(
             fn=search_and_replace,
-            inputs=[tb_sr_search_tags, tb_sr_replace_tags, rb_sr_replace_target],
+            inputs=[tb_sr_search_tags, tb_sr_replace_tags, rb_sr_replace_target, cb_use_regex],
             outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags]
         )
 
