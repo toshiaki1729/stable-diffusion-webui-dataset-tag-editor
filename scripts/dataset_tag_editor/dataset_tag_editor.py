@@ -186,6 +186,7 @@ class DatasetTagEditor:
         for img_path in img_paths:
             caption = ', '.join(self.dataset.get_data_tags(img_path))
             caption = [t.strip() for t in caption.replace(search_text, replace_text).split(',')]
+            caption = [t for t in caption if t]
             self.set_tags_by_image_path(img_path, caption)
         
         self.construct_tag_counts()
@@ -199,6 +200,7 @@ class DatasetTagEditor:
         for img_path in img_paths:
             tags = self.dataset.get_data_tags(img_path)
             tags = [t.replace(search_text, replace_text) if t in selected_tags else t for t in tags]
+            tags = [t for t in tags if t]
             self.set_tags_by_image_path(img_path, tags)
         
         self.construct_tag_counts()
