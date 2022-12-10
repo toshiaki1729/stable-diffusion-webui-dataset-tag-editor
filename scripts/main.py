@@ -568,15 +568,10 @@ def on_ui_tabs():
         # Edit Caption of Selected Image tab
 
         btn_hidden_set_index.click(
-            fn=gallery_index_changed,
-            _js="(x) => [dataset_tag_editor_gl_dataset_images_selected_index()]",
-            inputs=[nb_hidden_image_index],
-            outputs=[tb_caption_selected_image, txt_gallery, nb_hidden_image_index]
-        )
-        btn_hidden_set_index.click(
-            fn=get_current_move_or_delete_target_num,
+            fn=lambda t, i: gallery_index_changed(i) + [get_current_move_or_delete_target_num(t, i)],
+            _js="(x, y) => [x, dataset_tag_editor_gl_dataset_images_selected_index()]",
             inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
-            outputs=[ta_move_or_delete_target_dataset_num]
+            outputs=[tb_caption_selected_image, txt_gallery, nb_hidden_image_index] + [ta_move_or_delete_target_dataset_num]
         )
 
         btn_copy_caption.click(
