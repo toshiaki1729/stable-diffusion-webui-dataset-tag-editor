@@ -19,6 +19,7 @@ displayed_image_num = 0
 tmp_selection_img_path_set = set()
 gallery_selected_image_path = ''
 selection_selected_image_path = ''
+show_only_selected_tags = True
 
 
 # ================================================================
@@ -101,7 +102,10 @@ def clear_tag_filters():
 
 
 def update_common_tags():
-    tags = ', '.join(dataset_tag_editor.get_common_tags(filters=get_filters()))
+    if show_only_selected_tags:
+        tags = ', '.join([t for t in dataset_tag_editor.get_common_tags(filters=get_filters()) if t in tag_filter_ui.filter.tags])
+    else:
+        tags = ', '.join(dataset_tag_editor.get_common_tags(filters=get_filters()))
     return [tags, tags]
 
 
@@ -277,6 +281,12 @@ def search_and_replace(search_text: str, replace_text: str, target_text: str, us
     return update_filter_and_gallery() + update_common_tags()
 
 
+def cb_show_only_tags_selected_changed(value: bool):
+    global show_only_selected_tags
+    show_only_selected_tags = value
+    return update_common_tags()
+
+
 # ================================================================
 # Callbacks for "Move or Delete Files" tab
 # ================================================================
@@ -397,6 +407,7 @@ def on_ui_tabs():
             with gr.Tab(label='Batch Edit Captions'):
                 with gr.Column(variant='panel'):
                     gr.HTML('Edit common tags.')
+                    cb_show_only_tags_selected = gr.Checkbox(value=True, label='Show only the tags selected in the Positive Filter')
                     tb_common_tags = gr.Textbox(label='Common Tags', interactive=False)
                     tb_edit_tags = gr.Textbox(label='Edit Tags', interactive=True)
                     cb_prepend_tags = gr.Checkbox(value=False, label='Prepend additional tags')
@@ -565,6 +576,12 @@ def on_ui_tabs():
             fn=search_and_replace,
             inputs=[tb_sr_search_tags, tb_sr_replace_tags, rb_sr_replace_target, cb_use_regex],
             outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags]
+        )
+
+        cb_show_only_tags_selected.change(
+            fn=cb_show_only_tags_selected_changed,
+            inputs=cb_show_only_tags_selected,
+            outputs=[tb_common_tags, tb_edit_tags]
         )
 
         #----------------------------------------------------------------
