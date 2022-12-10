@@ -201,7 +201,7 @@ def apply_image_selection_filter():
 # Callbacks for "Edit Caption of Selected Image" tab
 # ================================================================
 
-def gallery_index_changed(idx: int):
+def gallery_index_changed(idx: int, edit_caption: str, copy_automatically: bool):
     global gallery_selected_image_path
     idx = int(idx)
     img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=get_filters())
@@ -215,6 +215,7 @@ def gallery_index_changed(idx: int):
     
     return [
         tags_txt,
+        tags_txt if copy_automatically else edit_caption,
         get_current_gallery_txt(),
         idx
         ]
@@ -456,7 +457,7 @@ def on_ui_tabs():
                         btn_copy_interrogate = gr.Button(value='Copy and Overwrite')
                         btn_prepend_interrogate = gr.Button(value='Prepend')
                         btn_append_interrogate = gr.Button(value='Append')
-
+                cb_copy_caption_automatically = gr.Checkbox(value=False, label='Copy caption from selected images automatically')
                 tb_edit_caption_selected_image = gr.Textbox(label='Edit Caption', interactive=True, lines=6)
                 btn_apply_changes_selected_image = gr.Button(value='Apply changes to selected image', variant='primary')
 
@@ -588,10 +589,10 @@ def on_ui_tabs():
         # Edit Caption of Selected Image tab
 
         btn_hidden_set_index.click(
-            fn=lambda t, i: gallery_index_changed(i) + [get_current_move_or_delete_target_num(t, i)],
-            _js="(x, y) => [x, dataset_tag_editor_gl_dataset_images_selected_index()]",
-            inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
-            outputs=[tb_caption_selected_image, txt_gallery, nb_hidden_image_index] + [ta_move_or_delete_target_dataset_num]
+            fn=lambda t, e, c, i: gallery_index_changed(i, e, c) + [get_current_move_or_delete_target_num(t, i)],
+            _js="(x, y, z, w) => [x, y, z, dataset_tag_editor_gl_dataset_images_selected_index()]",
+            inputs=[rb_move_or_delete_target_data, tb_edit_caption_selected_image, cb_copy_caption_automatically, nb_hidden_image_index],
+            outputs=[tb_caption_selected_image, tb_edit_caption_selected_image, txt_gallery, nb_hidden_image_index] + [ta_move_or_delete_target_dataset_num]
         )
 
         btn_copy_caption.click(
