@@ -4,8 +4,8 @@ from scripts.dataset_tag_editor.dataset import Dataset
 from typing import List, Callable
 
 class TagFilterUI:
-    def __init__(self, dataset_tag_editor: DatasetTagEditor, tag_filter_mode: TagFilter.Mode = TagFilter.Mode.INCLUSIVE):
-        self.logic = TagFilter.Logic.NONE
+    def __init__(self, dataset_tag_editor: DatasetTagEditor, tag_filter_logic: TagFilter.Mode = TagFilter.Logic.AND, tag_filter_mode: TagFilter.Mode = TagFilter.Mode.INCLUSIVE):
+        self.logic = tag_filter_logic
         self.filter_word = ''
         self.sort_by = 'Alphabetical Order'
         self.sort_order = 'Ascending'

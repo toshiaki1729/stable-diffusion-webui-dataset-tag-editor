@@ -10,7 +10,7 @@ dataset_tag_editor = DatasetTagEditor()
 
 path_filter = PathFilter()
 tag_filter_ui = TagFilterUI(dataset_tag_editor)
-tag_filter_ui_neg = TagFilterUI(dataset_tag_editor, TagFilter.Mode.EXCLUSIVE)
+tag_filter_ui_neg = TagFilterUI(dataset_tag_editor, tag_filter_logic=TagFilter.Mode.EXCLUSIVE)
 
 get_filters = lambda:[path_filter, tag_filter_ui.get_filter(), tag_filter_ui_neg.get_filter()]
 
