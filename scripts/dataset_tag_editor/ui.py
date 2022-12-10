@@ -26,7 +26,7 @@ class TagFilterUI:
         with gr.Row():
             self.rd_sort_by = gr.Radio(choices=['Alphabetical Order', 'Frequency'], value='Alphabetical Order', interactive=True, label='Sort by')
             self.rd_sort_order = gr.Radio(choices=['Ascending', 'Descending'], value='Ascending', interactive=True, label='Sort Order')
-        self.rd_logic = gr.Radio(choices=['NONE', 'AND', 'OR'], value='NONE', label='Filter Logic', interactive=True)
+        self.rd_logic = gr.Radio(choices=['AND', 'OR', 'NONE'], value='AND', label='Filter Logic', interactive=True)
         self.cbg_tags = gr.CheckboxGroup(label='Filter Images by Tags', interactive=True)
     
 
