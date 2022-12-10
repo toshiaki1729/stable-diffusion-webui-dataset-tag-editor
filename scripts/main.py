@@ -38,6 +38,16 @@ def get_current_txt_selection():
     return f"""Selected Image : {selection_selected_image_path}"""
 
 
+def get_current_move_or_delete_target_num(target_data: str, idx: int):
+    if target_data == 'Selected One':
+        idx = int(idx)
+        return f'Target dataset num: {1 if idx != -1 else 0}'
+        
+    elif target_data == 'All Displayed Ones':
+        img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=get_filters())
+        return f'Target dataset num: {len(img_paths)}'
+
+
 def load_files_from_dir(dir: str, recursive: bool, load_caption_from_filename: bool, use_interrogator: str, use_clip: bool, use_booru: bool):
     global total_image_num, displayed_image_num, tmp_selection_img_path_set, gallery_selected_image_path, selection_selected_image_path, path_filter
     
@@ -265,6 +275,44 @@ def search_and_replace(search_text: str, replace_text: str, target_text: str, us
 
 
 # ================================================================
+# Callbacks for "Move or Delete Files" tab
+# ================================================================
+
+def move_files(target_data: str, target_file: List[str], dest_dir: str, idx: int = -1):
+    move_img = 'Image File' in target_file
+    move_txt = 'Caption Text File' in target_file
+    move_bak = 'Caption Backup File' in target_file
+    if target_data == 'Selected One':
+        idx = int(idx)
+        img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=get_filters())
+        if  0 <= idx and idx < len(img_paths):
+            dataset_tag_editor.move_dataset_file(img_paths[idx], dest_dir, move_img, move_txt, move_bak)
+            dataset_tag_editor.construct_tag_counts()
+        
+    elif target_data == 'All Displayed Ones':
+        dataset_tag_editor.move_dataset(dest_dir, get_filters(), move_img, move_txt, move_bak)
+
+    return update_filter_and_gallery() + update_common_tags()
+
+
+def delete_files(target_data: str, target_file: List[str], idx: int = -1):
+    delete_img = 'Image File' in target_file
+    delete_txt = 'Caption Text File' in target_file
+    delete_bak = 'Caption Backup File' in target_file
+    if target_data == 'Selected One':
+        idx = int(idx)
+        img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=get_filters())
+        if  0 <= idx and idx < len(img_paths):
+            dataset_tag_editor.delete_dataset_file(delete_img, delete_txt, delete_bak)
+            dataset_tag_editor.construct_tag_counts()
+    
+    elif target_data == 'All Displayed Ones':
+        dataset_tag_editor.delete_dataset(get_filters(), delete_img, delete_txt, delete_bak)
+
+    return update_filter_and_gallery() + update_common_tags()
+
+
+# ================================================================
 # Script Callbacks
 # ================================================================
 
@@ -399,6 +447,15 @@ def on_ui_tabs():
                 btn_apply_changes_selected_image = gr.Button(value='Apply changes to selected image', variant='primary')
 
                 gr.HTML("""Changes are not applied to the text files until the "Save all changes" button is pressed.""")
+
+            with gr.Tab(label='Move or Delete Files'):
+                gr.HTML(value='<b>Note: </b>Moved or deleted images will be unloaded.')
+                rb_move_or_delete_target_data = gr.Radio(choices=['Selected One', 'All Displayed Ones'], label='Move or Delete')
+                cbg_move_or_delete_target_file = gr.CheckboxGroup(choices=['Image File', 'Caption Text File', 'Caption Backup File'], label='Target')
+                ta_move_or_delete_target_dataset_num = gr.HTML(value='Target dataset num: 0')
+                tb_move_or_delete_destination_dir = gr.Textbox(label='Destination Directory')
+                btn_move_or_delete_move_files = gr.Button(value='Move File(s)', variant='primary')
+                btn_move_or_delete_delete_files = gr.Button(value='DELETE File(s)', variant='primary')
         
         #----------------------------------------------------------------
         # Filter and Edit Tags tab
@@ -408,8 +465,23 @@ def on_ui_tabs():
             outputs=[txt_result]
         )
 
-        tag_filter_ui.set_callbacks(on_filter_update=lambda:update_gallery() + update_common_tags() + [', '.join(tag_filter_ui.filter.tags)], outputs=[gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags])
-        tag_filter_ui_neg.set_callbacks(on_filter_update=lambda:update_gallery() + update_common_tags() + [', '.join(tag_filter_ui.filter.tags)], outputs=[gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags])
+        tag_filter_ui.set_callbacks(
+            on_filter_update=lambda:
+            update_gallery() +
+            update_common_tags() +
+            [', '.join(tag_filter_ui.filter.tags)] +
+            [get_current_move_or_delete_target_num(rb_move_or_delete_target_data, nb_hidden_image_index)],
+            outputs=[gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags] + [ta_move_or_delete_target_dataset_num]
+        )
+
+        tag_filter_ui_neg.set_callbacks(
+            on_filter_update=lambda:
+            update_gallery() +
+            update_common_tags() +
+            [', '.join(tag_filter_ui_neg.filter.tags)] +
+            [get_current_move_or_delete_target_num(rb_move_or_delete_target_data, nb_hidden_image_index)],
+            outputs=[gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags] + [ta_move_or_delete_target_dataset_num]
+        )
 
         btn_load_datasets.click(
             fn=load_files_from_dir,
@@ -501,6 +573,11 @@ def on_ui_tabs():
             inputs=[nb_hidden_image_index],
             outputs=[tb_caption_selected_image, txt_gallery, nb_hidden_image_index]
         )
+        btn_hidden_set_index.click(
+            fn=get_current_move_or_delete_target_num,
+            inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
+            outputs=[ta_move_or_delete_target_dataset_num]
+        )
 
         btn_copy_caption.click(
             fn=lambda a:a,
@@ -558,6 +635,27 @@ def on_ui_tabs():
             fn=lambda a:a,
             inputs=[tb_edit_caption_selected_image],
             outputs=[tb_caption_selected_image]
+        )
+
+        #----------------------------------------------------------------
+        # Move or Delete Files
+
+        rb_move_or_delete_target_data.change(
+            fn=get_current_move_or_delete_target_num,
+            inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
+            outputs=[ta_move_or_delete_target_dataset_num]
+        )
+
+        btn_move_or_delete_move_files.click(
+            fn=move_files,
+            inputs=[rb_move_or_delete_target_data, cbg_move_or_delete_target_file, tb_move_or_delete_destination_dir, nb_hidden_image_index],
+            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags]
+        )
+
+        btn_move_or_delete_delete_files.click(
+            fn=delete_files,
+            inputs=[rb_move_or_delete_target_data, cbg_move_or_delete_target_file, nb_hidden_image_index],
+            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags]
         )
 
     return [(dataset_tag_editor_interface, "Dataset Tag Editor", "dataset_tag_editor_interface")]

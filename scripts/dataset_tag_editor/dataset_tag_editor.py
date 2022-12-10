@@ -242,6 +242,105 @@ class DatasetTagEditor:
         return {k for k in self.dataset.datas.keys() if k}
 
 
+    def delete_dataset(self, filters: List[Dataset.Filter], delete_image: bool = False, delete_caption: bool = False, delete_backup: bool = False):
+        filtered_set = self.dataset.copy()
+        for filter in filters:
+            filtered_set.filter(filter)
+        for path in filtered_set.datas.keys():
+            self.delete_dataset_file(path, delete_image, delete_caption, delete_backup)
+        
+        if delete_image:
+            self.dataset.remove(filtered_set)
+            print(list(self.dataset.datas.values()))
+            self.construct_tag_counts()
+
+
+    def move_dataset(self, dest_dir: str, filters: List[Dataset.Filter], move_image: bool = False, move_caption: bool = False, move_backup: bool = False):
+        filtered_set = self.dataset.copy()
+        for filter in filters:
+            filtered_set.filter(filter)
+        for path in filtered_set.datas.keys():
+            self.move_dataset_file(path, dest_dir, move_image, move_caption, move_backup)
+        
+        if move_image:
+            self.construct_tag_counts()
+
+    
+    def delete_dataset_file(self, img_path: str, delete_image: bool = False, delete_caption: bool = False, delete_backup: bool = False):
+        if img_path not in self.dataset.datas.keys():
+            return
+        
+        if delete_image:
+            try:
+                if os.path.exists(img_path) and os.path.isfile(img_path):
+                    os.remove(img_path)
+                    self.dataset.remove_by_path(img_path)
+                    print(f'Deleted {img_path}')
+            except Exception as e:
+                print(e)
+        
+        if delete_caption:
+            try:
+                filepath_noext, _ = os.path.splitext(img_path)
+                txt_path = filepath_noext + '.txt'
+                if os.path.exists(txt_path) and os.path.isfile(txt_path):
+                    os.remove(txt_path)
+                    print(f'Deleted {txt_path}')
+            except Exception as e:
+                print(e)
+        
+        if delete_backup:
+            try:
+                filepath_noext, _ = os.path.splitext(img_path)
+                for extnum in range(1000):
+                    bak_path = filepath_noext + f'.{extnum:0>3d}'
+                    if os.path.exists(bak_path) and os.path.isfile(bak_path):
+                        os.remove(bak_path)
+                        print(f'Deleted {bak_path}')
+            except Exception as e:
+                print(e)
+    
+
+    def move_dataset_file(self, img_path: str, dest_dir: str, move_image: bool = False, move_caption: bool = False, move_backup: bool = False):
+        if img_path not in self.dataset.datas.keys():
+            return
+        
+        if (move_image or move_caption or move_backup) and not os.path.exists(dest_dir):
+            os.mkdir(dest_dir)
+
+        if move_image:
+            try:
+                dst_path = os.path.join(dest_dir, os.path.basename(img_path))
+                if os.path.exists(img_path) and os.path.isfile(img_path):
+                    os.replace(img_path, dst_path)
+                    self.dataset.remove_by_path(img_path)
+                    print(f'Moved {img_path} -> {dst_path}')
+            except Exception as e:
+                print(e)
+        
+        if move_caption:
+            try:
+                filepath_noext, _ = os.path.splitext(img_path)
+                txt_path = filepath_noext + '.txt'
+                dst_path = os.path.join(dest_dir, os.path.basename(txt_path))
+                if os.path.exists(txt_path) and os.path.isfile(txt_path):
+                    os.replace(txt_path, dst_path)
+                    print(f'Moved {txt_path} -> {dst_path}')
+            except Exception as e:
+                print(e)
+        
+        if move_backup:
+            try:
+                filepath_noext, _ = os.path.splitext(img_path)
+                for extnum in range(1000):
+                    bak_path = filepath_noext + f'.{extnum:0>3d}'
+                    dst_path = os.path.join(dest_dir, os.path.basename(bak_path))
+                    if os.path.exists(bak_path) and os.path.isfile(bak_path):
+                        os.replace(bak_path, dst_path)
+                        print(f'Moved {bak_path} -> {dst_path}')
+            except Exception as e:
+                print(e)
+
 
     def load_dataset(self, img_dir: str, recursive: bool = False, load_caption_from_filename: bool = True, interrogate_method: InterrogateMethod = InterrogateMethod.NONE, use_booru: bool = True, use_clip: bool = False):
         self.clear()
