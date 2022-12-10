@@ -81,6 +81,6 @@ class TagFilterUI:
 
 
     def clear_filter(self):
-        self.filter = TagFilter()
+        self.filter = TagFilter(logic=TagFilter.Logic.AND, mode=TagFilter.Mode.INCLUSIVE)
         self.filter_word = ''
         self.selected_tags = []
