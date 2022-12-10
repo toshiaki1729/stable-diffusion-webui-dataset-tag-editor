@@ -232,7 +232,7 @@ def change_selected_image_caption(tags_text: str, idx: int):
         idx = -1
     else:
         dataset_tag_editor.set_tags_by_image_path(imgpath=img_paths[idx], tags=edited_tags)
-    return update_filter_and_gallery() + update_common_tags() + [idx]
+    return update_filter_and_gallery() + update_common_tags()
 
 
 def interrogate_selected_image_clip():
@@ -589,9 +589,15 @@ def on_ui_tabs():
         # Edit Caption of Selected Image tab
 
         btn_hidden_set_index.click(
-            fn=lambda t, e, c, i: gallery_index_changed(i, e, c) + [get_current_move_or_delete_target_num(t, i)],
-            _js="(x, y, z, w) => [x, y, z, dataset_tag_editor_gl_dataset_images_selected_index()]",
-            inputs=[rb_move_or_delete_target_data, tb_edit_caption_selected_image, cb_copy_caption_automatically, nb_hidden_image_index],
+            fn=lambda x:x,
+            _js="(x) => dataset_tag_editor_gl_dataset_images_selected_index()",
+            inputs=nb_hidden_image_index,
+            outputs=nb_hidden_image_index
+        )
+
+        nb_hidden_image_index.change(
+            fn=lambda e,c,i,t: gallery_index_changed(i, e, c) + [get_current_move_or_delete_target_num(t, i)],
+            inputs=[tb_edit_caption_selected_image, cb_copy_caption_automatically, nb_hidden_image_index] + [rb_move_or_delete_target_data],
             outputs=[tb_caption_selected_image, tb_edit_caption_selected_image, txt_gallery, nb_hidden_image_index] + [ta_move_or_delete_target_dataset_num]
         )
 
@@ -644,7 +650,7 @@ def on_ui_tabs():
         btn_apply_changes_selected_image.click(
             fn=change_selected_image_caption,
             inputs=[tb_edit_caption_selected_image, nb_hidden_image_index],
-            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [nb_hidden_image_index]
+            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags]
         )
         
         btn_apply_changes_selected_image.click(

@@ -29,7 +29,6 @@ let dataset_tag_editor_gl_dataset_images_key_handler = function (e) {
             e.preventDefault();
             break;
     }
-    dataset_tag_editor_gl_dataset_images_clicked();
 }
 
 
@@ -51,18 +50,44 @@ let dataset_tag_editor_gl_selected_images_key_handler = function (e) {
             e.preventDefault();
             break;
     }
-    dataset_tag_editor_gl_selected_images_clicked();
 }
 
+let observing_dataset = false
+let observing_selected = false
+
 document.addEventListener("DOMContentLoaded", function () {
+    let o_gl_dataset = new MutationObserver(function (m){
+        dataset_tag_editor_gl_dataset_images_clicked()
+    })
+    let o_gl_selected = new MutationObserver(function (m){
+        dataset_tag_editor_gl_selected_images_clicked()
+    })
     let o = new MutationObserver(function (m) {
-        dteModifiedGallery_dataset.setElement(gradioApp().getElementById("dataset_tag_editor_dataset_gallery"))
-        dteModifiedGallery_dataset.addKeyHandler(dataset_tag_editor_gl_dataset_images_key_handler)
-        dteModifiedGallery_dataset.addClickHandler(dataset_tag_editor_gl_dataset_images_clicked)
-        
-        dteModifiedGallery_filter.setElement(gradioApp().getElementById("dataset_tag_editor_selection_gallery"))
-        dteModifiedGallery_filter.addKeyHandler(dataset_tag_editor_gl_selected_images_key_handler)
-        dteModifiedGallery_filter.addClickHandler(dataset_tag_editor_gl_selected_images_clicked)
+        let elem_gl_dataset = gradioApp().getElementById("dataset_tag_editor_dataset_gallery")
+        let elem_gl_selected = gradioApp().getElementById("dataset_tag_editor_selection_gallery")
+        if(elem_gl_dataset){
+            dteModifiedGallery_dataset.setElement(elem_gl_dataset)
+            dteModifiedGallery_dataset.addKeyHandler(dataset_tag_editor_gl_dataset_images_key_handler)
+            if(!observing_dataset){
+                o_gl_dataset.observe(elem_gl_dataset, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"]})
+                observing_dataset = true
+            }
+        }else{
+            o_gl_dataset.disconnect()
+            observing_dataset = false
+        }
+        if(elem_gl_selected){
+            dteModifiedGallery_filter.setElement(elem_gl_selected)
+            dteModifiedGallery_filter.addKeyHandler(dataset_tag_editor_gl_selected_images_key_handler)
+            if(!observing_selected){
+                o_gl_selected.observe(elem_gl_selected, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"]})
+                observing_selected = true
+            }
+        }else{
+            o_gl_selected.disconnect()
+            observing_selected = false
+        }
     });
-    o.observe(gradioApp(), { childList: true, subtree: true });
+    
+    o.observe(gradioApp(), { childList: true, subtree: true })
 });
