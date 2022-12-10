@@ -47,6 +47,9 @@ def get_current_move_or_delete_target_num(target_data: str, idx: int):
         img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=get_filters())
         return f'Target dataset num: {len(img_paths)}'
 
+    else:
+        return f'Target dataset num: 0'
+
 
 def load_files_from_dir(dir: str, recursive: bool, load_caption_from_filename: bool, use_interrogator: str, use_clip: bool, use_booru: bool):
     global total_image_num, displayed_image_num, tmp_selection_img_path_set, gallery_selected_image_path, selection_selected_image_path, path_filter
