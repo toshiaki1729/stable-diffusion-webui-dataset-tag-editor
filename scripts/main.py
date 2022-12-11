@@ -503,9 +503,8 @@ def on_ui_tabs():
             on_filter_update=lambda:
             update_gallery() +
             update_common_tags() +
-            [', '.join(tag_filter_ui_neg.filter.tags)] +
             [get_current_move_or_delete_target_num(rb_move_or_delete_target_data, nb_hidden_image_index)],
-            outputs=[gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags] + [ta_move_or_delete_target_dataset_num]
+            outputs=[gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [ta_move_or_delete_target_dataset_num]
         )
 
         btn_load_datasets.click(
