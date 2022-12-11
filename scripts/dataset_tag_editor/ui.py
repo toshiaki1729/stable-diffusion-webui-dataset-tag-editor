@@ -30,12 +30,12 @@ class TagFilterUI:
         self.cbg_tags = gr.CheckboxGroup(label='Filter Images by Tags', interactive=True)
     
 
-    def set_callbacks(self, on_filter_update: Callable[[], List] = lambda:[], outputs=None):
+    def set_callbacks(self, on_filter_update: Callable[[List], List] = lambda:[], inputs=[], outputs=[]):
         self.tb_search_tags.change(fn=self.tb_search_tags_changed, inputs=self.tb_search_tags, outputs=self.cbg_tags)
         self.rd_sort_by.change(fn=self.rd_sort_by_changed, inputs=self.rd_sort_by, outputs=self.cbg_tags)
         self.rd_sort_order.change(fn=self.rd_sort_order_changed, inputs=self.rd_sort_order, outputs=self.cbg_tags)
-        self.rd_logic.change(fn=lambda a:[self.rd_logic_changed(a)] + on_filter_update(), inputs=self.rd_logic, outputs=[self.cbg_tags] + outputs)
-        self.cbg_tags.change(fn=lambda a:[self.cbg_tags_changed(a)] + on_filter_update(), inputs=self.cbg_tags, outputs=[self.cbg_tags] + outputs)
+        self.rd_logic.change(fn=lambda a, *b:[self.rd_logic_changed(a)] + on_filter_update(*b), inputs=[self.rd_logic] + inputs, outputs=[self.cbg_tags] + outputs)
+        self.cbg_tags.change(fn=lambda a, *b:[self.cbg_tags_changed(a)] + on_filter_update(*b), inputs=[self.cbg_tags] + inputs, outputs=[self.cbg_tags] + outputs)
 
 
     def tb_search_tags_changed(self, tb_search_tags: str):

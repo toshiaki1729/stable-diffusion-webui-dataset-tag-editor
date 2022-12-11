@@ -92,13 +92,13 @@ def update_gallery():
 
 
 def update_filter_and_gallery():
-    return [tag_filter_ui.cbg_tags_update(), tag_filter_ui_neg.cbg_tags_update()] + update_gallery()
+    return [tag_filter_ui.cbg_tags_update(), tag_filter_ui_neg.cbg_tags_update()] + update_gallery() + update_common_tags() + [', '.join(tag_filter_ui.filter.tags)]
 
 
 def clear_tag_filters():
     tag_filter_ui.clear_filter()
     tag_filter_ui_neg.clear_filter()
-    return update_filter_and_gallery() + update_common_tags()
+    return update_filter_and_gallery()
 
 
 def update_common_tags():
@@ -194,7 +194,7 @@ def apply_image_selection_filter():
         path_filter = PathFilter(tmp_selection_img_path_set, PathFilter.Mode.INCLUSIVE)
     else:
         path_filter = PathFilter()
-    return update_filter_and_gallery() + update_common_tags()
+    return update_filter_and_gallery()
     
 
 # ================================================================
@@ -232,7 +232,7 @@ def change_selected_image_caption(tags_text: str, idx: int):
         idx = -1
     else:
         dataset_tag_editor.set_tags_by_image_path(imgpath=img_paths[idx], tags=edited_tags)
-    return update_filter_and_gallery() + update_common_tags()
+    return update_filter_and_gallery()
 
 
 def interrogate_selected_image_clip():
@@ -267,7 +267,7 @@ def apply_edit_tags(search_tags: str, replace_tags: str, prepend: bool):
     tag_filter_ui.get_filter().tags = dataset_tag_editor.get_replaced_tagset(tag_filter_ui.get_filter().tags, search_tags, replace_tags)
     tag_filter_ui_neg.get_filter().tags = dataset_tag_editor.get_replaced_tagset(tag_filter_ui_neg.get_filter().tags, search_tags, replace_tags)
 
-    return update_filter_and_gallery() + update_common_tags()
+    return update_filter_and_gallery()
 
 
 def search_and_replace(search_text: str, replace_text: str, target_text: str, use_regex: bool):
@@ -287,7 +287,7 @@ def search_and_replace(search_text: str, replace_text: str, target_text: str, us
         tag_filter_ui.filter.tags = dataset_tag_editor.search_and_replace_tag_set(search_text, replace_text, tag_filter_ui.filter.tags, None, use_regex)
         tag_filter_ui_neg.filter.tags = dataset_tag_editor.search_and_replace_tag_set(search_text, replace_text, tag_filter_ui_neg.filter.tags, None, use_regex)
     
-    return update_filter_and_gallery() + update_common_tags()
+    return update_filter_and_gallery()
 
 
 def cb_show_only_tags_selected_changed(value: bool):
@@ -314,7 +314,7 @@ def move_files(target_data: str, target_file: List[str], dest_dir: str, idx: int
     elif target_data == 'All Displayed Ones':
         dataset_tag_editor.move_dataset(dest_dir, get_filters(), move_img, move_txt, move_bak)
 
-    return update_filter_and_gallery() + update_common_tags()
+    return update_filter_and_gallery()
 
 
 def delete_files(target_data: str, target_file: List[str], idx: int = -1):
@@ -331,7 +331,7 @@ def delete_files(target_data: str, target_file: List[str], idx: int = -1):
     elif target_data == 'All Displayed Ones':
         dataset_tag_editor.delete_dataset(get_filters(), delete_img, delete_txt, delete_bak)
 
-    return update_filter_and_gallery() + update_common_tags()
+    return update_filter_and_gallery()
 
 
 # ================================================================
@@ -491,19 +491,21 @@ def on_ui_tabs():
         )
 
         tag_filter_ui.set_callbacks(
-            on_filter_update=lambda:
+            on_filter_update=lambda a, b:
             update_gallery() +
             update_common_tags() +
             [', '.join(tag_filter_ui.filter.tags)] +
-            [get_current_move_or_delete_target_num(rb_move_or_delete_target_data, nb_hidden_image_index)],
+            [get_current_move_or_delete_target_num(a, b)],
+            inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
             outputs=[gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags] + [ta_move_or_delete_target_dataset_num]
         )
 
         tag_filter_ui_neg.set_callbacks(
-            on_filter_update=lambda:
+            on_filter_update=lambda a, b:
             update_gallery() +
             update_common_tags() +
-            [get_current_move_or_delete_target_num(rb_move_or_delete_target_data, nb_hidden_image_index)],
+            [get_current_move_or_delete_target_num(a, b)],
+            inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
             outputs=[gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [ta_move_or_delete_target_dataset_num]
         )
 
@@ -519,7 +521,12 @@ def on_ui_tabs():
 
         btn_clear_tag_filters.click(
             fn=clear_tag_filters,
-            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags]
+            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags]
+        )
+        btn_clear_tag_filters.click(
+            fn=get_current_move_or_delete_target_num,
+            inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
+            outputs=[ta_move_or_delete_target_dataset_num]
         )
 
         btn_clear_all_filters.click(
@@ -528,7 +535,12 @@ def on_ui_tabs():
         )
         btn_clear_all_filters.click(
             fn=clear_tag_filters,
-            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags]
+            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags]
+        )
+        btn_clear_all_filters.click(
+            fn=get_current_move_or_delete_target_num,
+            inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
+            outputs=[ta_move_or_delete_target_dataset_num]
         )
 
         #----------------------------------------------------------------
@@ -570,7 +582,12 @@ def on_ui_tabs():
 
         btn_apply_image_selection_filter.click(
             fn=apply_image_selection_filter,
-            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags]
+            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags]
+        )
+        btn_apply_image_selection_filter.click(
+            fn=get_current_move_or_delete_target_num,
+            inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
+            outputs=[ta_move_or_delete_target_dataset_num]
         )
 
         #----------------------------------------------------------------
@@ -579,13 +596,23 @@ def on_ui_tabs():
         btn_apply_edit_tags.click(
             fn=apply_edit_tags,
             inputs=[tb_common_tags, tb_edit_tags, cb_prepend_tags],
-            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags]
+            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags]
+        )
+        btn_apply_edit_tags.click(
+            fn=get_current_move_or_delete_target_num,
+            inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
+            outputs=[ta_move_or_delete_target_dataset_num]
         )
 
         btn_apply_sr_tags.click(
             fn=search_and_replace,
             inputs=[tb_sr_search_tags, tb_sr_replace_tags, rb_sr_replace_target, cb_use_regex],
-            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags]
+            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags]
+        )
+        btn_apply_sr_tags.click(
+            fn=get_current_move_or_delete_target_num,
+            inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
+            outputs=[ta_move_or_delete_target_dataset_num]
         )
 
         cb_show_only_tags_selected.change(
@@ -664,13 +691,17 @@ def on_ui_tabs():
         btn_apply_changes_selected_image.click(
             fn=change_selected_image_caption,
             inputs=[tb_edit_caption_selected_image, nb_hidden_image_index],
-            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags]
+            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags]
         )
-        
         btn_apply_changes_selected_image.click(
             fn=lambda a:a,
             inputs=[tb_edit_caption_selected_image],
             outputs=[tb_caption_selected_image]
+        )
+        btn_apply_changes_selected_image.click(
+            fn=get_current_move_or_delete_target_num,
+            inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
+            outputs=[ta_move_or_delete_target_dataset_num]
         )
 
         #----------------------------------------------------------------
@@ -685,13 +716,23 @@ def on_ui_tabs():
         btn_move_or_delete_move_files.click(
             fn=move_files,
             inputs=[rb_move_or_delete_target_data, cbg_move_or_delete_target_file, tb_move_or_delete_destination_dir, nb_hidden_image_index],
-            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags]
+            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags]
+        )
+        btn_move_or_delete_move_files.click(
+            fn=get_current_move_or_delete_target_num,
+            inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
+            outputs=[ta_move_or_delete_target_dataset_num]
         )
 
         btn_move_or_delete_delete_files.click(
             fn=delete_files,
             inputs=[rb_move_or_delete_target_data, cbg_move_or_delete_target_file, nb_hidden_image_index],
-            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags]
+            outputs=[tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags]
+        )
+        btn_move_or_delete_delete_files.click(
+            fn=get_current_move_or_delete_target_num,
+            inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
+            outputs=[ta_move_or_delete_target_dataset_num]
         )
 
     return [(dataset_tag_editor_interface, "Dataset Tag Editor", "dataset_tag_editor_interface")]
