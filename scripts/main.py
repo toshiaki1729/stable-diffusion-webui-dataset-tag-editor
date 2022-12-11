@@ -2,8 +2,9 @@ from typing import List, Set
 from modules import shared, script_callbacks
 from modules.shared import opts, cmd_opts
 import gradio as gr
+import pandas as pd
 from scripts.dataset_tag_editor.dataset_tag_editor import DatasetTagEditor, InterrogateMethod
-from scripts.dataset_tag_editor.filters import TagFilter, PathFilter
+from scripts.dataset_tag_editor.filters import TagFilter, PathFilter, TagScoreFilter
 from scripts.dataset_tag_editor.ui import TagFilterUI
 
 dataset_tag_editor = DatasetTagEditor()
@@ -11,8 +12,9 @@ dataset_tag_editor = DatasetTagEditor()
 path_filter = PathFilter()
 tag_filter_ui = TagFilterUI(dataset_tag_editor)
 tag_filter_ui_neg = TagFilterUI(dataset_tag_editor, tag_filter_mode=TagFilter.Mode.EXCLUSIVE)
+tag_score_filters = []
 
-get_filters = lambda:[path_filter, tag_filter_ui.get_filter(), tag_filter_ui_neg.get_filter()]
+get_filters = lambda:[path_filter, tag_filter_ui.get_filter(), tag_filter_ui_neg.get_filter()] + tag_score_filters
 
 total_image_num = 0
 displayed_image_num = 0
@@ -23,7 +25,7 @@ show_only_selected_tags = True
 
 
 # ================================================================
-# Callbacks for "Filter and Edit Tags" tab
+# Callbacks for "Filter by Tags" tab
 # ================================================================
 
 def get_current_gallery_txt():
@@ -195,7 +197,30 @@ def apply_image_selection_filter():
     else:
         path_filter = PathFilter()
     return update_filter_and_gallery() + update_common_tags()
+
+
+# ================================================================
+# Callbacks for "Filter by Tag Weight" tab
+# ================================================================
+
+def apply_filter_tag_weight(df_filter: pd.DataFrame):
+    global tag_score_filters
+    tag_score_filters = []
+    for i in df_filter.index:
+        tag = df_filter.loc[i, 'Tag']
+        logic = df_filter.loc[i, 'Logic']
+        if logic == 'greater than':
+            logic = TagScoreFilter.Mode.GREATER_THAN
+        elif logic == 'less than':
+            logic = TagScoreFilter.Mode.LESS_THAN
+        else:
+            continue
+        threshold = float(df_filter.loc[i, 'Threshold'])
+        
+        if tag and threshold:
+            tag_score_filters.append(TagScoreFilter(dataset_tag_editor.booru_tag_scores))
     
+
 
 # ================================================================
 # Callbacks for "Edit Caption of Selected Image" tab
@@ -413,6 +438,17 @@ def on_ui_tabs():
                         btn_clear_image_selection = gr.Button(value='Clear selection')
 
                 btn_apply_image_selection_filter = gr.Button(value='Apply selection filter', variant='primary')
+
+            with gr.Tab(label='Filter by Tag Weight'):
+                rb_tag_weight_filter_tagger = gr.Dropdown(choices=['DeepDanbooru', 'WDv1.4 Tagger'], value='DeepDanbooru', interactive=True, label='Tagger')
+                tb_tag_weight_filter_tag = gr.Textbox(label='Tag')
+                dd_tag_weight_filter_logic = gr.Dropdown(choices=['greater than', 'less than'], value='greater than', interactive=True, label='Logic')
+                sl_tag_weight_filter_score =  gr.Slider(minimum=0, maximum=1, label='Tag Score Threshold')
+                df_tag_weight_filter_input = gr.DataFrame(interactive=True, max_cols=3, col_count=(3, 'fixed'), headers=['Tag', 'Logic', 'Threshold'])
+                df_tag_weight_filter_apply = gr.Button(value='Apply Filter', variant='primary')
+                df_tag_weight_filter_clear = gr.Button(value='Clear Filter')
+                with gr.Accordion(label='Show Current Filter', open=True):
+                    df_tag_weight_filter_output = gr.DataFrame(interactive=True, max_cols=3, col_count=(3, 'fixed'), headers=['Tag', 'Logic', 'Threshold'])
 
             with gr.Tab(label='Batch Edit Captions'):
                 with gr.Column(variant='panel'):
