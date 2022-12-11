@@ -8,6 +8,7 @@ from PIL import Image
 from enum import Enum
 import modules.deepbooru as deepbooru
 from scripts.dataset_tag_editor.dataset import Dataset, Data
+from . import tag_scorer
 
 re_tags = re.compile(r'^(.+) \[\d+\]$')
 
@@ -38,6 +39,17 @@ def interrogate_image_booru(path):
         return deepbooru.model.tag(img)
 
 
+def interrogate_image_waifu(path):
+    try:
+        img = Image.open(path).convert('RGB')
+    except:
+        return ''
+    else:
+        with tag_scorer.WaifuDiffusion() as scorer:
+            res = scorer.predict(img, threshold=shared.opts.interrogate_deepbooru_score_threshold)
+        return ', '.join(tag_scorer.get_arranged_tags(res))
+            
+
 def get_filepath_set(dir: str, recursive: bool):
     if recursive:
         dirs_to_see = [dir]
@@ -65,6 +77,8 @@ class DatasetTagEditor:
         self.dataset = Dataset()
         self.tag_counts = {}
         self.dataset_dir = ''
+        self.booru_tag_scores = None
+        self.waifu_tag_scores = None
 
     def get_tag_list(self):
         if len(self.tag_counts) == 0:
@@ -342,7 +356,25 @@ class DatasetTagEditor:
                 print(e)
 
 
-    def load_dataset(self, img_dir: str, recursive: bool = False, load_caption_from_filename: bool = True, interrogate_method: InterrogateMethod = InterrogateMethod.NONE, use_booru: bool = True, use_clip: bool = False):
+    def score_dataset_booru(self):
+        with tag_scorer.DeepDanbooru() as scorer:
+            self.booru_tag_scores = dict()
+            for img_path in self.dataset.datas.keys():
+                img = Image.open(img_path)
+                probs = scorer.predict(img)
+                self.booru_tag_scores[img_path] = probs
+    
+
+    def score_dataset_waifu(self):
+        with tag_scorer.DeepDanbooru() as scorer:
+            self.waifu_tag_scores = dict()
+            for img_path in self.dataset.datas.keys():
+                img = Image.open(img_path)
+                probs = scorer.predict(img)
+                self.waifu_tag_scores[img_path] = probs
+
+
+    def load_dataset(self, img_dir: str, recursive: bool = False, load_caption_from_filename: bool = True, interrogate_method: InterrogateMethod = InterrogateMethod.NONE, use_booru: bool = True, use_clip: bool = False, use_waifu: bool = False):
         self.clear()
         print(f'Loading dataset from {img_dir}')
         if recursive:
@@ -359,7 +391,9 @@ class DatasetTagEditor:
 
         print(f'Total {len(filepath_set)} files under the directory including not image files.')
 
-        def load_images(filepath_set: Set[str]):
+
+        from . import tag_scorer
+        def load_images(filepath_set: Set[str], scorers: List[tag_scorer.TagScorer]):
             for img_path in filepath_set:
                 img_dir = os.path.dirname(img_path)
                 img_filename, img_ext = os.path.splitext(os.path.basename(img_path))
@@ -387,46 +421,63 @@ class DatasetTagEditor:
                             tokens = self.re_word.findall(caption_text)
                             caption_text = (shared.opts.dataset_filename_join_string or "").join(tokens)
                 
-                if interrogate_method != InterrogateMethod.NONE and ((interrogate_method != InterrogateMethod.PREFILL) or (interrogate_method == InterrogateMethod.PREFILL and not caption_text)):
+                interrogate_tags = []
+                caption_tags =  [t.strip() for t in caption_text.split(',')]
+                if interrogate_method != InterrogateMethod.NONE and ((interrogate_method != InterrogateMethod.PREFILL) or (interrogate_method == InterrogateMethod.PREFILL and not caption_tags)):
                     try:
                         img = Image.open(img_path).convert('RGB')
                     except Exception as e:
                         print(e)
                         print(f'Cannot interrogate file: {img_path}')
                     else:
-                        interrogate_text = ''
                         if use_clip:
-                            interrogate_text += shared.interrogator.generate_caption(img)
+                            tmp = [t.strip() for t in shared.interrogator.generate_caption(img).split(',')]
+                            interrogate_tags += [t for t in tmp if t]
                             
-                        if use_booru:
-                            tmp = deepbooru.model.tag_multi(img)
-                            interrogate_text += (', ' if interrogate_text and tmp else '') + tmp
+                        for scorer in scorers:
+                            probs = scorer.predict(img)
+                            interrogate_tags += [t for t, p in probs.items() if p > shared.opts.interrogate_deepbooru_score_threshold]
+                            if isinstance(scorer, tag_scorer.DeepDanbooru):
+                                if not self.booru_tag_scores:
+                                    self.booru_tag_scores = dict()
+                                self.booru_tag_scores[img_path] = probs
+                            elif isinstance(scorer, tag_scorer.WaifuDiffusion):
+                                if not self.waifu_tag_scores:
+                                    self.waifu_tag_scores = dict()
+                                self.waifu_tag_scores[img_path] = probs
 
-                        if interrogate_method == InterrogateMethod.OVERWRITE:
-                            caption_text = interrogate_text
-                        elif interrogate_method == InterrogateMethod.PREPEND:
-                            caption_text = interrogate_text + (', ' if interrogate_text and caption_text else '') + caption_text
-                        else:
-                            caption_text += (', ' if interrogate_text and caption_text else '') + interrogate_text
                         img.close()
                 
-                self.set_tags_by_image_path(img_path, [t.strip() for t in caption_text.split(',')])
-
+                if interrogate_method == InterrogateMethod.OVERWRITE:
+                    tags = interrogate_tags
+                elif interrogate_method == InterrogateMethod.PREPEND:
+                    tags = interrogate_tags + caption_tags
+                else:
+                    tags = caption_tags + interrogate_tags
+                self.set_tags_by_image_path(img_path, tags)
+        
         try:
+            scorers = []
             if interrogate_method != InterrogateMethod.NONE:
                 if use_clip:
                     shared.interrogator.load()
                 if use_booru:
-                    deepbooru.model.start()
+                    scorer = tag_scorer.DeepDanbooru()
+                    scorer.start()
+                    scorers.append(scorer)
+                if use_waifu:
+                    scorer = tag_scorer.WaifuDiffusion()
+                    scorer.start()
+                    scorers.append(scorer)
 
-            load_images(filepath_set = filepath_set)
+            load_images(filepath_set = filepath_set, scorers=scorers)
             
         finally:
             if interrogate_method != InterrogateMethod.NONE:
                 if use_clip:
                     shared.interrogator.send_blip_to_ram()
-                if use_booru:
-                    deepbooru.model.stop()
+                for scorer in scorers:
+                    scorer.stop()
 
         self.construct_tag_counts()
         print(f'Loading Completed: {len(self.dataset)} images found')
@@ -481,6 +532,8 @@ class DatasetTagEditor:
         self.dataset.clear()
         self.tag_counts.clear()
         self.dataset_dir = ''
+        self.booru_tag_scores = None
+        self.waifu_tag_scores = None
 
 
     def construct_tag_counts(self):

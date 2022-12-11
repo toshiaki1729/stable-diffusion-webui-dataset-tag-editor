@@ -2,7 +2,7 @@ from typing import List, Set
 from modules import shared, script_callbacks
 from modules.shared import opts, cmd_opts
 import gradio as gr
-from scripts.dataset_tag_editor.dataset_tag_editor import DatasetTagEditor, interrogate_image_clip, interrogate_image_booru, InterrogateMethod
+from scripts.dataset_tag_editor.dataset_tag_editor import DatasetTagEditor, InterrogateMethod
 from scripts.dataset_tag_editor.filters import TagFilter, PathFilter
 from scripts.dataset_tag_editor.ui import TagFilterUI
 
@@ -52,7 +52,7 @@ def get_current_move_or_delete_target_num(target_data: str, idx: int):
         return f'Target dataset num: 0'
 
 
-def load_files_from_dir(dir: str, recursive: bool, load_caption_from_filename: bool, use_interrogator: str, use_clip: bool, use_booru: bool):
+def load_files_from_dir(dir: str, recursive: bool, load_caption_from_filename: bool, use_interrogator: str, use_clip: bool, use_booru: bool, use_waifu: bool):
     global total_image_num, displayed_image_num, tmp_selection_img_path_set, gallery_selected_image_path, selection_selected_image_path, path_filter
     
     interrogate_method = InterrogateMethod.NONE
@@ -65,7 +65,7 @@ def load_files_from_dir(dir: str, recursive: bool, load_caption_from_filename: b
     elif use_interrogator == 'Append':
         interrogate_method = InterrogateMethod.APPEND
 
-    dataset_tag_editor.load_dataset(img_dir=dir, recursive=recursive, load_caption_from_filename=load_caption_from_filename, interrogate_method=interrogate_method, use_clip=use_clip, use_booru=use_booru)
+    dataset_tag_editor.load_dataset(dir, recursive, load_caption_from_filename, interrogate_method, use_booru, use_clip, use_waifu)
     img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=get_filters())
     path_filter = PathFilter()
     total_image_num = displayed_image_num = len(dataset_tag_editor.get_img_path_set())
@@ -237,12 +237,20 @@ def change_selected_image_caption(tags_text: str, idx: int):
 
 def interrogate_selected_image_clip():
     global gallery_selected_image_path
+    from scripts.dataset_tag_editor.dataset_tag_editor import interrogate_image_clip
     return interrogate_image_clip(gallery_selected_image_path)
 
 
 def interrogate_selected_image_booru():
     global gallery_selected_image_path
+    from scripts.dataset_tag_editor.dataset_tag_editor import interrogate_image_booru
     return interrogate_image_booru(gallery_selected_image_path)
+
+
+def interrogate_selected_image_waifu():
+    global gallery_selected_image_path
+    from scripts.dataset_tag_editor.dataset_tag_editor import interrogate_image_waifu
+    return interrogate_image_waifu(gallery_selected_image_path)
 
 
 # ================================================================
@@ -365,6 +373,7 @@ def on_ui_tabs():
                             with gr.Row():
                                 cb_use_clip_to_prefill = gr.Checkbox(value=False, label='Use BLIP')
                                 cb_use_booru_to_prefill = gr.Checkbox(value=False, label='Use DeepDanbooru')
+                                cb_use_waifu_to_prefill = gr.Checkbox(value=False, label='Use WDv1.4 Tagger')
                 
                 gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_dataset_gallery").style(grid=opts.dataset_editor_image_columns)
                 txt_gallery = gr.HTML(value=get_current_gallery_txt())
@@ -452,6 +461,7 @@ def on_ui_tabs():
                     with gr.Row():
                         btn_interrogate_clip = gr.Button(value='Interrogate with BLIP')
                         btn_interrogate_booru = gr.Button(value='Interrogate with DeepDanbooru')
+                        btn_interrogate_waifu = gr.Button(value='Interrogate with WDv1.4 tagger')
                     tb_interrogate_selected_image = gr.Textbox(label='Interrogate Result', interactive=True, lines=6)
                     with gr.Row():
                         btn_copy_interrogate = gr.Button(value='Copy and Overwrite')
@@ -500,7 +510,7 @@ def on_ui_tabs():
 
         btn_load_datasets.click(
             fn=load_files_from_dir,
-            inputs=[tb_img_directory, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_clip_to_prefill, cb_use_booru_to_prefill],
+            inputs=[tb_img_directory, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_clip_to_prefill, cb_use_booru_to_prefill, cb_use_waifu_to_prefill],
             outputs=[gl_dataset_images, gl_selected_images, txt_gallery, txt_selection] + [tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags]
         )
         btn_load_datasets.click(
@@ -626,6 +636,11 @@ def on_ui_tabs():
 
         btn_interrogate_booru.click(
             fn=interrogate_selected_image_booru,
+            outputs=[tb_interrogate_selected_image]
+        )
+
+        btn_interrogate_waifu.click(
+            fn=interrogate_selected_image_waifu,
             outputs=[tb_interrogate_selected_image]
         )
 

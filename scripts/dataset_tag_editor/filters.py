@@ -1,5 +1,5 @@
 from scripts.dataset_tag_editor.dataset import Dataset
-from typing import Set, List
+from typing import Set, Dict
 from enum import Enum
 
 class TagFilter(Dataset.Filter):
@@ -92,4 +92,28 @@ class PathFilter(Dataset.Filter):
         return dataset
 
     
+class TagScoreFilter(Dataset.Filter):
+    class Mode(Enum):
+        NONE = 0
+        LESS_THAN = 1
+        GREATER_THAN = 2
+
+    def __init__(self, scores: Dict[str, Dict[str, float]], tag: str, threshold: float, mode: Mode = Mode.NONE):
+        self.scores = scores
+        self.mode = mode
+        self.tag = tag
+        self.threshold = threshold
     
+    def apply(self, dataset: Dataset):
+        if self.mode == TagScoreFilter.Mode.NONE:
+            return dataset
+        
+        paths_remove = {path for path, scores in self.scores.items() if (scores.get(self.tag) or 0) > self.threshold}
+        
+        if self.mode == TagScoreFilter.Mode.GREATER_THAN:
+            paths_remove = {path for path in dataset.datas.keys()} - paths_remove
+        
+        for path in paths_remove:
+            dataset.remove_by_path(path)
+        
+        return dataset
