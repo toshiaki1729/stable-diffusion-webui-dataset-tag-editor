@@ -29,6 +29,7 @@ let dataset_tag_editor_gl_dataset_images_key_handler = function (e) {
             e.preventDefault();
             break;
     }
+    dataset_tag_editor_gl_dataset_images_clicked()
 }
 
 
@@ -50,6 +51,7 @@ let dataset_tag_editor_gl_selected_images_key_handler = function (e) {
             e.preventDefault();
             break;
     }
+    dataset_tag_editor_gl_selected_images_clicked()
 }
 
 document.addEventListener("DOMContentLoaded", function () {
