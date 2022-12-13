@@ -479,16 +479,17 @@ def on_ui_tabs():
                             tb_img_directory = gr.Textbox(label='Dataset directory', placeholder='C:\\directory\\of\\datasets', value=cfg_general.dataset_dir)
                         with gr.Column(scale=1, min_width=80):
                             btn_load_datasets = gr.Button(value='Load')
-                    with gr.Row():
-                        with gr.Column():
-                            cb_load_recursive = gr.Checkbox(value=cfg_general.load_recursive, label='Load from subdirectories')
-                            cb_load_caption_from_filename = gr.Checkbox(value=cfg_general.load_caption_from_filename, label='Load caption from filename if no text file exists')
-                        with gr.Column():
-                            rb_use_interrogator = gr.Radio(choices=['No', 'If Empty', 'Overwrite', 'Prepend', 'Append'], value=cfg_general.use_interrogator, label='Use Interrogator Caption')
-                            with gr.Row():
-                                cb_use_clip_to_prefill = gr.Checkbox(value=cfg_general.use_clip_to_prefill, label='Use BLIP')
-                                cb_use_booru_to_prefill = gr.Checkbox(value=cfg_general.use_booru_to_prefill, label='Use DeepDanbooru')
-                                cb_use_waifu_to_prefill = gr.Checkbox(value=cfg_general.use_waifu_to_prefill, label='Use WDv1.4 Tagger')
+                    with gr.Accordion(label='Dataset Load Settings'):
+                        with gr.Row():
+                            with gr.Column():
+                                cb_load_recursive = gr.Checkbox(value=cfg_general.load_recursive, label='Load from subdirectories')
+                                cb_load_caption_from_filename = gr.Checkbox(value=cfg_general.load_caption_from_filename, label='Load caption from filename if no text file exists')
+                            with gr.Column():
+                                rb_use_interrogator = gr.Radio(choices=['No', 'If Empty', 'Overwrite', 'Prepend', 'Append'], value=cfg_general.use_interrogator, label='Use Interrogator Caption')
+                                with gr.Row():
+                                    cb_use_clip_to_prefill = gr.Checkbox(value=cfg_general.use_clip_to_prefill, label='Use BLIP')
+                                    cb_use_booru_to_prefill = gr.Checkbox(value=cfg_general.use_booru_to_prefill, label='Use DeepDanbooru')
+                                    cb_use_waifu_to_prefill = gr.Checkbox(value=cfg_general.use_waifu_to_prefill, label='Use WDv1.4 Tagger')
                 
                 gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_dataset_gallery").style(grid=opts.dataset_editor_image_columns)
                 txt_gallery = gr.HTML(value=get_current_gallery_txt())
