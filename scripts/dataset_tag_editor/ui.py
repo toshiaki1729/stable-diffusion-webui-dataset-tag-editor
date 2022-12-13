@@ -4,8 +4,8 @@ from scripts.dataset_tag_editor.dataset import Dataset
 from typing import List, Callable
 
 class TagFilterUI:
-    def __init__(self, dataset_tag_editor: DatasetTagEditor, tag_filter_logic: TagFilter.Mode = TagFilter.Logic.AND, tag_filter_mode: TagFilter.Mode = TagFilter.Mode.INCLUSIVE):
-        self.logic = tag_filter_logic
+    def __init__(self, dataset_tag_editor: DatasetTagEditor, tag_filter_mode: TagFilter.Mode = TagFilter.Mode.INCLUSIVE):
+        self.logic = TagFilter.Logic.AND
         self.filter_word = ''
         self.sort_by = 'Alphabetical Order'
         self.sort_order = 'Ascending'
@@ -18,23 +18,26 @@ class TagFilterUI:
     def get_filter(self):
         return self.filter
 
-    def create_ui(self, get_filters: Callable[[], List[Dataset.Filter]]):
+    def create_ui(self, get_filters: Callable[[], List[Dataset.Filter]], logic = TagFilter.Logic.AND, sort_by = 'Alphabetical Order', sort_order = 'Ascending'):
         self.get_filters = get_filters
+        self.logic = logic
+        self.filter = TagFilter({}, self.logic, self.filter_mode)
 
         import gradio as gr
         self.tb_search_tags = gr.Textbox(label='Search Tags', interactive=True)
         with gr.Row():
-            self.rd_sort_by = gr.Radio(choices=['Alphabetical Order', 'Frequency'], value='Alphabetical Order', interactive=True, label='Sort by')
-            self.rd_sort_order = gr.Radio(choices=['Ascending', 'Descending'], value='Ascending', interactive=True, label='Sort Order')
-        self.rd_logic = gr.Radio(choices=['AND', 'OR', 'NONE'], value='AND', label='Filter Logic', interactive=True)
+            self.rb_sort_by = gr.Radio(choices=['Alphabetical Order', 'Frequency'], value=sort_by, interactive=True, label='Sort by')
+            self.rb_sort_order = gr.Radio(choices=['Ascending', 'Descending'], value=sort_order, interactive=True, label='Sort Order')
+        v = 'AND' if self.logic==TagFilter.Logic.AND else 'OR' if self.logic==TagFilter.Logic.OR else 'NONE'
+        self.rb_logic = gr.Radio(choices=['AND', 'OR', 'NONE'], value=v, label='Filter Logic', interactive=True)
         self.cbg_tags = gr.CheckboxGroup(label='Filter Images by Tags', interactive=True)
     
 
     def set_callbacks(self, on_filter_update: Callable[[List], List] = lambda:[], inputs=[], outputs=[]):
         self.tb_search_tags.change(fn=self.tb_search_tags_changed, inputs=self.tb_search_tags, outputs=self.cbg_tags)
-        self.rd_sort_by.change(fn=self.rd_sort_by_changed, inputs=self.rd_sort_by, outputs=self.cbg_tags)
-        self.rd_sort_order.change(fn=self.rd_sort_order_changed, inputs=self.rd_sort_order, outputs=self.cbg_tags)
-        self.rd_logic.change(fn=lambda a, *b:[self.rd_logic_changed(a)] + on_filter_update(*b), inputs=[self.rd_logic] + inputs, outputs=[self.cbg_tags] + outputs)
+        self.rb_sort_by.change(fn=self.rd_sort_by_changed, inputs=self.rb_sort_by, outputs=self.cbg_tags)
+        self.rb_sort_order.change(fn=self.rd_sort_order_changed, inputs=self.rb_sort_order, outputs=self.cbg_tags)
+        self.rb_logic.change(fn=lambda a, *b:[self.rd_logic_changed(a)] + on_filter_update(*b), inputs=[self.rb_logic] + inputs, outputs=[self.cbg_tags] + outputs)
         self.cbg_tags.change(fn=lambda a, *b:[self.cbg_tags_changed(a)] + on_filter_update(*b), inputs=[self.cbg_tags] + inputs, outputs=[self.cbg_tags] + outputs)
 
 
