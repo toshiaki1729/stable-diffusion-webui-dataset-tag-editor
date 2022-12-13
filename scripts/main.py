@@ -462,12 +462,14 @@ def on_ui_tabs():
                 with gr.Column(scale=2):
                     cb_backup = gr.Checkbox(value=cfg_general.backup, label='Backup original text file (original file will be renamed like filename.000, .001, .002, ...)', interactive=True)
             gr.HTML(value='<b>Note:</b> New text file will be created if you are using filename as captions.')
+            with gr.Row(visible=False):
+                txt_result = gr.Textbox(label='Results', interactive=False)
+        
+        with gr.Accordion(label='Load/Save Settings (config.json)', open=False):
             with gr.Row():
-                txt_result = gr.Textbox(label='Results', interactive=False, visible=False)
-            with gr.Row():
+                btn_reload_config_file = gr.Button(value='Reload settings')
                 btn_save_setting_as_default = gr.Button(value='Save current settings')
                 btn_restore_default = gr.Button(value='Restore settings to default')
-
 
         with gr.Row().style(equal_height=False):
             with gr.Column():
@@ -498,13 +500,13 @@ def on_ui_tabs():
 
                 with gr.Tab(label='Positive Filter'):
                     with gr.Column(variant='panel'):
-                        gr.HTML(value='Search tags / Filter images by tags (inclusive)')
+                        gr.HTML(value='Search tags / Filter images by tags <b>(INCLUSIVE)</b>')
                         logic_p = TagFilter.Logic.OR if cfg_filter_p.logic=='OR' else TagFilter.Logic.NONE if cfg_filter_p.logic=='NONE' else TagFilter.Logic.AND
                         tag_filter_ui.create_ui(get_filters, logic_p, cfg_filter_p.sort_by, cfg_filter_p.sort_order)
 
                 with gr.Tab(label='Negative Filter'):
                     with gr.Column(variant='panel'):
-                        gr.HTML(value='Search tags / Filter images by tags (exclusive)')
+                        gr.HTML(value='Search tags / Filter images by tags <b>(EXCLUSIVE)</b>')
                         logic_n = TagFilter.Logic.AND if cfg_filter_n.logic=='AND' else TagFilter.Logic.NONE if cfg_filter_n.logic=='NONE' else TagFilter.Logic.OR
                         tag_filter_ui_neg.create_ui(get_filters, logic_n, cfg_filter_n.sort_by, cfg_filter_n.sort_order)
             
@@ -602,6 +604,23 @@ def on_ui_tabs():
         #----------------------------------------------------------------
         # General
 
+        configurable_components = \
+            [cb_backup, tb_img_directory, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_clip_to_prefill, cb_use_booru_to_prefill, cb_use_waifu_to_prefill] +\
+            [tag_filter_ui.rb_sort_by, tag_filter_ui.rb_sort_order, tag_filter_ui.rb_logic, tag_filter_ui_neg.rb_sort_by, tag_filter_ui_neg.rb_sort_order, tag_filter_ui_neg.rb_logic] +\
+            [cb_show_only_tags_selected, cb_prepend_tags, cb_use_regex, rb_sr_replace_target] +\
+            [cb_copy_caption_automatically] +\
+            [rb_move_or_delete_target_data, cbg_move_or_delete_target_file, tb_move_or_delete_destination_dir]
+        
+        def reload_config_file():
+            config.load()
+            p, n = read_filter_config()
+            return read_general_config() + p + n + read_batch_edit_config() + read_edit_selected_config() + read_move_delete_config()
+
+        btn_reload_config_file.click(
+            fn=reload_config_file,
+            outputs=configurable_components
+        )
+
         def save_settings_callback(*a):
             write_general_config(*a[:8])
             write_filter_config(*a[8:14])
@@ -612,12 +631,7 @@ def on_ui_tabs():
 
         btn_save_setting_as_default.click(
             fn=save_settings_callback,
-            inputs=
-            [cb_backup, tb_img_directory, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_clip_to_prefill, cb_use_booru_to_prefill, cb_use_waifu_to_prefill] +
-            [tag_filter_ui.rb_sort_by, tag_filter_ui.rb_sort_order, tag_filter_ui.rb_logic, tag_filter_ui_neg.rb_sort_by, tag_filter_ui_neg.rb_sort_order, tag_filter_ui_neg.rb_logic] +
-            [cb_show_only_tags_selected, cb_prepend_tags, cb_use_regex, rb_sr_replace_target] +
-            [cb_copy_caption_automatically] +
-            [rb_move_or_delete_target_data, cbg_move_or_delete_target_file, tb_move_or_delete_destination_dir]
+            inputs=configurable_components
         )
 
         def restore_default_settings():
@@ -631,13 +645,7 @@ def on_ui_tabs():
 
         btn_restore_default.click(
             fn=restore_default_settings,
-            outputs=
-            [cb_backup, tb_img_directory, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_clip_to_prefill, cb_use_booru_to_prefill, cb_use_waifu_to_prefill] +
-            [tag_filter_ui.rb_sort_by, tag_filter_ui.rb_sort_order, tag_filter_ui.rb_logic] +
-            [tag_filter_ui_neg.rb_sort_by, tag_filter_ui_neg.rb_sort_order, tag_filter_ui_neg.rb_logic] +
-            [cb_show_only_tags_selected, cb_prepend_tags, cb_use_regex, rb_sr_replace_target] +
-            [cb_copy_caption_automatically] +
-            [rb_move_or_delete_target_data, cbg_move_or_delete_target_file, tb_move_or_delete_destination_dir]
+            outputs=configurable_components
         )
 
 
