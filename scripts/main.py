@@ -101,8 +101,8 @@ def read_general_config():
 
 def read_filter_config():
     cfg = config.read('filter')
-    cfg_p = cfg['positive']
-    cfg_n = cfg['negative']
+    cfg_p = cfg.get('positive') if cfg else None
+    cfg_n = cfg.get('negative') if cfg else None
     return FilterConfig(**cfg_p) if cfg_p else CFG_FILTER_P_DEFAULT, FilterConfig(**cfg_n) if cfg_n else CFG_FILTER_N_DEFAULT
 
 def read_batch_edit_config():
