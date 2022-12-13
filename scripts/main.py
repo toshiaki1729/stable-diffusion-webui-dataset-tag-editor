@@ -465,7 +465,7 @@ def on_ui_tabs():
             with gr.Row(visible=False):
                 txt_result = gr.Textbox(label='Results', interactive=False)
         
-        with gr.Accordion(label='Load/Save Settings (config.json)', open=False):
+        with gr.Accordion(label='Reload/Save Settings (config.json)', open=False):
             with gr.Row():
                 btn_reload_config_file = gr.Button(value='Reload settings')
                 btn_save_setting_as_default = gr.Button(value='Save current settings')
