@@ -36,7 +36,9 @@ def interrogate_image_booru(path):
     except:
         return ''
     else:
-        return deepbooru.model.tag(img)
+        with tag_scorer.DeepDanbooru() as scorer:
+            res = scorer.predict(img, threshold=shared.opts.interrogate_deepbooru_score_threshold)
+        return ', '.join(tag_scorer.get_arranged_tags(res))
 
 
 def interrogate_image_waifu(path):
@@ -246,6 +248,17 @@ class DatasetTagEditor:
             else:
                 tags = {t.replace(search_text, replace_text) if t in selected_tags else t for t in tags}
         return {t for t in tags if t}
+    
+
+    def remove_duplicated_tags(self, filters: List[Dataset.Filter] = []):
+        img_paths = self.get_filtered_imgpaths(filters)
+        for path in img_paths:
+            tags = self.dataset.get_data_tags(path)
+            res = []
+            for t in tags:
+                if t not in res:
+                    res.append(t)
+            self.set_tags_by_image_path(path, res)
     
 
     def get_img_path_list(self):

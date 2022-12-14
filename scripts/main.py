@@ -391,6 +391,11 @@ def cb_show_only_tags_selected_changed(value: bool):
     return update_common_tags()
 
 
+def remove_duplicated_tags():
+    dataset_tag_editor.remove_duplicated_tags(get_filters())
+    return update_filter_and_gallery()
+
+
 # ================================================================
 # Callbacks for "Move or Delete Files" tab
 # ================================================================
@@ -566,6 +571,8 @@ def on_ui_tabs():
                     rb_sr_replace_target = gr.Radio(['Only Selected Tags', 'Each Tags', 'Entire Caption'], value=cfg_batch_edit.target, label='Search and Replace in', interactive=True)
                     tb_sr_selected_tags = gr.Textbox(label='Selected Tags', interactive=False, lines=2)
                     btn_apply_sr_tags = gr.Button(value='Search and Replace', variant='primary')
+                with gr.Column(variant='panel'):
+                    btn_remove_duplicate = gr.Button(value='Remove duplicated tags')
                     
             with gr.Tab(label='Edit Caption of Selected Image'):
                 with gr.Tab(label='Read Caption from Selected Image'):
@@ -788,6 +795,11 @@ def on_ui_tabs():
             fn=cb_show_only_tags_selected_changed,
             inputs=cb_show_only_tags_selected,
             outputs=[tb_common_tags, tb_edit_tags]
+        )
+
+        btn_remove_duplicate.click(
+            fn=remove_duplicated_tags,
+            outputs=o_filter_and_gallery
         )
 
         #----------------------------------------------------------------
