@@ -2,7 +2,6 @@ from typing import List
 from modules import shared, script_callbacks, scripts
 from modules.shared import opts
 import gradio as gr
-import pandas as pd
 import json
 import os
 from collections import namedtuple
@@ -16,7 +15,7 @@ dataset_tag_editor = DatasetTagEditor()
 path_filter = PathFilter()
 tag_filter_ui:TagFilterUI = None
 tag_filter_ui_neg:TagFilterUI = None
-tag_score_filters = []
+tag_score_filters: List[TagScoreFilter] = []
 
 def get_filters():
     return [path_filter, tag_filter_ui.get_filter(), tag_filter_ui_neg.get_filter()] + tag_score_filters
@@ -295,26 +294,56 @@ def apply_image_selection_filter():
 
 
 # ================================================================
-# Callbacks for "Filter by Tag Weight" tab
+# Callbacks for "Filter by Tag Score" tab
 # ================================================================
 
-def apply_filter_tag_weight(df_filter: pd.DataFrame):
+def add_tag_score_filter(tagger: str, tag: str, logic: str, threshold: float, filter_args: List[List]):
+    filter_args.append([tagger, tag, logic, threshold])
+    return filter_args
+
+
+def apply_tag_score_filter(filter_args: List[List]):
     global tag_score_filters
     tag_score_filters = []
-    for i in df_filter.index:
-        tag = df_filter.loc[i, 'Tag']
-        logic = df_filter.loc[i, 'Logic']
-        if logic == 'greater than':
-            logic = TagScoreFilter.Mode.GREATER_THAN
-        elif logic == 'less than':
-            logic = TagScoreFilter.Mode.LESS_THAN
-        else:
+    for args in filter_args:
+        try:
+            tagger = args[0]
+            tag = args[1]
+            logic = args[2]
+            if logic == 'greater than':
+                logic = TagScoreFilter.Mode.GREATER_THAN
+            elif logic == 'less than':
+                logic = TagScoreFilter.Mode.LESS_THAN
+            else:
+                continue
+            threshold = float(args[3])
+        except:
             continue
-        threshold = float(df_filter.loc[i, 'Threshold'])
         
         if tag and threshold:
-            tag_score_filters.append(TagScoreFilter(dataset_tag_editor.booru_tag_scores))
+            if tagger == 'DeepDanbooru':
+                scores = dataset_tag_editor.booru_tag_scores
+            elif tagger == 'WDv1.4 Tagger':
+                scores = dataset_tag_editor.waifu_tag_scores
+            else:
+                continue
+            tag_score_filters.append(TagScoreFilter(scores, tag, threshold, logic))
     
+    return show_current_tag_score_filters()
+    
+
+def show_current_tag_score_filters():
+    res = []
+    for f in tag_score_filters:
+        if f.scores is dataset_tag_editor.booru_tag_scores:
+            tagger = 'DeepDanbooru'
+        elif f.scores is dataset_tag_editor.waifu_tag_scores:
+            tagger = 'WDv1.4 Tagger'
+        else:
+            continue
+        mode = 'greater than' if f.mode==TagScoreFilter.Mode.GREATER_THAN else 'less than'
+        res.append([tagger, f.tag, mode, f.threshold])
+    return res
 
 
 # ================================================================
@@ -562,16 +591,17 @@ def on_ui_tabs():
 
                 btn_apply_image_selection_filter = gr.Button(value='Apply selection filter', variant='primary')
 
-            with gr.Tab(label='Filter by Tag Weight'):
-                rb_tag_weight_filter_tagger = gr.Dropdown(choices=['DeepDanbooru', 'WDv1.4 Tagger'], value='DeepDanbooru', interactive=True, label='Tagger')
-                tb_tag_weight_filter_tag = gr.Textbox(label='Tag')
-                dd_tag_weight_filter_logic = gr.Dropdown(choices=['greater than', 'less than'], value='greater than', interactive=True, label='Logic')
-                sl_tag_weight_filter_score =  gr.Slider(minimum=0, maximum=1, label='Tag Score Threshold')
-                df_tag_weight_filter_input = gr.DataFrame(interactive=True, max_cols=3, col_count=(3, 'fixed'), headers=['Tag', 'Logic', 'Threshold'])
-                df_tag_weight_filter_apply = gr.Button(value='Apply Filter', variant='primary')
-                df_tag_weight_filter_clear = gr.Button(value='Clear Filter')
+            with gr.Tab(label='Filter by Tag Score'):
+                rb_tag_score_filter_tagger = gr.Dropdown(choices=['DeepDanbooru', 'WDv1.4 Tagger'], value='DeepDanbooru', interactive=True, label='Tagger')
+                tb_tag_score_filter_tag = gr.Textbox(label='Tag')
+                dd_tag_score_filter_logic = gr.Dropdown(choices=['greater than', 'less than'], value='greater than', interactive=True, label='Logic')
+                sl_tag_score_filter_score =  gr.Slider(minimum=0, maximum=1, label='Tag Score Threshold')
+                btn_tag_score_filter_add = gr.Button(value='Add Filter')
+                df_tag_score_filter_input = gr.Dataframe(interactive=True, max_cols=4, col_count=(4, 'fixed'), headers=['Tagger', 'Tag', 'Logic', 'Threshold'], type='array')
+                btn_tag_score_filter_clear = gr.Button(value='Clear Filter')
+                btn_tag_score_filter_apply = gr.Button(value='Apply Filter', variant='primary')
                 with gr.Accordion(label='Show Current Filter', open=True):
-                    df_tag_weight_filter_output = gr.DataFrame(interactive=True, max_cols=3, col_count=(3, 'fixed'), headers=['Tag', 'Logic', 'Threshold'])
+                    df_tag_score_filter_output = gr.Dataframe(interactive=True, max_cols=4, col_count=(4, 'fixed'), headers=['Tagger', 'Tag', 'Logic', 'Threshold'])
 
             with gr.Tab(label='Batch Edit Captions'):
                 with gr.Column(variant='panel'):
