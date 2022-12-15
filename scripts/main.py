@@ -700,7 +700,7 @@ def on_ui_tabs():
             [', '.join(tag_filter_ui.filter.tags)] +
             [get_current_move_or_delete_target_num(a, b)],
             inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
-            outputs=[gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags] + [ta_move_or_delete_target_dataset_num]
+            outputs=[gl_dataset_images, nb_hidden_image_index, nb_hidden_image_index_prev, nb_hidden_image_index_save_or_not, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags] + [ta_move_or_delete_target_dataset_num]
         )
 
         tag_filter_ui_neg.set_callbacks(
@@ -709,7 +709,7 @@ def on_ui_tabs():
             update_common_tags() +
             [get_current_move_or_delete_target_num(a, b)],
             inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
-            outputs=[gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [ta_move_or_delete_target_dataset_num]
+            outputs=[gl_dataset_images, nb_hidden_image_index, nb_hidden_image_index_prev, nb_hidden_image_index_save_or_not, txt_gallery] + [tb_common_tags, tb_edit_tags] + [ta_move_or_delete_target_dataset_num]
         )
 
         btn_load_datasets.click(
