@@ -718,7 +718,7 @@ def on_ui_tabs():
             outputs=[gl_dataset_images, gl_selected_images, txt_gallery, txt_selection] + o_filter_and_gallery
         )
         btn_load_datasets.click(
-            fn=lambda:['', '', '', -100, -100, -100],
+            fn=lambda:['', '', '', -1, -1, -1],
             outputs=[tb_common_tags, tb_edit_tags, tb_caption_selected_image, nb_hidden_image_index, nb_hidden_image_index_prev, nb_hidden_image_index_save_or_not]
         )
 
