@@ -77,6 +77,7 @@ class DatasetTagEditor:
         # from modules.textual_inversion.dataset
         self.re_word = re.compile(shared.opts.dataset_filename_word_regex) if len(shared.opts.dataset_filename_word_regex) > 0 else None
         self.dataset = Dataset()
+        self.img_idx = dict()
         self.tag_counts = {}
         self.dataset_dir = ''
         self.booru_tag_scores = None
@@ -140,6 +141,16 @@ class DatasetTagEditor:
         img_paths = sorted(filtered_set.datas.keys())
         
         return img_paths
+
+
+    def get_filtered_imgindices(self, filters: List[Dataset.Filter] = []):
+        filtered_set = self.dataset.copy()
+        for filter in filters:
+            filtered_set.filter(filter)
+        
+        img_paths = sorted(filtered_set.datas.keys())
+        
+        return [self.img_idx.get(p) for p in img_paths]
 
 
     def get_filtered_tags(self, filters: List[Dataset.Filter] = [], filter_word: str = '', filter_tags = True):
@@ -491,6 +502,9 @@ class DatasetTagEditor:
                     shared.interrogator.send_blip_to_ram()
                 for scorer in scorers:
                     scorer.stop()
+        
+        for i, p in enumerate(sorted(self.dataset.datas.keys())):
+            self.img_idx[p] = i
 
         self.construct_tag_counts()
         print(f'Loading Completed: {len(self.dataset)} images found')
@@ -544,6 +558,7 @@ class DatasetTagEditor:
     def clear(self):
         self.dataset.clear()
         self.tag_counts.clear()
+        self.img_idx.clear()
         self.dataset_dir = ''
         self.booru_tag_scores = None
         self.waifu_tag_scores = None
