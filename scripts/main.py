@@ -617,7 +617,7 @@ def on_ui_tabs():
                         rb_sr_replace_target = gr.Radio(['Only Selected Tags', 'Each Tags', 'Entire Caption'], value=cfg_batch_edit.target, label='Search and Replace in', interactive=True)
                         tb_sr_selected_tags = gr.Textbox(label='Selected Tags', interactive=False, lines=2)
                         btn_apply_sr_tags = gr.Button(value='Search and Replace', variant='primary')
-                with gr.Tab(label='Delete'):
+                with gr.Tab(label='Remove'):
                     with gr.Column(variant='panel'):
                         gr.HTML('Remove <b>duplicate</b> tags from the images displayed.')
                         btn_remove_duplicate = gr.Button(value='Remove duplicate tags', variant='primary')
