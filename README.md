@@ -30,75 +30,77 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 Note. "tag" means each blocks of caption separated by commas.
 - Edit captions while viewing related images
 - Search tags
-- Filter images by tags and edit those captions
+- Filter images to edit their caption by tags
+  - AND/OR logic can be used in each Positive/Negative filters
 - Batch replace/remove/append tags
+- Batch search and replace
+  - [regular expression](https://docs.python.org/3/library/re.html) can be used
 - Use interrogators
+  - BLIP, DeepDanbooru, [WDv1.4 Tagger](https://huggingface.co/SmilingWolf/wd-v1-4-vit-tagger)
+- Batch remove image and/or caption files
 
 
 ## Usage
 1. Make dataset using web UI
+    - better to use already cropped images
 1. Load them
     - use interrogator if needed
 1. Edit their captions
-    - filter images you want to edit by tags in "Filter and Edit Tags" tab
-      - search tags and filter images by tags
-      - replace / remove them or append new tags to their captions
+    - filter images you want to edit by tags in "Filter by Tags" tab
     - filter images manually in "Filter by Selection" tab
+    - replace/remove tags or append new tags in "Batch Edit Captions" tab
     - edit captions individually in "Edit Caption of Selected Image" tab
       - you also can use interrogator here
+    - move/delete files in "Move or Delete Files" tab if needed
 1. Click "Save all changes" button
 
 
 ## Description of Display
 
 ### Common
+![](pic/ss02.png)
 - "Save all changes" buttton
   - save captions to text file
     - changes will not be applied to the text files until you press this button
   - if "Backup original text file" is checked, original text files will be renamed not to be overwritten
     - backup file name will be like filename.000, -.001, -.002, ...
-  - new text file will be created if not exists
-- "Results" text box
-  - shows save results
+  - new caption text file will be created if it does not exist
+- "Reload/Save Settings" Accordion (closed initially)
+  - you can reload/save/restore all settings in the UI here
+  - settings will be saved in `.../tag-editor-root-dir/config.json`
 - "Dataset Directory" text box
   - input the directory of training images and load them by clicking "Load" button
   - loading options are below
   - you can make caption on loading by using interrogator if needed
 - "Dataset Images" gallery
   - to view and select images
-  - the number of colums can be changed in "Settings" tab
+  - the number of colums can be changed in web UI's "Settings" tab
 
 ***
 
 ### "Filter and Edit Tags" tab
-![](ss02.png)
+![](pic/ss03.png)
+#### Common
+- "Clear tag filters" button
+  - clear tag search text and tag selection
+- "Clear ALL filters" button
+  - clear all filters including image selection filter in the next tab
 
+Positive (inclusive) / Negative (exclusive) filters can be used by toglling tabs.
+
+#### Search tags / Filter images by tags
 - "Search Tags" text box
   - search and filter the tags displayed below
-- "Clear tag filters" button
-  - clear tag search and filter by tags
-- "Clear ALL filters" button
-  - clear all filters including selection filter in next tab
 - "Sort by / Sort order" radio buttons
   - change sort order of the tags displayed below
 - "Filter Images by Tags" checkboxes
   - filter images displayed in the left gallery by tags
     - also filter tags depending on captions of the displayed images
-- "Selected Tags" text box (not editable)
-  - shows the selected tags in comma separated style
-- "Edit Tags" text box
-  - you can edit the selected tags for all captions of the displayed images
-    - each tags will be replaced by the tags in "same place"
-    - erase tags by changing it into blank
-    - you can append some tags to captions by add new tags at the end
-      - the tags will be added to the beggining/end of text files depending on the checkbox below
-- "Apply changes to filtered images" button
-  - apply the tag changes only to displayed images
 
 ***
 
 ### "Filter by Selection" tab
-![](ss03.png)
+![](pic/ss04.png)
 
 - "Add selection" button
   - to include selected dataset image in selection
@@ -116,8 +118,39 @@ Note. "tag" means each blocks of caption separated by commas.
 
 ***
 
+### "Batch Edit Captions" tab
+![](pic/ss05.png)
+#### "Search and Replace" tab
+
+- "Edit common tags" is a simple way to edit tags.
+  - "Common Tags" text box (not editable)
+    - shows the common tags among the displayed images in comma separated style
+  - "Edit Tags" text box
+    - you can edit the selected tags for all captions of the displayed images
+      - each tags will be replaced by the tags in "same place"
+      - erase tags by changing it into blank
+      - you can add some tags to the captions by appending new tags
+        - the tags will be added to the beggining/end of text files depending on the checkbox below
+  - "Apply changes to filtered images" button
+    - apply the tag changes only to displayed images
+
+- "Search and Replace" is a little complicated but powerful way to edit tags.
+  - Regular expression can be used here.
+  - "Search Text" text box
+    - text to be replaced
+  - "Replace Text" text box
+    - text to replace "Search Text"
+  - "Search and Replace in" radio buttons 
+    - to select the replacing method
+      - "Only Selected Tags" : limit the range only to selected tags, and do replace sepalately in each tags
+      - "Each Tags" : do replace sepalately in each tags
+      - "Entire Caption" : do replace in entire caption at once
+  - "Search and Replace" button to apply
+
+***
+
 ### "Edit Caption of Selected Image" tab
-![](ss04.png) ![](ss05.png)
+![](pic/ss06.png)
 
 #### "Read Caption from Selected Image" tab
 - "Caption of Selected Image" textbox
@@ -134,3 +167,15 @@ Note. "tag" means each blocks of caption separated by commas.
   - edit caption here
 - "Apply changes to selected image" button
   - change the caption of selected image into the text in "Edit Tags" textbox
+
+***
+
+  ### "Move or Delete Files" tab
+![](pic/ss07.png)
+- "Move or Delete" radio buttons to select target image
+- "Target" checkboxes to select which files to be moved or deleted
+- "Move File(s)" button
+  - move files to "Destination Directory"
+- "DELETE File(s)" button
+  - delete files
+  - Note: This won't move the files into $Recycle.Bin, just do DELETE them completely.
