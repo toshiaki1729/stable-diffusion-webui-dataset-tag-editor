@@ -658,6 +658,7 @@ def on_ui_tabs():
                 ta_move_or_delete_target_dataset_num = gr.HTML(value='Target dataset num: 0')
                 tb_move_or_delete_destination_dir = gr.Textbox(label='Destination Directory', value=cfg_file_move_delete.destination)
                 btn_move_or_delete_move_files = gr.Button(value='Move File(s)', variant='primary')
+                gr.HTML(value='<b>Note: </b>DELETE cannot be undone. The files will be deleted completely.')
                 btn_move_or_delete_delete_files = gr.Button(value='DELETE File(s)', variant='primary')
         
         o_filter_and_gallery = \
