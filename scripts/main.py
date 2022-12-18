@@ -333,7 +333,8 @@ def gallery_index_changed(prev_idx: int, next_idx: int, edit_caption: str, copy_
     return\
         [prev_idx if warn_change_not_saved and edit_caption != prev_tags_txt else -1] +\
         [next_tags_txt, next_tags_txt if copy_automatically else edit_caption] +\
-        [edit_caption]
+        [edit_caption] +\
+        [get_current_gallery_txt()]
 
 
 def dialog_selected_save_caption_change(prev_idx: int, edit_caption: str):
@@ -853,7 +854,7 @@ def on_ui_tabs():
         nb_hidden_image_index.change(
             fn=gallery_index_changed,
             inputs=[nb_hidden_image_index_prev, nb_hidden_image_index, tb_edit_caption_selected_image, cb_copy_caption_automatically, cb_ask_save_when_caption_changed],
-            outputs=[nb_hidden_image_index_save_or_not] + [tb_caption_selected_image, tb_edit_caption_selected_image] + [tb_hidden_edit_caption]
+            outputs=[nb_hidden_image_index_save_or_not] + [tb_caption_selected_image, tb_edit_caption_selected_image] + [tb_hidden_edit_caption] + [txt_gallery]
         )
 
         nb_hidden_image_index_save_or_not.change(
