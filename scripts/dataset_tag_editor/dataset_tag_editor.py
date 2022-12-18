@@ -272,6 +272,14 @@ class DatasetTagEditor:
             self.set_tags_by_image_path(path, res)
     
 
+    def remove_tags(self, tags: Set[str], filters: List[Dataset.Filter] = []):
+        img_paths = self.get_filtered_imgpaths(filters)
+        for path in img_paths:
+            res = self.dataset.get_data_tags(path)
+            res = [t for t in res if t not in tags]
+            self.set_tags_by_image_path(path, res)
+
+
     def get_img_path_list(self):
         return [k for k in self.dataset.datas.keys() if k]
 
