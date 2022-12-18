@@ -78,7 +78,7 @@ Note. "tag" means each blocks of caption separated by commas.
 
 ***
 
-### "Filter and Edit Tags" tab
+### "Filter by Tags" tab
 ![](pic/ss03.png)
 #### Common
 - "Clear tag filters" button
@@ -146,6 +146,13 @@ Positive (inclusive) / Negative (exclusive) filters can be used by toglling tabs
       - "Each Tags" : do replace sepalately in each tags
       - "Entire Caption" : do replace in entire caption at once
   - "Search and Replace" button to apply
+
+#### "Remove" tab
+Simple way to batch remove tags
+- "Remove duplicate tags" button
+  - make each tags in each captions appear only once
+- "Remove selected tags" button
+  - remove tags selected below
 
 ***
 
