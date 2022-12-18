@@ -619,10 +619,10 @@ def on_ui_tabs():
                         btn_apply_sr_tags = gr.Button(value='Search and Replace', variant='primary')
                 with gr.Tab(label='Delete'):
                     with gr.Column(variant='panel'):
-                        gr.HTML('Remove duplicated tags in the images displayed.')
+                        gr.HTML('Remove <b>duplicated</b> tags from the images displayed.')
                         btn_remove_duplicate = gr.Button(value='Remove duplicated tags', variant='primary')
                     with gr.Column(variant='panel'):
-                        gr.HTML('Remove selected tags from the images displayed.')
+                        gr.HTML('Remove <b>selected</b> tags from the images displayed.')
                         btn_remove_selected = gr.Button(value='Remove selected tags', variant='primary')
                         tag_select_ui_remove.create_ui(get_filters, cfg_batch_edit.sory_by, cfg_batch_edit.sort_order)
                     
