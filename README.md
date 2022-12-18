@@ -34,7 +34,7 @@ Note. "tag" means each blocks of caption separated by commas.
   - AND/OR logic can be used in each Positive/Negative filters
 - Batch replace/remove/append tags
 - Batch search and replace
-  - [regular expression](https://docs.python.org/3/library/re.html) can be used
+  - [regular expression](https://docs.python.org/3/library/re.html#regular-expression-syntax) can be used
 - Use interrogators
   - BLIP, DeepDanbooru, [WDv1.4 Tagger](https://huggingface.co/SmilingWolf/wd-v1-4-vit-tagger)
 - Batch remove image and/or caption files
@@ -86,9 +86,8 @@ Note. "tag" means each blocks of caption separated by commas.
 - "Clear ALL filters" button
   - clear all filters including image selection filter in the next tab
 
-Positive (inclusive) / Negative (exclusive) filters can be used by toglling tabs.
-
 #### Search tags / Filter images by tags
+Positive (inclusive) / Negative (exclusive) filters can be used by toglling tabs.
 - "Search Tags" text box
   - search and filter the tags displayed below
 - "Sort by / Sort order" radio buttons
