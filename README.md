@@ -139,7 +139,7 @@ Positive (inclusive) / Negative (exclusive) filters can be used by toglling tabs
     - "Search Text" will be replaced by "Replace Text"
   - "Search and Replace in" radio buttons 
     - to select the replacing method
-      - "Only Selected Tags" : limit the range only to selected tags, and do replace sepalately in each tags
+      - "Only Selected Tags" : do replace sepalately in each only selected tags
       - "Each Tags" : do replace sepalately in each tags
       - "Entire Caption" : do replace in entire caption at once
   - "Search and Replace" button to apply
