@@ -89,7 +89,7 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 
 ### "Filter by Tags" タブ
 ![](pic/ss03.png)
-#### Common
+#### 共通
 - "Clear tag filters" ボタン
   - タグの検索やタグによる画像の絞り込みを取り消します。
 - "Clear ALL filters" ボタン
@@ -138,7 +138,8 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 
 ### "Batch Edit Captions" タブ
 ![](pic/ss05.png)
-
+#### "Search and Replace" タブ
+複数のタグを一括置換できます
 - "Edit common tags" は、表示されている画像のタグを編集するシンプルな方法です。
   - "Common Tags" テキストボックス (編集不可)
     - 表示されている画像に共通するタグをカンマ区切りで表示します。
@@ -165,6 +166,15 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
       - "Entire Caption" : キャプション全体を一度に置換
   - "Search and Replace" ボタン
     - 一括置換を実行します
+
+  #### "Remove" タブ
+複数のタグを簡単に一括削除できます
+- "Remove duplicate tags" ボタン
+  - キャプションの中に複数存在するタグを1つにする
+- "Remove selected tags" ボタン
+  - 下で選択したタグを削除する
+  - "Search Tags" からタグの検索と絞り込みが可能
+  - "Select visible tags" で表示されているタグ全てを選択、"Deselect visible tags" で選択解除する。
 
 ***
 
