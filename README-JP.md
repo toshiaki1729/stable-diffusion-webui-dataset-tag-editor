@@ -15,7 +15,8 @@ DeepBooru interrogator で生成したような、カンマ区切り形式のキ
 ## インストール方法
 ### WebUIのExtensionsタブからインストールする
 "Install from URL" タブに `https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-editor.git` をコピーしてインストールできます。  
-"Availables" タブにこの拡張機能が表示されている場合は、ワンクリックでインストール可能です。
+"Availables" タブにこの拡張機能が表示されている場合は、ワンクリックでインストール可能です。  
+web UI の "Extensions" タブから更新をした際、完全に更新を適用するには web UI を再起動する必要がある場合があります。
 
 ### 手動でインストールする
 web UI の `extensions` フォルダにリポジトリのクローンを作成し再起動してください。
@@ -30,34 +31,46 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 - 画像を見ながらキャプションの編集ができます
 - タグの検索ができます
 - 複数タグで絞り込んでキャプションの編集ができます
+  - 絞り込み方法として、AND/OR/NOT検索ができます
 - タグを一括で置換・削除・追加できます
-- BLIPやDeepDanbooruを使用してタグの追加や編集ができます
+- タグまたはキャプション全体について一括置換ができます
+  - [正規表現](https://docs.python.org/ja/3/library/re.html#regular-expression-syntax) が利用可能です
+- BLIP、DeepDanbooru、[WDv1.4 Tagger](https://huggingface.co/SmilingWolf/wd-v1-4-vit-tagger)を使用してタグの追加や編集ができます
+- 画像やキャプションファイルの一括移動・削除ができます
 
 
 ## 使い方
 1. web UI でデータセットを作成する
+    - 既にリサイズ・トリミングされた画像を使用することをお勧めします
 1. データセットを読み込む
-    - 必要に応じてBLIPやDeepDanbooruでタグ付けができます
+    - 必要に応じてDeepDanbooru等でタグ付けができます
 1. キャプションを編集する
-    - "Filter and Edit Tags" タブで編集したいタグを選択する
-      - データセットに含まれるタグを検索・選択して編集対象を絞り込む
-      - 既存のタグを置換・削除したり新しく追加したりする
+    - "Filter by Tags" タブでキャプションの編集をしたい画像を絞り込む
     - 画像を手動で選んで絞り込む場合は "Filter by Selection" タブを使用する
+    - 一括でタグを置換・削除・追加する場合は "Batch Edit Caption" タブを使用する
     - キャプションを個別に編集したい場合は "Edit Caption of Selected Image" タブを使用する
-      - BLIPやDeepDanbooruも利用可能
+      - DeepDanbooru等も利用可能
+    - 選択したものをデータセットから一括移動・削除したい場合は "Remove or Delete Files" タブを使用する
 1. "Save all changes" ボタンをクリックして保存する
 
 
 ## 表示内容
 
 ### 共通
+
+![](pic/ss02.png)
+
 - "Save all changes" ボタン
   - キャプションをテキストファイルに保存します。このボタンを押すまで全ての変更は適用されません。
   - "Backup original text file" にチェックを入れることで、保存時にオリジナルのテキストファイル名をバックアップします。
     - バックアップファイル名は、filename.000、 -.001、 -.002、…、のように付けられます。
   - キャプションを含むテキストファイルが無い場合は新しく作成されます。
-- "Results" テキストボックス
-  - 保存した結果が表示されます。
+- "Reload/Save Settings" アコーディオン
+  - UIで表示されている設定を全て再読み込み・保存したり、デフォルトに戻せます。
+    - "Reload settings" : 設定を再読み込みします。
+    - "Save current settings" : 現在の設定を保存します。
+    - "Restore settings to default" : 設定をデフォルトに戻します（保存はしません）。
+  - 設定は `.../tag-editor-root-dir/config.json` に保存されています。
 - "Dataset Directory" テキストボックス
   - 学習データセットのあるディレクトリを入力してください。
   - 下のオプションからロード方法を変更できます。
@@ -74,37 +87,37 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 
 ***
 
-### "Filter and Edit Tags" タブ
-![](ss02.png)
-
-- "Search Tags" テキストボックス
-  - 入力した文字で下に表示されているタグを検索し絞り込みます。
+### "Filter by Tags" タブ
+![](pic/ss03.png)
+#### Common
 - "Clear tag filters" ボタン
   - タグの検索やタグによる画像の絞り込みを取り消します。
 - "Clear ALL filters" ボタン
   - "Filter by Selection" タブでの画像選択による絞り込みを含めて、全ての絞り込みを取り消します。
+
+#### Search tags / Filter images by tags
+"Positive Filter" : 指定した条件を**満たす**画像を表示します。  
+"Negative Filter" : 指定した条件を**満たさない**画像を表示します。  
+両フィルタは同時に指定可能です
+
+- "Search Tags" テキストボックス
+  - 入力した文字で下に表示されているタグを検索し絞り込みます。
 - "Sort by / Sort order" ラジオボタン
   - 下に表示されているタグの並び順を切り替えます。
     - Alphabetical Order / Frequency : アルファベット順／出現頻度順
     - Ascending / Descending : 昇順／降順
+- "Filter Logic" ラジオボタン
+  - 絞り込みの方法を指定します。
+    - "AND" : 選択したタグを全て含む画像
+    - "OR" : 選択したタグのいずれかを含む画像
+    - "NONE" : フィルタを無効にする
 - "Filter Images by Tags" チェックボックス
   - 選択したタグによって左の画像を絞り込みます。絞り込まれた画像のキャプションの内容に応じて、タグも絞り込まれます。
-- "Selected Tags" テキストボックス (編集不可)
-  - 選択したタグをカンマ区切りで表示します。
-- "Edit Tags" テキストボックス
-  - 選択したタグを編集します。編集内容は絞り込まれている画像にのみ適用されます。選択されていないタグには影響しません。
-    - 編集すると、カンマ区切りで同じ場所にあるタグを置換できます。
-    - タグを空白に変えることで削除できます。
-    - 末尾にタグを追加することでキャプションに新たなタグを追加できます。
-      - タグが追加される位置はキャプションの先頭と末尾を選べます。
-        - "Prepend additional tags" をチェックすると先頭、チェックを外すと末尾に追加します。
-- "Apply changes to filtered images" ボタン
-  - 絞り込まれている画像に、タグの変更を適用します。
 
 ***
 
 ### "Filter by Selection" タブ
-![](ss03.png)
+![](pic/ss04.png)
 
 - "Add selection" ボタン
   - 左で選択した画像を選択対象に追加します。
@@ -123,8 +136,40 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 
 ***
 
+### "Batch Edit Captions" タブ
+![](pic/ss05.png)
+
+- "Edit common tags" は、表示されている画像のタグを編集するシンプルな方法です。
+  - "Common Tags" テキストボックス (編集不可)
+    - 表示されている画像に共通するタグをカンマ区切りで表示します。
+    - 上の "Show only … Positive Filter" をチェックすることで、"Filter by Tags" の "Positive Filter" で選択したもののみ表示することができます。
+  - "Edit Tags" テキストボックス
+    - 共通のタグを編集します。編集内容は絞り込まれている画像にのみ適用されます。表示されていないタグには影響しません。
+      - 編集すると、カンマ区切りで同じ場所にあるタグを置換できます。
+      - タグを空白に変えることで削除できます。
+      - 末尾にタグを追加することでキャプションに新たなタグを追加できます。
+        - タグが追加される位置はキャプションの先頭と末尾を選べます。
+          - "Prepend additional tags" をチェックすると先頭、チェックを外すと末尾に追加します。
+  - "Apply changes to filtered images" ボタン
+    - 絞り込まれている画像に、タグの変更を適用します。
+- "Search and Replace" では、表示されている画像のタグまたはキャプション全体に対して一括置換ができます。
+  - "Use regex" にチェックを入れることで、正規表現が利用可能です。
+  - "Search Text" テキストボックス
+    - 置換対象の文字列を入力します。
+  - "Replace Text" テキストボックス
+    - この文字列で "Search Text" を置換します。
+  - "Search and Replace in" ラジオボタン
+    - 一括置換の範囲を選択します
+      - "Only Selected Tags" : "Positive Filter" で選択したタグのみ、それぞれのタグを個別に置換
+      - "Each Tags" : それぞれのタグを個別に置換
+      - "Entire Caption" : キャプション全体を一度に置換
+  - "Search and Replace" ボタン
+    - 一括置換を実行します
+
+***
+
 ### "Edit Caption of Selected Image" タブ
-![](ss04.png) ![](ss05.png)
+![](pic/ss06.png)
 
 #### "Read Caption from Selected Image" タブ
 - "Caption of Selected Image" テキストボックス
@@ -141,3 +186,21 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
   - ここでキャプションの編集が可能です。
 - "Apply changes to selected image" ボタン
   - 選択している画像のキャプションを "Edit Tags" の内容に変更します。
+
+### "Move or Delete Files" タブ
+![](pic/ss07.png)
+
+- "Move or Delete" ラジオボタン
+  - 操作を実行する対象を選びます。
+    - "Selected One" : 左のギャラリーで選択されている画像のみ
+    - "All Displayed Ones" : 左のギャラリーで表示されている画像全て
+- "Target" チェックボックス
+  - 操作を実行する対象を選びます。
+    - "Image File" : 画像ファイル
+    - "Caption Text File" : キャプションファイル
+    - "Caption Backup File" : キャプションファイルのバックアップ
+- "Move File(s)" ボタン
+  - "Destination Directory" で指定したディレクトリにファイルを移動します。
+- "DELETE Files(s)" ボタン
+  - ファイルを削除します。
+  - 注意 : ごみ箱には送られず、完全に削除されます。

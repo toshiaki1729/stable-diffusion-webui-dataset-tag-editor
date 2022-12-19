@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, NamedTuple, Type
 from modules import shared, script_callbacks, scripts
 from modules.shared import opts
 import gradio as gr
@@ -8,7 +8,7 @@ from collections import namedtuple
 
 from scripts.dataset_tag_editor.dataset_tag_editor import DatasetTagEditor, InterrogateMethod
 from scripts.dataset_tag_editor.filters import TagFilter, PathFilter, TagScoreFilter
-from scripts.dataset_tag_editor.ui import TagFilterUI
+from scripts.dataset_tag_editor.ui import TagFilterUI, TagSelectUI
 
 dataset_tag_editor = DatasetTagEditor()
 
@@ -16,6 +16,7 @@ path_filter = PathFilter()
 tag_filter_ui:TagFilterUI = None
 tag_filter_ui_neg:TagFilterUI = None
 tag_score_filters: List[TagScoreFilter] = []
+tag_select_ui_remove:TagSelectUI = None
 
 def get_filters():
     return [path_filter, tag_filter_ui.get_filter(), tag_filter_ui_neg.get_filter()] + tag_score_filters
@@ -37,15 +38,15 @@ CONFIG_PATH = os.path.join(scripts.basedir(), 'config.json')
 
 GeneralConfig = namedtuple('GeneralConfig', ['backup', 'dataset_dir', 'load_recursive', 'load_caption_from_filename', 'use_interrogator', 'use_clip_to_prefill', 'use_booru_to_prefill', 'use_waifu_to_prefill'])
 FilterConfig = namedtuple('FilterConfig', ['sort_by', 'sort_order', 'logic'])
-BatchEditConfig = namedtuple('BatchEditConfig', ['show_only_selected', 'prepend', 'use_regex', 'target'])
-EditSelectedConfig = namedtuple('EditSelectedConfig', ['auto_copy'])
+BatchEditConfig = namedtuple('BatchEditConfig', ['show_only_selected', 'prepend', 'use_regex', 'target', 'sory_by', 'sort_order'])
+EditSelectedConfig = namedtuple('EditSelectedConfig', ['auto_copy', 'warn_change_not_saved'])
 MoveDeleteConfig = namedtuple('MoveDeleteConfig', ['range', 'target', 'destination'])
 
 CFG_GENERAL_DEFAULT = GeneralConfig(True, '', False, True, 'No', False, False, False)
 CFG_FILTER_P_DEFAULT = FilterConfig('Alphabetical Order', 'Ascending', 'AND')
 CFG_FILTER_N_DEFAULT = FilterConfig('Alphabetical Order', 'Ascending', 'OR')
-CFG_BATCH_EDIT_DEFAULT = BatchEditConfig(True, False, False, 'Only Selected Tags')
-CFG_EDIT_SELECTED_DEFAULT = EditSelectedConfig(False)
+CFG_BATCH_EDIT_DEFAULT = BatchEditConfig(True, False, False, 'Only Selected Tags', 'Alphabetical Order', 'Ascending')
+CFG_EDIT_SELECTED_DEFAULT = EditSelectedConfig(False, False)
 CFG_MOVE_DELETE_DEFAULT = MoveDeleteConfig('Selected One', [], '')
 
 class Config:
@@ -84,39 +85,51 @@ def write_filter_config(sort_by_p: str, sort_order_p: str, logic_p: str, sort_by
     cfg_n = FilterConfig(sort_by_n, sort_order_n, logic_n)
     config.write({'positive':cfg_p._asdict(), 'negative':cfg_n._asdict()}, 'filter')
 
-def write_batch_edit_config(show_only_selected: bool, prepend: bool, use_regex: bool, target: str):
-    cfg = BatchEditConfig(show_only_selected, prepend, use_regex, target)
+def write_batch_edit_config(show_only_selected: bool, prepend: bool, use_regex: bool, target: str, sort_by: str, sort_order: str):
+    cfg = BatchEditConfig(show_only_selected, prepend, use_regex, target, sort_by, sort_order)
     config.write(cfg._asdict(), 'batch_edit')
 
-def write_edit_selected_config(auto_copy: bool):
-    cfg = EditSelectedConfig(auto_copy)
+def write_edit_selected_config(auto_copy: bool, warn_change_not_saved: bool):
+    cfg = EditSelectedConfig(auto_copy, warn_change_not_saved)
     config.write(cfg._asdict(), 'edit_selected')
 
 def write_move_delete_config(range: str, target: str, destination: str):
     cfg = MoveDeleteConfig(range, target, destination)
     config.write(cfg._asdict(), 'file_move_delete')
 
+def read_config(name: str, config_type: Type, default: NamedTuple):
+    d = config.read(name)
+    cfg = default
+    if d:
+        d = default._asdict() | d
+        cfg = config_type(**d)
+    return cfg
+
 def read_general_config():
-    cfg = config.read('general')
-    return GeneralConfig(**cfg) if cfg else CFG_GENERAL_DEFAULT
+    return read_config('general', GeneralConfig, CFG_GENERAL_DEFAULT)
 
 def read_filter_config():
-    cfg = config.read('filter')
-    cfg_p = cfg.get('positive') if cfg else None
-    cfg_n = cfg.get('negative') if cfg else None
-    return FilterConfig(**cfg_p) if cfg_p else CFG_FILTER_P_DEFAULT, FilterConfig(**cfg_n) if cfg_n else CFG_FILTER_N_DEFAULT
+    d = config.read('filter')
+    d_p = d.get('positive') if d else None
+    d_n = d.get('negative') if d else None
+    cfg_p = CFG_FILTER_P_DEFAULT
+    cfg_n = CFG_FILTER_N_DEFAULT
+    if d_p:
+        d_p = CFG_FILTER_P_DEFAULT._asdict() | d_p
+        cfg_p = FilterConfig(**d_p)
+    if d_n:
+        d_n = CFG_FILTER_N_DEFAULT._asdict() | d_n
+        cfg_n = FilterConfig(**d_n)
+    return cfg_p, cfg_n
 
 def read_batch_edit_config():
-    cfg = config.read('batch_edit')
-    return BatchEditConfig(**cfg) if cfg else CFG_BATCH_EDIT_DEFAULT
+    return read_config('batch_edit', BatchEditConfig, CFG_BATCH_EDIT_DEFAULT)
 
 def read_edit_selected_config():
-    cfg = config.read('edit_selected')
-    return EditSelectedConfig(**cfg) if cfg else CFG_EDIT_SELECTED_DEFAULT
+    return read_config('edit_selected', EditSelectedConfig, CFG_EDIT_SELECTED_DEFAULT)
 
 def read_move_delete_config():
-    cfg = config.read('file_move_delete')
-    return MoveDeleteConfig(**cfg) if cfg else CFG_MOVE_DELETE_DEFAULT
+    return read_config('file_move_delete', MoveDeleteConfig, CFG_MOVE_DELETE_DEFAULT)
 
 # ================================================================
 # Callbacks for "Filter and Edit Tags" tab
@@ -162,7 +175,8 @@ def load_files_from_dir(dir: str, recursive: bool, load_caption_from_filename: b
         interrogate_method = InterrogateMethod.APPEND
 
     dataset_tag_editor.load_dataset(dir, recursive, load_caption_from_filename, interrogate_method, use_booru, use_clip, use_waifu)
-    img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=get_filters())
+    img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=[])
+    img_indices = dataset_tag_editor.get_filtered_imgindices(filters=[])
     path_filter = PathFilter()
     total_image_num = displayed_image_num = len(dataset_tag_editor.get_img_path_set())
     tmp_selection_img_path_set = set()
@@ -173,22 +187,33 @@ def load_files_from_dir(dir: str, recursive: bool, load_caption_from_filename: b
         [],
         get_current_gallery_txt(),
         get_current_txt_selection()
-    ] + clear_tag_filters()
+    ] +\
+    [gr.CheckboxGroup.update(value=[str(i) for i in img_indices], choices=[str(i) for i in img_indices]), True] +\
+    clear_tag_filters() +\
+    [tag_select_ui_remove.cbg_tags_update()]
 
 
 def update_gallery():
     global displayed_image_num
-    img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=get_filters())
-    displayed_image_num = len(img_paths)
+    img_indices = dataset_tag_editor.get_filtered_imgindices(filters=get_filters())
+    displayed_image_num = len(img_indices)
     return [
-        img_paths,
+        [str(i) for i in img_indices],
+        1,
+        -1,
+        -1,
         -1,
         get_current_gallery_txt()
         ]
 
 
 def update_filter_and_gallery():
-    return [tag_filter_ui.cbg_tags_update(), tag_filter_ui_neg.cbg_tags_update()] + update_gallery() + update_common_tags() + [', '.join(tag_filter_ui.filter.tags)]
+    return \
+        [tag_filter_ui.cbg_tags_update(), tag_filter_ui_neg.cbg_tags_update()] +\
+        update_gallery() +\
+        update_common_tags() +\
+        [', '.join(tag_filter_ui.filter.tags)] +\
+        [tag_select_ui_remove.cbg_tags_update()]
 
 
 def clear_tag_filters():
@@ -350,24 +375,35 @@ def show_current_tag_score_filters():
 # Callbacks for "Edit Caption of Selected Image" tab
 # ================================================================
 
-def gallery_index_changed(idx: int, edit_caption: str, copy_automatically: bool):
+def gallery_index_changed(prev_idx: int, next_idx: int, edit_caption: str, copy_automatically: bool, warn_change_not_saved: bool):
     global gallery_selected_image_path
-    idx = int(idx)
+    prev_idx = int(prev_idx)
+    next_idx = int(next_idx)
     img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=get_filters())
-    tags_txt = ''
-    if 0 <= idx and idx < len(img_paths):
-        gallery_selected_image_path = img_paths[idx]
-        tags_txt = ', '.join(dataset_tag_editor.get_tags_by_image_path(gallery_selected_image_path))
+    prev_tags_txt = ''
+    if 0 <= prev_idx and prev_idx < len(img_paths):
+        prev_tags_txt = ', '.join(dataset_tag_editor.get_tags_by_image_path(gallery_selected_image_path))
+    else:
+        prev_idx = -1
+    
+    next_tags_txt = ''
+    if 0 <= next_idx and next_idx < len(img_paths):
+        gallery_selected_image_path = img_paths[next_idx]
+        next_tags_txt = ', '.join(dataset_tag_editor.get_tags_by_image_path(gallery_selected_image_path))
     else:
         gallery_selected_image_path = ''
-        idx = -1
-    
-    return [
-        tags_txt,
-        tags_txt if copy_automatically else edit_caption,
-        get_current_gallery_txt(),
-        idx
-        ]
+        
+    return\
+        [prev_idx if warn_change_not_saved and edit_caption != prev_tags_txt else -1] +\
+        [next_tags_txt, next_tags_txt if copy_automatically else edit_caption] +\
+        [edit_caption] +\
+        [get_current_gallery_txt()]
+
+
+def dialog_selected_save_caption_change(prev_idx: int, edit_caption: str):
+    global gallery_selected_image_path
+    prev_idx = int(prev_idx)
+    return change_selected_image_caption(edit_caption, prev_idx)
 
 
 def change_selected_image_caption(tags_text: str, idx: int):
@@ -377,9 +413,7 @@ def change_selected_image_caption(tags_text: str, idx: int):
     edited_tags = [t.strip() for t in tags_text.split(',')]
     edited_tags = [t for t in edited_tags if t]
 
-    if idx < 0 or len(img_paths) <= idx:
-        idx = -1
-    else:
+    if 0 <= idx and idx < len(img_paths):
         dataset_tag_editor.set_tags_by_image_path(imgpath=img_paths[idx], tags=edited_tags)
     return update_filter_and_gallery()
 
@@ -450,6 +484,11 @@ def remove_duplicated_tags():
     return update_filter_and_gallery()
 
 
+def remove_selected_tags():
+    dataset_tag_editor.remove_tags(tag_select_ui_remove.selected_tags, get_filters())
+    return update_filter_and_gallery()
+
+
 # ================================================================
 # Callbacks for "Move or Delete Files" tab
 # ================================================================
@@ -493,7 +532,7 @@ def delete_files(target_data: str, target_file: List[str], idx: int = -1):
 # ================================================================
 
 def on_ui_tabs():
-    global tag_filter_ui, tag_filter_ui_neg
+    global tag_filter_ui, tag_filter_ui_neg, tag_select_ui_remove
     config.load()
 
     cfg_general = read_general_config()
@@ -504,12 +543,18 @@ def on_ui_tabs():
 
     tag_filter_ui = TagFilterUI(dataset_tag_editor, tag_filter_mode=TagFilter.Mode.INCLUSIVE)
     tag_filter_ui_neg = TagFilterUI(dataset_tag_editor, tag_filter_mode=TagFilter.Mode.EXCLUSIVE)
-
+    tag_select_ui_remove = TagSelectUI(dataset_tag_editor)
 
     with gr.Blocks(analytics_enabled=False) as dataset_tag_editor_interface:
         with gr.Row(visible=False):
             btn_hidden_set_index = gr.Button(elem_id="dataset_tag_editor_btn_hidden_set_index")
-            nb_hidden_image_index = gr.Number(value=-1)
+            nb_hidden_image_index = gr.Number(value=-1, label='hidden_idx_next')
+            nb_hidden_image_index_prev = gr.Number(value=-1, label='hidden_idx_prev')
+            nb_hidden_image_index_save_or_not = gr.Number(value=-1, label='hidden_s_or_n')
+            btn_hidden_save_caption = gr.Button(elem_id="dataset_tag_editor_btn_hidden_save_caption")
+            tb_hidden_edit_caption = gr.Textbox()
+            cbg_hidden_dataset_filter = gr.CheckboxGroup(label='Dataset Filter')
+            nb_hidden_dataset_filter_apply = gr.Number(label='Filter Apply', value=-1)
 
         gr.HTML(value="""
         This extension works well with text captions in comma-separated style (such as the tags generated by DeepBooru interrogator).
@@ -581,7 +626,7 @@ def on_ui_tabs():
                         btn_add_image_selection = gr.Button(value='Add selection [Enter]', elem_id='dataset_tag_editor_btn_add_image_selection')    
                         btn_add_all_displayed_image_selection = gr.Button(value='Add ALL Displayed')    
 
-                    gl_selected_images = gr.Gallery(label='Filter Images', elem_id="dataset_tag_editor_selection_gallery").style(grid=opts.dataset_editor_image_columns)
+                    gl_filter_images = gr.Gallery(label='Filter Images', elem_id="dataset_tag_editor_filter_gallery").style(grid=opts.dataset_editor_image_columns)
                     txt_selection = gr.HTML(value=get_current_txt_selection())
 
                     with gr.Row():
@@ -604,41 +649,48 @@ def on_ui_tabs():
                     df_tag_score_filter_output = gr.Dataframe(interactive=True, max_cols=4, col_count=(4, 'fixed'), headers=['Tagger', 'Tag', 'Logic', 'Threshold'])
 
             with gr.Tab(label='Batch Edit Captions'):
-                with gr.Column(variant='panel'):
-                    gr.HTML('Edit common tags.')
-                    cb_show_only_tags_selected = gr.Checkbox(value=cfg_batch_edit.show_only_selected, label='Show only the tags selected in the Positive Filter')
-                    tb_common_tags = gr.Textbox(label='Common Tags', interactive=False)
-                    tb_edit_tags = gr.Textbox(label='Edit Tags', interactive=True)
-                    cb_prepend_tags = gr.Checkbox(value=cfg_batch_edit.prepend, label='Prepend additional tags')
-                    btn_apply_edit_tags = gr.Button(value='Apply changes to filtered images', variant='primary')
-                    with gr.Accordion(label='Show description of how to edit tags', open=False):
-                        gr.HTML(value="""
-                        1. The tags common to all displayed images are shown in comma separated style.<br>
-                        2. When changes are applied, all tags in each displayed images are replaced.<br>
-                        3. If you change some tags into blank, they will be erased.<br>
-                        4. If you add some tags to the end, they will be added to the end/beginning of the text file.<br>
-                        5. Changes are not applied to the text files until the "Save all changes" button is pressed.<br>
-                        <b>ex A.</b><br>
-                        &emsp;Original Text = "A, A, B, C"&emsp;Common Tags = "B, A"&emsp;Edit Tags = "X, Y"<br>
-                        &emsp;Result = "Y, Y, X, C"&emsp;(B->X, A->Y)<br>
-                        <b>ex B.</b><br>
-                        &emsp;Original Text = "A, B, C"&emsp;Common Tags = "(nothing)"&emsp;Edit Tags = "X, Y"<br>
-                        &emsp;Result = "A, B, C, X, Y"&emsp;(add X and Y to the end (default))<br>
-                        &emsp;Result = "X, Y, A, B, C"&emsp;(add X and Y to the beginning ("Prepend additional tags" checked))<br>
-                        <b>ex C.</b><br>
-                        &emsp;Original Text = "A, B, C, D, E"&emsp;Common Tags = "A, B, D"&emsp;Edit Tags = ", X, "<br>
-                        &emsp;Result = "X, C, E"&emsp;(A->"", B->X, D->"")<br>
-                        """)
-                with gr.Column(variant='panel'):
-                    gr.HTML('Search and Replace for all images displayed.')
-                    tb_sr_search_tags = gr.Textbox(label='Search Text', interactive=True)
-                    tb_sr_replace_tags = gr.Textbox(label='Replace Text', interactive=True)
-                    cb_use_regex = gr.Checkbox(label='Use regex', value=cfg_batch_edit.use_regex)
-                    rb_sr_replace_target = gr.Radio(['Only Selected Tags', 'Each Tags', 'Entire Caption'], value=cfg_batch_edit.target, label='Search and Replace in', interactive=True)
-                    tb_sr_selected_tags = gr.Textbox(label='Selected Tags', interactive=False, lines=2)
-                    btn_apply_sr_tags = gr.Button(value='Search and Replace', variant='primary')
-                with gr.Column(variant='panel'):
-                    btn_remove_duplicate = gr.Button(value='Remove duplicated tags')
+                with gr.Tab(label='Search and Replace'):
+                    with gr.Column(variant='panel'):
+                        gr.HTML('Edit common tags.')
+                        cb_show_only_tags_selected = gr.Checkbox(value=cfg_batch_edit.show_only_selected, label='Show only the tags selected in the Positive Filter')
+                        tb_common_tags = gr.Textbox(label='Common Tags', interactive=False)
+                        tb_edit_tags = gr.Textbox(label='Edit Tags', interactive=True)
+                        cb_prepend_tags = gr.Checkbox(value=cfg_batch_edit.prepend, label='Prepend additional tags')
+                        btn_apply_edit_tags = gr.Button(value='Apply changes to filtered images', variant='primary')
+                        with gr.Accordion(label='Show description of how to edit tags', open=False):
+                            gr.HTML(value="""
+                            1. The tags common to all displayed images are shown in comma separated style.<br>
+                            2. When changes are applied, all tags in each displayed images are replaced.<br>
+                            3. If you change some tags into blank, they will be erased.<br>
+                            4. If you add some tags to the end, they will be added to the end/beginning of the text file.<br>
+                            5. Changes are not applied to the text files until the "Save all changes" button is pressed.<br>
+                            <b>ex A.</b><br>
+                            &emsp;Original Text = "A, A, B, C"&emsp;Common Tags = "B, A"&emsp;Edit Tags = "X, Y"<br>
+                            &emsp;Result = "Y, Y, X, C"&emsp;(B->X, A->Y)<br>
+                            <b>ex B.</b><br>
+                            &emsp;Original Text = "A, B, C"&emsp;Common Tags = "(nothing)"&emsp;Edit Tags = "X, Y"<br>
+                            &emsp;Result = "A, B, C, X, Y"&emsp;(add X and Y to the end (default))<br>
+                            &emsp;Result = "X, Y, A, B, C"&emsp;(add X and Y to the beginning ("Prepend additional tags" checked))<br>
+                            <b>ex C.</b><br>
+                            &emsp;Original Text = "A, B, C, D, E"&emsp;Common Tags = "A, B, D"&emsp;Edit Tags = ", X, "<br>
+                            &emsp;Result = "X, C, E"&emsp;(A->"", B->X, D->"")<br>
+                            """)
+                    with gr.Column(variant='panel'):
+                        gr.HTML('Search and Replace for all images displayed.')
+                        tb_sr_search_tags = gr.Textbox(label='Search Text', interactive=True)
+                        tb_sr_replace_tags = gr.Textbox(label='Replace Text', interactive=True)
+                        cb_use_regex = gr.Checkbox(label='Use regex', value=cfg_batch_edit.use_regex)
+                        rb_sr_replace_target = gr.Radio(['Only Selected Tags', 'Each Tags', 'Entire Caption'], value=cfg_batch_edit.target, label='Search and Replace in', interactive=True)
+                        tb_sr_selected_tags = gr.Textbox(label='Selected Tags', interactive=False, lines=2)
+                        btn_apply_sr_tags = gr.Button(value='Search and Replace', variant='primary')
+                with gr.Tab(label='Remove'):
+                    with gr.Column(variant='panel'):
+                        gr.HTML('Remove <b>duplicate</b> tags from the images displayed.')
+                        btn_remove_duplicate = gr.Button(value='Remove duplicate tags', variant='primary')
+                    with gr.Column(variant='panel'):
+                        gr.HTML('Remove <b>selected</b> tags from the images displayed.')
+                        btn_remove_selected = gr.Button(value='Remove selected tags', variant='primary')
+                        tag_select_ui_remove.create_ui(get_filters, cfg_batch_edit.sory_by, cfg_batch_edit.sort_order)
                     
             with gr.Tab(label='Edit Caption of Selected Image'):
                 with gr.Tab(label='Read Caption from Selected Image'):
@@ -659,6 +711,7 @@ def on_ui_tabs():
                         btn_prepend_interrogate = gr.Button(value='Prepend')
                         btn_append_interrogate = gr.Button(value='Append')
                 cb_copy_caption_automatically = gr.Checkbox(value=cfg_edit_selected.auto_copy, label='Copy caption from selected images automatically')
+                cb_ask_save_when_caption_changed = gr.Checkbox(value=cfg_edit_selected.warn_change_not_saved, label='Warn if changes in caption is not saved')
                 tb_edit_caption_selected_image = gr.Textbox(label='Edit Caption', interactive=True, lines=6)
                 btn_apply_changes_selected_image = gr.Button(value='Apply changes to selected image', variant='primary')
 
@@ -671,9 +724,14 @@ def on_ui_tabs():
                 ta_move_or_delete_target_dataset_num = gr.HTML(value='Target dataset num: 0')
                 tb_move_or_delete_destination_dir = gr.Textbox(label='Destination Directory', value=cfg_file_move_delete.destination)
                 btn_move_or_delete_move_files = gr.Button(value='Move File(s)', variant='primary')
+                gr.HTML(value='<b>Note: </b>DELETE cannot be undone. The files will be deleted completely.')
                 btn_move_or_delete_delete_files = gr.Button(value='DELETE File(s)', variant='primary')
         
-        o_filter_and_gallery = [tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags]
+        o_filter_and_gallery = \
+            [tag_filter_ui.cbg_tags, tag_filter_ui_neg.cbg_tags, cbg_hidden_dataset_filter, nb_hidden_dataset_filter_apply, nb_hidden_image_index, nb_hidden_image_index_prev, nb_hidden_image_index_save_or_not, txt_gallery] +\
+            [tb_common_tags, tb_edit_tags] +\
+            [tb_sr_selected_tags] +\
+            [tag_select_ui_remove.cbg_tags]
 
         #----------------------------------------------------------------
         # General
@@ -681,8 +739,8 @@ def on_ui_tabs():
         configurable_components = \
             [cb_backup, tb_img_directory, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_clip_to_prefill, cb_use_booru_to_prefill, cb_use_waifu_to_prefill] +\
             [tag_filter_ui.rb_sort_by, tag_filter_ui.rb_sort_order, tag_filter_ui.rb_logic, tag_filter_ui_neg.rb_sort_by, tag_filter_ui_neg.rb_sort_order, tag_filter_ui_neg.rb_logic] +\
-            [cb_show_only_tags_selected, cb_prepend_tags, cb_use_regex, rb_sr_replace_target] +\
-            [cb_copy_caption_automatically] +\
+            [cb_show_only_tags_selected, cb_prepend_tags, cb_use_regex, rb_sr_replace_target, tag_select_ui_remove.rb_sort_by, tag_select_ui_remove.rb_sort_order] +\
+            [cb_copy_caption_automatically, cb_ask_save_when_caption_changed] +\
             [rb_move_or_delete_target_data, cbg_move_or_delete_target_file, tb_move_or_delete_destination_dir]
         
         def reload_config_file():
@@ -698,9 +756,9 @@ def on_ui_tabs():
         def save_settings_callback(*a):
             write_general_config(*a[:8])
             write_filter_config(*a[8:14])
-            write_batch_edit_config(*a[14:18])
-            write_edit_selected_config(*a[18:19])
-            write_move_delete_config(*a[19:])
+            write_batch_edit_config(*a[14:20])
+            write_edit_selected_config(*a[20:22])
+            write_move_delete_config(*a[22:])
             config.save()
 
         btn_save_setting_as_default.click(
@@ -737,28 +795,49 @@ def on_ui_tabs():
             update_gallery() +
             update_common_tags() +
             [', '.join(tag_filter_ui.filter.tags)] +
-            [get_current_move_or_delete_target_num(a, b)],
+            [get_current_move_or_delete_target_num(a, b)] +
+            [tag_select_ui_remove.cbg_tags_update()],
             inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
-            outputs=[gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [tb_sr_selected_tags] + [ta_move_or_delete_target_dataset_num]
+            outputs=
+            [cbg_hidden_dataset_filter, nb_hidden_dataset_filter_apply, nb_hidden_image_index, nb_hidden_image_index_prev, nb_hidden_image_index_save_or_not, txt_gallery] +
+            [tb_common_tags, tb_edit_tags] +
+            [tb_sr_selected_tags] +
+            [ta_move_or_delete_target_dataset_num]+
+            [tag_select_ui_remove.cbg_tags]
         )
 
         tag_filter_ui_neg.set_callbacks(
             on_filter_update=lambda a, b:
             update_gallery() +
             update_common_tags() +
-            [get_current_move_or_delete_target_num(a, b)],
+            [get_current_move_or_delete_target_num(a, b)] +
+            [tag_select_ui_remove.cbg_tags_update()],
             inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
-            outputs=[gl_dataset_images, nb_hidden_image_index, txt_gallery] + [tb_common_tags, tb_edit_tags] + [ta_move_or_delete_target_dataset_num]
+            outputs=
+            [cbg_hidden_dataset_filter, nb_hidden_dataset_filter_apply, nb_hidden_image_index, nb_hidden_image_index_prev, nb_hidden_image_index_save_or_not, txt_gallery] +
+            [tb_common_tags, tb_edit_tags] +
+            [ta_move_or_delete_target_dataset_num] +
+            [tag_select_ui_remove.cbg_tags]
         )
 
         btn_load_datasets.click(
             fn=load_files_from_dir,
             inputs=[tb_img_directory, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_clip_to_prefill, cb_use_booru_to_prefill, cb_use_waifu_to_prefill],
-            outputs=[gl_dataset_images, gl_selected_images, txt_gallery, txt_selection] + o_filter_and_gallery
+            outputs=
+            [gl_dataset_images, gl_filter_images, txt_gallery, txt_selection] +
+            [cbg_hidden_dataset_filter, nb_hidden_dataset_filter_apply] +
+            o_filter_and_gallery
         )
         btn_load_datasets.click(
-            fn=lambda:['', '', '', -1],
-            outputs=[tb_common_tags, tb_edit_tags, tb_caption_selected_image, nb_hidden_image_index]
+            fn=lambda:['', '', '', -1, -1, -1],
+            outputs=[tb_common_tags, tb_edit_tags, tb_caption_selected_image, nb_hidden_image_index, nb_hidden_image_index_prev, nb_hidden_image_index_save_or_not]
+        )
+
+        nb_hidden_dataset_filter_apply.change(
+            fn=lambda a, b: [a, b],
+            _js='(x, y) => [y>=0 ? dataset_tag_editor_gl_dataset_images_filter(x) : x, -1]',
+            inputs=[cbg_hidden_dataset_filter, nb_hidden_dataset_filter_apply],
+            outputs=[cbg_hidden_dataset_filter, nb_hidden_dataset_filter_apply]
         )
 
         btn_clear_tag_filters.click(
@@ -773,7 +852,7 @@ def on_ui_tabs():
 
         btn_clear_all_filters.click(
             fn=clear_image_selection,
-            outputs=[gl_selected_images, txt_selection, nb_hidden_selection_image_index]
+            outputs=[gl_filter_images, txt_selection, nb_hidden_selection_image_index]
         )
         btn_clear_all_filters.click(
             fn=clear_tag_filters,
@@ -790,7 +869,7 @@ def on_ui_tabs():
 
         btn_hidden_set_selection_index.click(
             fn=selection_index_changed,
-            _js="(x) => [dataset_tag_editor_gl_selected_images_selected_index()]",
+            _js="(x) => [dataset_tag_editor_gl_filter_images_selected_index()]",
             inputs=[nb_hidden_selection_image_index],
             outputs=[txt_selection, nb_hidden_selection_image_index]
         )
@@ -798,28 +877,28 @@ def on_ui_tabs():
         btn_add_image_selection.click(
             fn=add_image_selection,
             inputs=[nb_hidden_image_index],
-            outputs=[gl_selected_images, nb_hidden_image_index]
+            outputs=[gl_filter_images, nb_hidden_image_index]
         )
 
         btn_add_all_displayed_image_selection.click(
             fn=add_all_displayed_image_selection,
-            outputs=gl_selected_images
+            outputs=gl_filter_images
         )
 
         btn_invert_image_selection.click(
             fn=invert_image_selection,
-            outputs=gl_selected_images
+            outputs=gl_filter_images
         )
 
         btn_remove_image_selection.click(
             fn=remove_image_selection,
             inputs=[nb_hidden_selection_image_index],
-            outputs=[gl_selected_images, txt_selection, nb_hidden_selection_image_index]
+            outputs=[gl_filter_images, txt_selection, nb_hidden_selection_image_index]
         )
 
         btn_clear_image_selection.click(
             fn=clear_image_selection,
-            outputs=[gl_selected_images, txt_selection, nb_hidden_selection_image_index]
+            outputs=[gl_filter_images, txt_selection, nb_hidden_selection_image_index]
         )
 
         btn_apply_image_selection_filter.click(
@@ -868,20 +947,39 @@ def on_ui_tabs():
             outputs=o_filter_and_gallery
         )
 
+        tag_select_ui_remove.set_callbacks()
+
+        btn_remove_selected.click(
+            fn=remove_selected_tags,
+            outputs=o_filter_and_gallery
+        )
+
         #----------------------------------------------------------------
         # Edit Caption of Selected Image tab
 
         btn_hidden_set_index.click(
-            fn=lambda x:x,
-            _js="(x) => dataset_tag_editor_gl_dataset_images_selected_index()",
-            inputs=nb_hidden_image_index,
-            outputs=nb_hidden_image_index
+            fn=lambda x, y:[x, y],
+            _js="(x, y) => [dataset_tag_editor_gl_dataset_images_selected_index(), x]",
+            inputs=[nb_hidden_image_index, nb_hidden_image_index_prev],
+            outputs=[nb_hidden_image_index, nb_hidden_image_index_prev]
+        )
+        
+        nb_hidden_image_index.change(
+            fn=gallery_index_changed,
+            inputs=[nb_hidden_image_index_prev, nb_hidden_image_index, tb_edit_caption_selected_image, cb_copy_caption_automatically, cb_ask_save_when_caption_changed],
+            outputs=[nb_hidden_image_index_save_or_not] + [tb_caption_selected_image, tb_edit_caption_selected_image] + [tb_hidden_edit_caption] + [txt_gallery]
         )
 
-        nb_hidden_image_index.change(
-            fn=lambda e,c,i,t: gallery_index_changed(i, e, c) + [get_current_move_or_delete_target_num(t, i)],
-            inputs=[tb_edit_caption_selected_image, cb_copy_caption_automatically, nb_hidden_image_index] + [rb_move_or_delete_target_data],
-            outputs=[tb_caption_selected_image, tb_edit_caption_selected_image, txt_gallery, nb_hidden_image_index] + [ta_move_or_delete_target_dataset_num]
+        nb_hidden_image_index_save_or_not.change(
+            fn=lambda a:None,
+            _js='(a) => dataset_tag_editor_ask_save_change_or_not(a)',
+            inputs=nb_hidden_image_index_save_or_not
+        )
+
+        btn_hidden_save_caption.click(
+            fn=lambda iprev, e, t, inext: dialog_selected_save_caption_change(iprev, e) + [get_current_move_or_delete_target_num(t, inext)],
+            inputs=[nb_hidden_image_index_prev, tb_hidden_edit_caption] + [rb_move_or_delete_target_data, nb_hidden_image_index],
+            outputs=o_filter_and_gallery + [ta_move_or_delete_target_dataset_num]
         )
 
         btn_copy_caption.click(
