@@ -135,10 +135,8 @@ Positive (inclusive) / Negative (exclusive) filters can be used by toglling tabs
 
 - "Search and Replace" is a little complicated but powerful way to edit tags.
   - Regular expression can be used here.
-  - "Search Text" text box
-    - text to be replaced
-  - "Replace Text" text box
-    - text to replace "Search Text"
+  - "Search/Replace Text" textboxes
+    - "Search Text" will be replaced by "Replace Text"
   - "Search and Replace in" radio buttons 
     - to select the replacing method
       - "Only Selected Tags" : limit the range only to selected tags, and do replace sepalately in each tags
