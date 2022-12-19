@@ -167,7 +167,7 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
   - "Search and Replace" ボタン
     - 一括置換を実行します
 
-  #### "Remove" タブ
+#### "Remove" タブ
 複数のタグを簡単に一括削除できます
 - "Remove duplicate tags" ボタン
   - キャプションの中に複数存在するタグを1つにする
