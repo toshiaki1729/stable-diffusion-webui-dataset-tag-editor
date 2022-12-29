@@ -1,6 +1,6 @@
 from PIL import Image
 import numpy as np
-from typing import Optional, List, Tuple
+from typing import List, Tuple
 import onnxruntime as ort
 from modules import shared
 

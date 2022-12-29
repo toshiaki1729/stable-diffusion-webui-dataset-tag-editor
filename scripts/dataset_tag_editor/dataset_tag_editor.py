@@ -2,13 +2,18 @@ import os
 import re
 from typing import List, Set, Optional
 from modules import shared
-from modules.shared import opts, cmd_opts
 from modules.textual_inversion.dataset import re_numbers_at_start
 from PIL import Image
 from enum import Enum
-import modules.deepbooru as deepbooru
-from scripts.dataset_tag_editor.dataset import Dataset, Data
-from . import tag_scorer
+
+import scripts.settings as settings
+if settings.DEVELOP:
+    import scripts.dataset_tag_editor.dataset as ds
+    import scripts.dataset_tag_editor.tag_scorer as tag_scorer
+else:
+    from scripts.dynamic_import import dynamic_import
+    ds = dynamic_import('scripts/dataset_tag_editor/dataset.py')
+    tag_scorer = dynamic_import('scripts/dataset_tag_editor/tag_scorer.py')
 
 re_tags = re.compile(r'^(.+) \[\d+\]$')
 
@@ -76,7 +81,7 @@ class DatasetTagEditor:
     def __init__(self):
         # from modules.textual_inversion.dataset
         self.re_word = re.compile(shared.opts.dataset_filename_word_regex) if len(shared.opts.dataset_filename_word_regex) > 0 else None
-        self.dataset = Dataset()
+        self.dataset = ds.Dataset()
         self.img_idx = dict()
         self.tag_counts = {}
         self.dataset_dir = ''
@@ -100,7 +105,7 @@ class DatasetTagEditor:
 
     
     def set_tags_by_image_path(self, imgpath: str, tags: List[str]):
-        self.dataset.append_data(Data(imgpath, ','.join(tags)))
+        self.dataset.append_data(ds.Data(imgpath, ','.join(tags)))
         self.construct_tag_counts()
     
 
@@ -133,7 +138,7 @@ class DatasetTagEditor:
         return []
 
 
-    def get_filtered_imgpaths(self, filters: List[Dataset.Filter] = []):
+    def get_filtered_imgpaths(self, filters: List[ds.Dataset.Filter] = []):
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
@@ -143,7 +148,7 @@ class DatasetTagEditor:
         return img_paths
 
 
-    def get_filtered_imgindices(self, filters: List[Dataset.Filter] = []):
+    def get_filtered_imgindices(self, filters: List[ds.Dataset.Filter] = []):
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
@@ -153,7 +158,7 @@ class DatasetTagEditor:
         return [self.img_idx.get(p) for p in img_paths]
 
 
-    def get_filtered_tags(self, filters: List[Dataset.Filter] = [], filter_word: str = '', filter_tags = True):
+    def get_filtered_tags(self, filters: List[ds.Dataset.Filter] = [], filter_word: str = '', filter_tags = True):
         if filter_tags:
             filtered_set = self.dataset.copy()
             for filter in filters:
@@ -165,7 +170,7 @@ class DatasetTagEditor:
         return {tag for tag in tags if filter_word in tag}
         
 
-    def get_common_tags(self, filters: List[Dataset.filter] = []):
+    def get_common_tags(self, filters: List[ds.Dataset.filter] = []):
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
@@ -177,7 +182,7 @@ class DatasetTagEditor:
         return sorted(result)
     
 
-    def replace_tags(self, search_tags: List[str], replace_tags: List[str], filters: List[Dataset.Filter] = [], prepend: bool = False):
+    def replace_tags(self, search_tags: List[str], replace_tags: List[str], filters: List[ds.Dataset.Filter] = [], prepend: bool = False):
         img_paths = self.get_filtered_imgpaths(filters=filters)
         tags_to_append = replace_tags[len(search_tags):]
         tags_to_remove = search_tags[len(replace_tags):]
@@ -207,7 +212,7 @@ class DatasetTagEditor:
         return {t for t in tags_replaced if t}
 
 
-    def search_and_replace_caption(self, search_text: str, replace_text: str, filters: List[Dataset.Filter] = [], use_regex: bool = False):
+    def search_and_replace_caption(self, search_text: str, replace_text: str, filters: List[ds.Dataset.Filter] = [], use_regex: bool = False):
         img_paths = self.get_filtered_imgpaths(filters=filters)
         
         for img_path in img_paths:
@@ -222,7 +227,7 @@ class DatasetTagEditor:
         self.construct_tag_counts()
 
 
-    def search_and_replace_selected_tags(self, search_text: str, replace_text: str, selected_tags: Optional[Set[str]], filters: List[Dataset.Filter] = [], use_regex: bool = False):
+    def search_and_replace_selected_tags(self, search_text: str, replace_text: str, selected_tags: Optional[Set[str]], filters: List[ds.Dataset.Filter] = [], use_regex: bool = False):
         img_paths = self.get_filtered_imgpaths(filters=filters)
 
         for img_path in img_paths:
@@ -261,7 +266,7 @@ class DatasetTagEditor:
         return {t for t in tags if t}
     
 
-    def remove_duplicated_tags(self, filters: List[Dataset.Filter] = []):
+    def remove_duplicated_tags(self, filters: List[ds.Dataset.Filter] = []):
         img_paths = self.get_filtered_imgpaths(filters)
         for path in img_paths:
             tags = self.dataset.get_data_tags(path)
@@ -272,7 +277,7 @@ class DatasetTagEditor:
             self.set_tags_by_image_path(path, res)
     
 
-    def remove_tags(self, tags: Set[str], filters: List[Dataset.Filter] = []):
+    def remove_tags(self, tags: Set[str], filters: List[ds.Dataset.Filter] = []):
         img_paths = self.get_filtered_imgpaths(filters)
         for path in img_paths:
             res = self.dataset.get_data_tags(path)
@@ -288,7 +293,7 @@ class DatasetTagEditor:
         return {k for k in self.dataset.datas.keys() if k}
 
 
-    def delete_dataset(self, filters: List[Dataset.Filter], delete_image: bool = False, delete_caption: bool = False, delete_backup: bool = False):
+    def delete_dataset(self, filters: List[ds.Dataset.Filter], delete_image: bool = False, delete_caption: bool = False, delete_backup: bool = False):
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
@@ -301,7 +306,7 @@ class DatasetTagEditor:
             self.construct_tag_counts()
 
 
-    def move_dataset(self, dest_dir: str, filters: List[Dataset.Filter], move_image: bool = False, move_caption: bool = False, move_backup: bool = False):
+    def move_dataset(self, dest_dir: str, filters: List[ds.Dataset.Filter], move_image: bool = False, move_caption: bool = False, move_backup: bool = False):
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
@@ -423,8 +428,6 @@ class DatasetTagEditor:
 
         print(f'Total {len(filepath_set)} files under the directory including not image files.')
 
-
-        from . import tag_scorer
         def load_images(filepath_set: Set[str], scorers: List[tag_scorer.TagScorer]):
             for img_path in filepath_set:
                 img_dir = os.path.dirname(img_path)

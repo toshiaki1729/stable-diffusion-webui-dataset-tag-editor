@@ -6,16 +6,24 @@ import json
 import os
 from collections import namedtuple
 
-from scripts.dataset_tag_editor.dataset_tag_editor import DatasetTagEditor, InterrogateMethod
-from scripts.dataset_tag_editor.filters import TagFilter, PathFilter
-from scripts.dataset_tag_editor.ui import TagFilterUI, TagSelectUI
+import scripts.settings as settings
 
-dataset_tag_editor = DatasetTagEditor()
+if settings.DEVELOP:
+    import scripts.dataset_tag_editor.dataset_tag_editor as dte
+    import scripts.dataset_tag_editor.filters as filters
+    import scripts.dataset_tag_editor.ui as ui
+else:
+    from scripts.dynamic_import import dynamic_import
+    dte = dynamic_import('scripts/dataset_tag_editor/dataset_tag_editor.py')
+    filters = dynamic_import('scripts/dataset_tag_editor/filters.py')
+    ui = dynamic_import('scripts/dataset_tag_editor/ui.py')
 
-path_filter = PathFilter()
-tag_filter_ui:TagFilterUI = None
-tag_filter_ui_neg:TagFilterUI = None
-tag_select_ui_remove:TagSelectUI = None
+dataset_tag_editor = dte.DatasetTagEditor()
+
+path_filter = filters.PathFilter()
+tag_filter_ui:ui.TagFilterUI = None
+tag_filter_ui_neg:ui.TagFilterUI = None
+tag_select_ui_remove:ui.TagSelectUI = None
 
 def get_filters():
     return [path_filter, tag_filter_ui.get_filter(), tag_filter_ui_neg.get_filter()]
@@ -163,20 +171,20 @@ def get_current_move_or_delete_target_num(target_data: str, idx: int):
 def load_files_from_dir(dir: str, recursive: bool, load_caption_from_filename: bool, use_interrogator: str, use_clip: bool, use_booru: bool, use_waifu: bool):
     global total_image_num, displayed_image_num, tmp_selection_img_path_set, gallery_selected_image_path, selection_selected_image_path, path_filter
     
-    interrogate_method = InterrogateMethod.NONE
+    interrogate_method = dte.InterrogateMethod.NONE
     if use_interrogator == 'If Empty':
-        interrogate_method = InterrogateMethod.PREFILL
+        interrogate_method = dte.InterrogateMethod.PREFILL
     elif use_interrogator == 'Overwrite':
-        interrogate_method = InterrogateMethod.OVERWRITE
+        interrogate_method = dte.InterrogateMethod.OVERWRITE
     elif use_interrogator == 'Prepend':
-        interrogate_method = InterrogateMethod.PREPEND
+        interrogate_method = dte.InterrogateMethod.PREPEND
     elif use_interrogator == 'Append':
-        interrogate_method = InterrogateMethod.APPEND
+        interrogate_method = dte.InterrogateMethod.APPEND
 
     dataset_tag_editor.load_dataset(dir, recursive, load_caption_from_filename, interrogate_method, use_booru, use_clip, use_waifu)
     img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=[])
     img_indices = dataset_tag_editor.get_filtered_imgindices(filters=[])
-    path_filter = PathFilter()
+    path_filter = filters.PathFilter()
     total_image_num = displayed_image_num = len(dataset_tag_editor.get_img_path_set())
     tmp_selection_img_path_set = set()
     gallery_selected_image_path = ''
@@ -300,7 +308,7 @@ def clear_image_selection():
     global tmp_selection_img_path_set, selection_selected_image_path, path_filter
     tmp_selection_img_path_set.clear()
     selection_selected_image_path = ''
-    path_filter = PathFilter()
+    path_filter = filters.PathFilter()
     return[
         [],
         get_current_txt_selection(),
@@ -311,9 +319,9 @@ def clear_image_selection():
 def apply_image_selection_filter():
     global path_filter
     if len(tmp_selection_img_path_set) > 0:
-        path_filter = PathFilter(tmp_selection_img_path_set, PathFilter.Mode.INCLUSIVE)
+        path_filter = filters.PathFilter(tmp_selection_img_path_set, filters.PathFilter.Mode.INCLUSIVE)
     else:
-        path_filter = PathFilter()
+        path_filter = filters.PathFilter()
     return update_filter_and_gallery()
     
 
@@ -487,9 +495,9 @@ def on_ui_tabs():
     cfg_edit_selected = read_edit_selected_config()
     cfg_file_move_delete = read_move_delete_config()
 
-    tag_filter_ui = TagFilterUI(dataset_tag_editor, tag_filter_mode=TagFilter.Mode.INCLUSIVE)
-    tag_filter_ui_neg = TagFilterUI(dataset_tag_editor, tag_filter_mode=TagFilter.Mode.EXCLUSIVE)
-    tag_select_ui_remove = TagSelectUI(dataset_tag_editor)
+    tag_filter_ui = ui.TagFilterUI(dataset_tag_editor, tag_filter_mode=filters.TagFilter.Mode.INCLUSIVE)
+    tag_filter_ui_neg = ui.TagFilterUI(dataset_tag_editor, tag_filter_mode=filters.TagFilter.Mode.EXCLUSIVE)
+    tag_select_ui_remove = ui.TagSelectUI(dataset_tag_editor)
 
     with gr.Blocks(analytics_enabled=False) as dataset_tag_editor_interface:
         with gr.Row(visible=False):
@@ -552,13 +560,13 @@ def on_ui_tabs():
                 with gr.Tab(label='Positive Filter'):
                     with gr.Column(variant='panel'):
                         gr.HTML(value='Search tags / Filter images by tags <b>(INCLUSIVE)</b>')
-                        logic_p = TagFilter.Logic.OR if cfg_filter_p.logic=='OR' else TagFilter.Logic.NONE if cfg_filter_p.logic=='NONE' else TagFilter.Logic.AND
+                        logic_p = filters.TagFilter.Logic.OR if cfg_filter_p.logic=='OR' else filters.TagFilter.Logic.NONE if cfg_filter_p.logic=='NONE' else filters.TagFilter.Logic.AND
                         tag_filter_ui.create_ui(get_filters, logic_p, cfg_filter_p.sort_by, cfg_filter_p.sort_order)
 
                 with gr.Tab(label='Negative Filter'):
                     with gr.Column(variant='panel'):
                         gr.HTML(value='Search tags / Filter images by tags <b>(EXCLUSIVE)</b>')
-                        logic_n = TagFilter.Logic.AND if cfg_filter_n.logic=='AND' else TagFilter.Logic.NONE if cfg_filter_n.logic=='NONE' else TagFilter.Logic.OR
+                        logic_n = filters.TagFilter.Logic.AND if cfg_filter_n.logic=='AND' else filters.TagFilter.Logic.NONE if cfg_filter_n.logic=='NONE' else filters.TagFilter.Logic.OR
                         tag_filter_ui_neg.create_ui(get_filters, logic_n, cfg_filter_n.sort_by, cfg_filter_n.sort_order)
             
             with gr.Tab(label='Filter by Selection'):
