@@ -9,7 +9,7 @@ else:
     from scripts.dynamic_import import dynamic_import
     dte = dynamic_import('scripts/dataset_tag_editor/dataset_tag_editor.py')
     filters = dynamic_import('scripts/dataset_tag_editor/filters.py')
-    ds = dynamic_import('scripts/dataset_tag_editor/dataset.py')
+    ds = dte.ds
 
 
 class TagFilterUI:

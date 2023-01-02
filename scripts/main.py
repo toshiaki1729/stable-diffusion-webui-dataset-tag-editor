@@ -14,9 +14,9 @@ if settings.DEVELOP:
     import scripts.dataset_tag_editor.ui as ui
 else:
     from scripts.dynamic_import import dynamic_import
-    dte = dynamic_import('scripts/dataset_tag_editor/dataset_tag_editor.py')
-    filters = dynamic_import('scripts/dataset_tag_editor/filters.py')
     ui = dynamic_import('scripts/dataset_tag_editor/ui.py')
+    filters = ui.filters
+    dte = ui.dte
 
 dataset_tag_editor = dte.DatasetTagEditor()
 
