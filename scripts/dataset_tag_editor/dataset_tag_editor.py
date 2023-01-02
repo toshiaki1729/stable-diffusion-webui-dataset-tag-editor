@@ -35,25 +35,25 @@ def interrogate_image_clip(path):
         return shared.interrogator.interrogate(img)
 
 
-def interrogate_image_booru(path):
+def interrogate_image_booru(path, threshold):
     try:
         img = Image.open(path).convert('RGB')
     except:
         return ''
     else:
         with tag_scorer.DeepDanbooru() as scorer:
-            res = scorer.predict(img, threshold=shared.opts.interrogate_deepbooru_score_threshold)
+            res = scorer.predict(img, threshold=threshold)
         return ', '.join(tag_scorer.get_arranged_tags(res))
 
 
-def interrogate_image_waifu(path):
+def interrogate_image_waifu(path, threshold):
     try:
         img = Image.open(path).convert('RGB')
     except:
         return ''
     else:
         with tag_scorer.WaifuDiffusion() as scorer:
-            res = scorer.predict(img, threshold=shared.opts.interrogate_deepbooru_score_threshold)
+            res = scorer.predict(img, threshold=threshold)
         return ', '.join(tag_scorer.get_arranged_tags(res))
             
 
@@ -411,7 +411,7 @@ class DatasetTagEditor:
                 self.waifu_tag_scores[img_path] = probs
 
 
-    def load_dataset(self, img_dir: str, recursive: bool = False, load_caption_from_filename: bool = True, interrogate_method: InterrogateMethod = InterrogateMethod.NONE, use_booru: bool = True, use_clip: bool = False, use_waifu: bool = False):
+    def load_dataset(self, img_dir: str, recursive: bool, load_caption_from_filename: bool, interrogate_method: InterrogateMethod, use_booru: bool, use_clip: bool, use_waifu: bool, threshold_booru: float, threshold_waifu: float):
         self.clear()
         print(f'Loading dataset from {img_dir}')
         if recursive:
@@ -471,12 +471,13 @@ class DatasetTagEditor:
                             
                         for scorer in scorers:
                             probs = scorer.predict(img)
-                            interrogate_tags += [t for t, p in probs.items() if p > shared.opts.interrogate_deepbooru_score_threshold]
                             if isinstance(scorer, tag_scorer.DeepDanbooru):
+                                interrogate_tags += [t for t, p in probs.items() if p > threshold_booru]
                                 if not self.booru_tag_scores:
                                     self.booru_tag_scores = dict()
                                 self.booru_tag_scores[img_path] = probs
                             elif isinstance(scorer, tag_scorer.WaifuDiffusion):
+                                interrogate_tags += [t for t, p in probs.items() if p > threshold_waifu]
                                 if not self.waifu_tag_scores:
                                     self.waifu_tag_scores = dict()
                                 self.waifu_tag_scores[img_path] = probs

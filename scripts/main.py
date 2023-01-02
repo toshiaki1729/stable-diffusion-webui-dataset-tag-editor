@@ -43,13 +43,26 @@ show_only_selected_tags = True
 CONFIG_PATH = os.path.join(scripts.basedir(), 'config.json')
 
 
-GeneralConfig = namedtuple('GeneralConfig', ['backup', 'dataset_dir', 'load_recursive', 'load_caption_from_filename', 'use_interrogator', 'use_clip_to_prefill', 'use_booru_to_prefill', 'use_waifu_to_prefill'])
+GeneralConfig = namedtuple('GeneralConfig', [
+    'backup',
+    'dataset_dir', 
+    'load_recursive', 
+    'load_caption_from_filename', 
+    'use_interrogator', 
+    'use_clip_to_prefill', 
+    'use_booru_to_prefill', 
+    'use_waifu_to_prefill', 
+    'use_custom_threshold_booru', 
+    'custom_threshold_booru', 
+    'use_custom_threshold_waifu', 
+    'custom_threshold_waifu'
+    ])
 FilterConfig = namedtuple('FilterConfig', ['sort_by', 'sort_order', 'logic'])
 BatchEditConfig = namedtuple('BatchEditConfig', ['show_only_selected', 'prepend', 'use_regex', 'target', 'sory_by', 'sort_order'])
 EditSelectedConfig = namedtuple('EditSelectedConfig', ['auto_copy', 'warn_change_not_saved'])
 MoveDeleteConfig = namedtuple('MoveDeleteConfig', ['range', 'target', 'destination'])
 
-CFG_GENERAL_DEFAULT = GeneralConfig(True, '', False, True, 'No', False, False, False)
+CFG_GENERAL_DEFAULT = GeneralConfig(True, '', False, True, 'No', False, False, False, False, 0.7, False, 0.5)
 CFG_FILTER_P_DEFAULT = FilterConfig('Alphabetical Order', 'Ascending', 'AND')
 CFG_FILTER_N_DEFAULT = FilterConfig('Alphabetical Order', 'Ascending', 'OR')
 CFG_BATCH_EDIT_DEFAULT = BatchEditConfig(True, False, False, 'Only Selected Tags', 'Alphabetical Order', 'Ascending')
@@ -83,8 +96,8 @@ class Config:
 
 config = Config()
 
-def write_general_config(backup: bool, dataset_dir: str, load_recursive: bool, load_caption_from_filename: bool, use_interrogator: str, use_clip_to_prefill: bool, use_booru_to_prefill: bool, use_waifu_to_prefill: bool):
-    cfg = GeneralConfig(backup, dataset_dir, load_recursive, load_caption_from_filename, use_interrogator, use_clip_to_prefill, use_booru_to_prefill, use_waifu_to_prefill)
+def write_general_config(backup: bool, dataset_dir: str, load_recursive: bool, load_caption_from_filename: bool, use_interrogator: str, use_clip_to_prefill: bool, use_booru_to_prefill: bool, use_waifu_to_prefill: bool, use_custom_threshold_booru: bool, custom_threshold_booru: float, use_custom_threshold_waifu: bool, custom_threshold_waifu: float):
+    cfg = GeneralConfig(backup, dataset_dir, load_recursive, load_caption_from_filename, use_interrogator, use_clip_to_prefill, use_booru_to_prefill, use_waifu_to_prefill, use_custom_threshold_booru, custom_threshold_booru, use_custom_threshold_waifu, custom_threshold_waifu)
     config.write(cfg._asdict(), 'general')
 
 def write_filter_config(sort_by_p: str, sort_order_p: str, logic_p: str, sort_by_n: str, sort_order_n: str, logic_n: str):
@@ -168,7 +181,19 @@ def get_current_move_or_delete_target_num(target_data: str, idx: int):
         return f'Target dataset num: 0'
 
 
-def load_files_from_dir(dir: str, recursive: bool, load_caption_from_filename: bool, use_interrogator: str, use_clip: bool, use_booru: bool, use_waifu: bool):
+def load_files_from_dir(
+    dir: str,
+    recursive: bool,
+    load_caption_from_filename: bool,
+    use_interrogator: str,
+    use_clip: bool,
+    use_booru: bool,
+    use_waifu: bool,
+    use_custom_threshold_booru: bool,
+    custom_threshold_booru: float,
+    use_custom_threshold_waifu: bool,
+    custom_threshold_waifu: float
+    ):
     global total_image_num, displayed_image_num, tmp_selection_img_path_set, gallery_selected_image_path, selection_selected_image_path, path_filter
     
     interrogate_method = dte.InterrogateMethod.NONE
@@ -181,7 +206,10 @@ def load_files_from_dir(dir: str, recursive: bool, load_caption_from_filename: b
     elif use_interrogator == 'Append':
         interrogate_method = dte.InterrogateMethod.APPEND
 
-    dataset_tag_editor.load_dataset(dir, recursive, load_caption_from_filename, interrogate_method, use_booru, use_clip, use_waifu)
+    threshold_booru = custom_threshold_booru if use_custom_threshold_booru else shared.opts.interrogate_deepbooru_score_threshold
+    threshold_waifu = custom_threshold_waifu if use_custom_threshold_waifu else shared.opts.interrogate_deepbooru_score_threshold
+
+    dataset_tag_editor.load_dataset(dir, recursive, load_caption_from_filename, interrogate_method, use_booru, use_clip, use_waifu, threshold_booru, threshold_waifu)
     img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=[])
     img_indices = dataset_tag_editor.get_filtered_imgindices(filters=[])
     path_filter = filters.PathFilter()
@@ -378,16 +406,18 @@ def interrogate_selected_image_clip():
     return interrogate_image_clip(gallery_selected_image_path)
 
 
-def interrogate_selected_image_booru():
+def interrogate_selected_image_booru(use_threshold: bool, threshold: float):
     global gallery_selected_image_path
+    threshold = threshold if use_threshold else shared.opts.interrogate_deepbooru_score_threshold
     from scripts.dataset_tag_editor.dataset_tag_editor import interrogate_image_booru
-    return interrogate_image_booru(gallery_selected_image_path)
+    return interrogate_image_booru(gallery_selected_image_path, threshold)
 
 
-def interrogate_selected_image_waifu():
+def interrogate_selected_image_waifu(use_threshold: bool, threshold: float):
     global gallery_selected_image_path
+    threshold = threshold if use_threshold else shared.opts.interrogate_deepbooru_score_threshold
     from scripts.dataset_tag_editor.dataset_tag_editor import interrogate_image_waifu
-    return interrogate_image_waifu(gallery_selected_image_path)
+    return interrogate_image_waifu(gallery_selected_image_path, threshold)
 
 
 # ================================================================
@@ -548,6 +578,13 @@ def on_ui_tabs():
                                     cb_use_clip_to_prefill = gr.Checkbox(value=cfg_general.use_clip_to_prefill, label='Use BLIP')
                                     cb_use_booru_to_prefill = gr.Checkbox(value=cfg_general.use_booru_to_prefill, label='Use DeepDanbooru')
                                     cb_use_waifu_to_prefill = gr.Checkbox(value=cfg_general.use_waifu_to_prefill, label='Use WDv1.4 Tagger')
+                    with gr.Accordion(label='Interrogator Settings'):
+                        with gr.Row():
+                            cb_use_custom_threshold_booru = gr.Checkbox(value=cfg_general.use_custom_threshold_booru, label='Use Custom Threshold (Booru)', interactive=True)
+                            sl_custom_threshold_booru = gr.Slider(minimum=0, maximum=1, value=cfg_general.custom_threshold_booru, step=0.01, interactive=True, label='Booru Score Threshold')
+                        with gr.Row():
+                            cb_use_custom_threshold_waifu = gr.Checkbox(value=cfg_general.use_custom_threshold_waifu, label='Use Custom Threshold (WDv1.4 Tagger)', interactive=True)
+                            sl_custom_threshold_waifu = gr.Slider(minimum=0, maximum=1, value=cfg_general.custom_threshold_waifu, step=0.01, interactive=True, label='WDv1.4 Tagger Score Threshold')
                 
                 gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_dataset_gallery").style(grid=opts.dataset_editor_image_columns)
                 txt_gallery = gr.HTML(value=get_current_gallery_txt())
@@ -679,7 +716,7 @@ def on_ui_tabs():
         # General
 
         configurable_components = \
-            [cb_backup, tb_img_directory, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_clip_to_prefill, cb_use_booru_to_prefill, cb_use_waifu_to_prefill] +\
+            [cb_backup, tb_img_directory, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_clip_to_prefill, cb_use_booru_to_prefill, cb_use_waifu_to_prefill, cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu] +\
             [tag_filter_ui.rb_sort_by, tag_filter_ui.rb_sort_order, tag_filter_ui.rb_logic, tag_filter_ui_neg.rb_sort_by, tag_filter_ui_neg.rb_sort_order, tag_filter_ui_neg.rb_logic] +\
             [cb_show_only_tags_selected, cb_prepend_tags, cb_use_regex, rb_sr_replace_target, tag_select_ui_remove.rb_sort_by, tag_select_ui_remove.rb_sort_order] +\
             [cb_copy_caption_automatically, cb_ask_save_when_caption_changed] +\
@@ -696,11 +733,11 @@ def on_ui_tabs():
         )
 
         def save_settings_callback(*a):
-            write_general_config(*a[:8])
-            write_filter_config(*a[8:14])
-            write_batch_edit_config(*a[14:20])
-            write_edit_selected_config(*a[20:22])
-            write_move_delete_config(*a[22:])
+            write_general_config(*a[:12])
+            write_filter_config(*a[12:18])
+            write_batch_edit_config(*a[18:24])
+            write_edit_selected_config(*a[24:26])
+            write_move_delete_config(*a[26:])
             config.save()
 
         btn_save_setting_as_default.click(
@@ -764,7 +801,7 @@ def on_ui_tabs():
 
         btn_load_datasets.click(
             fn=load_files_from_dir,
-            inputs=[tb_img_directory, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_clip_to_prefill, cb_use_booru_to_prefill, cb_use_waifu_to_prefill],
+            inputs=[tb_img_directory, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_clip_to_prefill, cb_use_booru_to_prefill, cb_use_waifu_to_prefill, cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu],
             outputs=
             [gl_dataset_images, gl_filter_images, txt_gallery, txt_selection] +
             [cbg_hidden_dataset_filter, nb_hidden_dataset_filter_apply] +
@@ -949,11 +986,13 @@ def on_ui_tabs():
 
         btn_interrogate_booru.click(
             fn=interrogate_selected_image_booru,
+            inputs=[cb_use_custom_threshold_booru, sl_custom_threshold_booru],
             outputs=[tb_interrogate_selected_image]
         )
 
         btn_interrogate_waifu.click(
             fn=interrogate_selected_image_waifu,
+            inputs=[cb_use_custom_threshold_waifu, sl_custom_threshold_waifu],
             outputs=[tb_interrogate_selected_image]
         )
 
