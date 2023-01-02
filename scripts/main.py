@@ -402,22 +402,19 @@ def change_selected_image_caption(tags_text: str, idx: int):
 
 def interrogate_selected_image_clip():
     global gallery_selected_image_path
-    from scripts.dataset_tag_editor.dataset_tag_editor import interrogate_image_clip
-    return interrogate_image_clip(gallery_selected_image_path)
+    return dte.interrogate_image_clip(gallery_selected_image_path)
 
 
 def interrogate_selected_image_booru(use_threshold: bool, threshold: float):
     global gallery_selected_image_path
     threshold = threshold if use_threshold else shared.opts.interrogate_deepbooru_score_threshold
-    from scripts.dataset_tag_editor.dataset_tag_editor import interrogate_image_booru
-    return interrogate_image_booru(gallery_selected_image_path, threshold)
+    return dte.interrogate_image_booru(gallery_selected_image_path, threshold)
 
 
 def interrogate_selected_image_waifu(use_threshold: bool, threshold: float):
     global gallery_selected_image_path
     threshold = threshold if use_threshold else shared.opts.interrogate_deepbooru_score_threshold
-    from scripts.dataset_tag_editor.dataset_tag_editor import interrogate_image_waifu
-    return interrogate_image_waifu(gallery_selected_image_path, threshold)
+    return dte.interrogate_image_waifu(gallery_selected_image_path, threshold)
 
 
 # ================================================================
