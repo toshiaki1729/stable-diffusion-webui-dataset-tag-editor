@@ -4,12 +4,10 @@ import scripts.settings as settings
 if settings.DEVELOP:
     import scripts.dataset_tag_editor.filters as filters
     import scripts.dataset_tag_editor.dataset_tag_editor as dte
-    import scripts.dataset_tag_editor.dataset as ds
 else:
     from scripts.dynamic_import import dynamic_import
     dte = dynamic_import('scripts/dataset_tag_editor/dataset_tag_editor.py')
-    filters = dynamic_import('scripts/dataset_tag_editor/filters.py')
-    ds = dte.ds
+    filters = dte.filters
 
 
 class TagFilterUI:
@@ -27,7 +25,7 @@ class TagFilterUI:
     def get_filter(self):
         return self.filter
 
-    def create_ui(self, get_filters: Callable[[], List[ds.Dataset.Filter]], logic = filters.TagFilter.Logic.AND, sort_by = 'Alphabetical Order', sort_order = 'Ascending'):
+    def create_ui(self, get_filters: Callable[[], List[filters.Filter]], logic = filters.TagFilter.Logic.AND, sort_by = 'Alphabetical Order', sort_order = 'Ascending'):
         self.get_filters = get_filters
         self.logic = logic
         self.filter = filters.TagFilter({}, self.logic, self.filter_mode)
@@ -109,7 +107,7 @@ class TagSelectUI:
         self.get_filters = lambda:[]
 
 
-    def create_ui(self, get_filters: Callable[[], List[ds.Dataset.Filter]], sort_by = 'Alphabetical Order', sort_order = 'Ascending'):
+    def create_ui(self, get_filters: Callable[[], List[filters.Filter]], sort_by = 'Alphabetical Order', sort_order = 'Ascending'):
         self.get_filters = get_filters
 
         import gradio as gr

@@ -1,14 +1,13 @@
 from typing import Set, Dict
 from enum import Enum
 
-import scripts.settings as settings
-if settings.DEVELOP:
-    import scripts.dataset_tag_editor.dataset as ds
-else:
-    from scripts.dynamic_import import dynamic_import
-    ds = dynamic_import('scripts/dataset_tag_editor/dataset.py')
 
-class TagFilter(ds.Dataset.Filter):
+class Filter:
+    def apply(self, dataset):
+        return dataset
+
+
+class TagFilter(Filter):
     class Logic(Enum):
         NONE = 0
         AND = 1
@@ -24,7 +23,7 @@ class TagFilter(ds.Dataset.Filter):
         self.logic = logic
         self.mode = mode
     
-    def apply(self, dataset: ds.Dataset):
+    def apply(self, dataset):
         if not self.tags or self.logic == TagFilter.Logic.NONE or self.mode == TagFilter.Logic.NONE:
             return dataset
         
@@ -74,7 +73,7 @@ class TagFilter(ds.Dataset.Filter):
         
         
         
-class PathFilter(ds.Dataset.Filter):
+class PathFilter(Filter):
     class Mode(Enum):
         NONE = 0
         INCLUSIVE = 1
@@ -84,7 +83,7 @@ class PathFilter(ds.Dataset.Filter):
         self.paths = paths
         self.mode = mode
     
-    def apply(self, dataset: ds.Dataset):
+    def apply(self, dataset):
         if self.mode == PathFilter.Mode.NONE:
             return dataset
         
@@ -98,7 +97,7 @@ class PathFilter(ds.Dataset.Filter):
         return dataset
 
     
-class TagScoreFilter(ds.Dataset.Filter):
+class TagScoreFilter(Filter):
     class Mode(Enum):
         NONE = 0
         LESS_THAN = 1
@@ -110,7 +109,7 @@ class TagScoreFilter(ds.Dataset.Filter):
         self.tag = tag
         self.threshold = threshold
     
-    def apply(self, dataset: ds.Dataset):
+    def apply(self, dataset):
         if self.mode == TagScoreFilter.Mode.NONE:
             return dataset
         

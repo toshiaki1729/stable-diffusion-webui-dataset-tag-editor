@@ -49,11 +49,7 @@ class Dataset:
         res.datas = self.datas.copy()
         return res
 
-    class Filter:
-        def apply(self, dataset):
-            return dataset
-
-    def filter(self, filter: Filter):
+    def filter(self, filter):
         return filter.apply(self)
 
     def get_data(self, path: str):
