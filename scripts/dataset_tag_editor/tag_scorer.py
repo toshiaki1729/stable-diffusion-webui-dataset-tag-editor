@@ -6,13 +6,9 @@ from typing import Optional, Dict
 from modules import devices, shared
 from modules import deepbooru as db
 
+from scripts.dynamic_import import dynamic_import
+waifu_diffusion_tagger = dynamic_import('scripts/dataset_tag_editor/waifu_diffusion_tagger.py')
 
-import scripts.settings as settings
-if settings.DEVELOP:
-    import scripts.dataset_tag_editor.waifu_diffusion_tagger as waifu_diffusion_tagger
-else:
-    from scripts.dynamic_import import dynamic_import
-    waifu_diffusion_tagger = dynamic_import('scripts/dataset_tag_editor/waifu_diffusion_tagger.py')
 
 class TagScorer:
     def __enter__(self):

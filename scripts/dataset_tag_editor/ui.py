@@ -1,13 +1,8 @@
 from typing import List, Callable
 
-import scripts.settings as settings
-if settings.DEVELOP:
-    import scripts.dataset_tag_editor.filters as filters
-    import scripts.dataset_tag_editor.dataset_tag_editor as dte
-else:
-    from scripts.dynamic_import import dynamic_import
-    dte = dynamic_import('scripts/dataset_tag_editor/dataset_tag_editor.py')
-    filters = dte.filters
+from scripts.dynamic_import import dynamic_import
+dte = dynamic_import('scripts/dataset_tag_editor/dataset_tag_editor.py')
+filters = dte.filters
 
 
 class TagFilterUI:

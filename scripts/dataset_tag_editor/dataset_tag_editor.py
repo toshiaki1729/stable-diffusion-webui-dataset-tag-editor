@@ -6,16 +6,11 @@ from modules.textual_inversion.dataset import re_numbers_at_start
 from PIL import Image
 from enum import Enum
 
-import scripts.settings as settings
-if settings.DEVELOP:
-    import scripts.dataset_tag_editor.dataset as ds
-    import scripts.dataset_tag_editor.tag_scorer as tag_scorer
-    import scripts.dataset_tag_editor.filters as filters
-else:
-    from scripts.dynamic_import import dynamic_import
-    ds = dynamic_import('scripts/dataset_tag_editor/dataset.py')
-    tag_scorer = dynamic_import('scripts/dataset_tag_editor/tag_scorer.py')
-    filters = dynamic_import('scripts/dataset_tag_editor/filters.py')
+from scripts.dynamic_import import dynamic_import
+ds = dynamic_import('scripts/dataset_tag_editor/dataset.py')
+tag_scorer = dynamic_import('scripts/dataset_tag_editor/tag_scorer.py')
+filters = dynamic_import('scripts/dataset_tag_editor/filters.py')
+
 
 re_tags = re.compile(r'^(.+) \[\d+\]$')
 

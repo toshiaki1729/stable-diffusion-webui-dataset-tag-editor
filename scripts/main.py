@@ -6,17 +6,11 @@ import json
 import os
 from collections import namedtuple
 
-import scripts.settings as settings
+from scripts.dynamic_import import dynamic_import
+ui = dynamic_import('scripts/dataset_tag_editor/ui.py')
+filters = ui.filters
+dte = ui.dte
 
-if settings.DEVELOP:
-    import scripts.dataset_tag_editor.dataset_tag_editor as dte
-    import scripts.dataset_tag_editor.filters as filters
-    import scripts.dataset_tag_editor.ui as ui
-else:
-    from scripts.dynamic_import import dynamic_import
-    ui = dynamic_import('scripts/dataset_tag_editor/ui.py')
-    filters = ui.filters
-    dte = ui.dte
 
 dataset_tag_editor = dte.DatasetTagEditor()
 
