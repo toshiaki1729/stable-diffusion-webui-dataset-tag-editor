@@ -455,6 +455,7 @@ class DatasetTagEditor:
                 
                 interrogate_tags = []
                 caption_tags =  [t.strip() for t in caption_text.split(',')]
+                caption_tags = [t for t in caption_tags if t]
                 if interrogate_method != InterrogateMethod.NONE and ((interrogate_method != InterrogateMethod.PREFILL) or (interrogate_method == InterrogateMethod.PREFILL and not caption_tags)):
                     try:
                         img = Image.open(img_path).convert('RGB')
