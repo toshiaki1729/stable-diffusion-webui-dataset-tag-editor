@@ -1,8 +1,8 @@
 from PIL import Image
 import numpy as np
 from typing import List, Tuple
-import onnxruntime as ort
 from modules import shared
+import launch
 
 
 class WaifuDiffusionTagger():
@@ -11,7 +11,7 @@ class WaifuDiffusionTagger():
     MODEL_FILENAME = "model.onnx"
     LABEL_FILENAME = "selected_tags.csv"
     def __init__(self):
-        self.model: ort.InferenceSession = None
+        self.model = None
         self.labels = []
 
     def load(self):
@@ -24,6 +24,10 @@ class WaifuDiffusionTagger():
                 providers = ['CPUExecutionProvider']
             else:
                 providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+            
+            if not launch.is_installed("onnxruntime"):
+                launch.run_pip("install onnxruntime-gpu", "requirements for dataset-tag-editor [onnxruntime-gpu]")
+            import onnxruntime as ort
             self.model = ort.InferenceSession(path_model, providers=providers)
         
         path_label = huggingface_hub.hf_hub_download(

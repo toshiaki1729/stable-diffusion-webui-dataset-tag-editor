@@ -7,10 +7,10 @@ from modules import devices, shared
 from modules import deepbooru as db
 
 from scripts.dynamic_import import dynamic_import
-waifu_diffusion_tagger = dynamic_import('scripts/dataset_tag_editor/waifu_diffusion_tagger.py')
+waifu_diffusion_tagger = dynamic_import('scripts/dataset_tag_editor/interrogators/waifu_diffusion_tagger.py')
 
 
-class TagScorer:
+class Tagger:
     def __enter__(self):
         self.start()
         return self
@@ -45,7 +45,7 @@ def get_arranged_tags(probs: Dict[str, float]):
         return [tag for tag, _ in sorted(probs.items(), key=lambda x: -x[1])]
 
 
-class DeepDanbooru(TagScorer):
+class DeepDanbooru(Tagger):
     def start(self):
         db.model.start()
 
@@ -78,7 +78,7 @@ class DeepDanbooru(TagScorer):
         return 'DeepDanbooru'
 
 
-class WaifuDiffusion(TagScorer):
+class WaifuDiffusion(Tagger):
     def start(self):
         waifu_diffusion_tagger.instance.load()
         return self
@@ -101,4 +101,4 @@ class WaifuDiffusion(TagScorer):
         return probability_dict
 
     def name(self):
-        return 'wd-v1-4-tags'
+        return 'wd-v1-4-tagger'
