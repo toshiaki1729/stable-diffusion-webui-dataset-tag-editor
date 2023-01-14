@@ -745,7 +745,7 @@ def on_ui_tabs():
             write_general_config(*a[p:inc(len(components_general))])
             write_filter_config(*a[p:inc(len(components_filter))])
             write_batch_edit_config(*a[p:inc(len(components_batch_edit))])
-            write_edit_selected_config(*a[p:inc(components_edit_selected)])
+            write_edit_selected_config(*a[p:inc(len(components_edit_selected))])
             write_move_delete_config(*a[p:])
             config.save()
 
