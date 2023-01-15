@@ -96,6 +96,7 @@ class DatasetTagEditor:
         self.img_idx = dict()
         self.tag_counts = {}
         self.dataset_dir = ''
+        self.caption_ext = '.txt'
 
     def get_tag_list(self):
         if len(self.tag_counts) == 0:
@@ -302,12 +303,12 @@ class DatasetTagEditor:
         return {k for k in self.dataset.datas.keys() if k}
 
 
-    def delete_dataset(self, filters: List[filters.Filter], delete_image: bool = False, delete_caption: bool = False, delete_backup: bool = False):
+    def delete_dataset(self, caption_ext: str, filters: List[filters.Filter], delete_image: bool = False, delete_caption: bool = False, delete_backup: bool = False):
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
         for path in filtered_set.datas.keys():
-            self.delete_dataset_file(path, delete_image, delete_caption, delete_backup)
+            self.delete_dataset_file(path, caption_ext, delete_image, delete_caption, delete_backup)
         
         if delete_image:
             self.dataset.remove(filtered_set)
@@ -315,18 +316,18 @@ class DatasetTagEditor:
             self.construct_tag_counts()
 
 
-    def move_dataset(self, dest_dir: str, filters: List[filters.Filter], move_image: bool = False, move_caption: bool = False, move_backup: bool = False):
+    def move_dataset(self, dest_dir: str, caption_ext:str, filters: List[filters.Filter], move_image: bool = False, move_caption: bool = False, move_backup: bool = False):
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
         for path in filtered_set.datas.keys():
-            self.move_dataset_file(path, dest_dir, move_image, move_caption, move_backup)
+            self.move_dataset_file(path, caption_ext, dest_dir, move_image, move_caption, move_backup)
         
         if move_image:
             self.construct_tag_counts()
 
     
-    def delete_dataset_file(self, img_path: str, delete_image: bool = False, delete_caption: bool = False, delete_backup: bool = False):
+    def delete_dataset_file(self, img_path: str, caption_ext:str, delete_image: bool = False, delete_caption: bool = False, delete_backup: bool = False):
         if img_path not in self.dataset.datas.keys():
             return
         
@@ -342,7 +343,7 @@ class DatasetTagEditor:
         if delete_caption:
             try:
                 filepath_noext, _ = os.path.splitext(img_path)
-                txt_path = filepath_noext + '.txt'
+                txt_path = filepath_noext + caption_ext
                 if os.path.exists(txt_path) and os.path.isfile(txt_path):
                     os.remove(txt_path)
                     print(f'Deleted {txt_path}')
@@ -361,7 +362,7 @@ class DatasetTagEditor:
                 print(e)
     
 
-    def move_dataset_file(self, img_path: str, dest_dir: str, move_image: bool = False, move_caption: bool = False, move_backup: bool = False):
+    def move_dataset_file(self, img_path: str, caption_ext: str, dest_dir: str, move_image: bool = False, move_caption: bool = False, move_backup: bool = False):
         if img_path not in self.dataset.datas.keys():
             return
         
@@ -381,7 +382,7 @@ class DatasetTagEditor:
         if move_caption:
             try:
                 filepath_noext, _ = os.path.splitext(img_path)
-                txt_path = filepath_noext + '.txt'
+                txt_path = filepath_noext + caption_ext
                 dst_path = os.path.join(dest_dir, os.path.basename(txt_path))
                 if os.path.exists(txt_path) and os.path.isfile(txt_path):
                     os.replace(txt_path, dst_path)
@@ -402,11 +403,13 @@ class DatasetTagEditor:
                 print(e)
 
 
-    def load_dataset(self, img_dir: str, recursive: bool, load_caption_from_filename: bool, interrogate_method: InterrogateMethod, use_booru: bool, use_blip: bool, use_git:bool, use_waifu: bool, threshold_booru: float, threshold_waifu: float):
+    def load_dataset(self, img_dir: str, caption_ext:str,  recursive: bool, load_caption_from_filename: bool, interrogate_method: InterrogateMethod, use_booru: bool, use_blip: bool, use_git:bool, use_waifu: bool, threshold_booru: float, threshold_waifu: float):
         self.clear()
         print(f'Loading dataset from {img_dir}')
         if recursive:
             print(f'Also loading from subdirectories.')
+
+        self.caption_ext = caption_ext
         
         try:
             filepath_set = get_filepath_set(dir=img_dir, recursive=recursive)
@@ -423,7 +426,7 @@ class DatasetTagEditor:
             for img_path in filepath_set:
                 img_dir = os.path.dirname(img_path)
                 img_filename, img_ext = os.path.splitext(os.path.basename(img_path))
-                if img_ext == '.txt':
+                if img_ext == self.caption_ext:
                     continue
 
                 try:
@@ -433,7 +436,7 @@ class DatasetTagEditor:
                 else:
                     img.close()
                 
-                text_filename = os.path.join(img_dir, img_filename+'.txt')
+                text_filename = os.path.join(img_dir, img_filename+self.caption_ext)
                 caption_text = ''
                 if interrogate_method != InterrogateMethod.OVERWRITE:
                     # from modules/textual_inversion/dataset.py, modified
@@ -522,7 +525,7 @@ class DatasetTagEditor:
             img_path, tags = data.imgpath, data.tags
             img_dir = os.path.dirname(img_path)
             img_path_noext, _ = os.path.splitext(os.path.basename(img_path))
-            txt_path = os.path.join(img_dir, img_path_noext + '.txt')
+            txt_path = os.path.join(img_dir, img_path_noext + self.caption_ext)
             # make backup
             if backup and os.path.exists(txt_path) and os.path.isfile(txt_path):
                 for extnum in range(1000):

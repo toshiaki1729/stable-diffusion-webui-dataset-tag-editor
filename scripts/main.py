@@ -40,6 +40,7 @@ CONFIG_PATH = os.path.join(scripts.basedir(), 'config.json')
 GeneralConfig = namedtuple('GeneralConfig', [
     'backup',
     'dataset_dir', 
+    'caption_ext', 
     'load_recursive', 
     'load_caption_from_filename', 
     'use_interrogator', 
@@ -55,14 +56,14 @@ GeneralConfig = namedtuple('GeneralConfig', [
 FilterConfig = namedtuple('FilterConfig', ['sort_by', 'sort_order', 'logic'])
 BatchEditConfig = namedtuple('BatchEditConfig', ['show_only_selected', 'prepend', 'use_regex', 'target', 'sory_by', 'sort_order'])
 EditSelectedConfig = namedtuple('EditSelectedConfig', ['auto_copy', 'warn_change_not_saved'])
-MoveDeleteConfig = namedtuple('MoveDeleteConfig', ['range', 'target', 'destination'])
+MoveDeleteConfig = namedtuple('MoveDeleteConfig', ['range', 'target', 'caption_ext', 'destination'])
 
-CFG_GENERAL_DEFAULT = GeneralConfig(True, '', False, True, 'No', False, False, False, False, False, 0.7, False, 0.5)
+CFG_GENERAL_DEFAULT = GeneralConfig(True, '', '.txt', False, True, 'No', False, False, False, False, False, 0.7, False, 0.5)
 CFG_FILTER_P_DEFAULT = FilterConfig('Alphabetical Order', 'Ascending', 'AND')
 CFG_FILTER_N_DEFAULT = FilterConfig('Alphabetical Order', 'Ascending', 'OR')
 CFG_BATCH_EDIT_DEFAULT = BatchEditConfig(True, False, False, 'Only Selected Tags', 'Alphabetical Order', 'Ascending')
 CFG_EDIT_SELECTED_DEFAULT = EditSelectedConfig(False, False)
-CFG_MOVE_DELETE_DEFAULT = MoveDeleteConfig('Selected One', [], '')
+CFG_MOVE_DELETE_DEFAULT = MoveDeleteConfig('Selected One', [], '.txt', '')
 
 class Config:
     def __init__(self):
@@ -91,25 +92,26 @@ class Config:
 
 config = Config()
 
-def write_general_config(backup: bool, dataset_dir: str, load_recursive: bool, load_caption_from_filename: bool, use_interrogator: str, use_blip_to_prefill: bool, use_git_to_prefill: bool, use_booru_to_prefill: bool, use_waifu_to_prefill: bool, use_custom_threshold_booru: bool, custom_threshold_booru: float, use_custom_threshold_waifu: bool, custom_threshold_waifu: float):
-    cfg = GeneralConfig(backup, dataset_dir, load_recursive, load_caption_from_filename, use_interrogator, use_blip_to_prefill, use_git_to_prefill, use_booru_to_prefill, use_waifu_to_prefill, use_custom_threshold_booru, custom_threshold_booru, use_custom_threshold_waifu, custom_threshold_waifu)
+def write_general_config(*args):
+    cfg = GeneralConfig(*args)
     config.write(cfg._asdict(), 'general')
 
-def write_filter_config(sort_by_p: str, sort_order_p: str, logic_p: str, sort_by_n: str, sort_order_n: str, logic_n: str):
-    cfg_p = FilterConfig(sort_by_p, sort_order_p, logic_p)
-    cfg_n = FilterConfig(sort_by_n, sort_order_n, logic_n)
+def write_filter_config(*args):
+    hlen = len(args) // 2
+    cfg_p = FilterConfig(*args[:hlen])
+    cfg_n = FilterConfig(*args[hlen:])
     config.write({'positive':cfg_p._asdict(), 'negative':cfg_n._asdict()}, 'filter')
 
-def write_batch_edit_config(show_only_selected: bool, prepend: bool, use_regex: bool, target: str, sort_by: str, sort_order: str):
-    cfg = BatchEditConfig(show_only_selected, prepend, use_regex, target, sort_by, sort_order)
+def write_batch_edit_config(*args):
+    cfg = BatchEditConfig(*args)
     config.write(cfg._asdict(), 'batch_edit')
 
-def write_edit_selected_config(auto_copy: bool, warn_change_not_saved: bool):
-    cfg = EditSelectedConfig(auto_copy, warn_change_not_saved)
+def write_edit_selected_config(*args):
+    cfg = EditSelectedConfig(*args)
     config.write(cfg._asdict(), 'edit_selected')
 
-def write_move_delete_config(range: str, target: str, destination: str):
-    cfg = MoveDeleteConfig(range, target, destination)
+def write_move_delete_config(*args):
+    cfg = MoveDeleteConfig(*args)
     config.write(cfg._asdict(), 'file_move_delete')
 
 def read_config(name: str, config_type: Type, default: NamedTuple):
@@ -181,6 +183,7 @@ def get_current_move_or_delete_target_num(target_data: str, idx: int):
 
 def load_files_from_dir(
     dir: str,
+    caption_file_ext: str,
     recursive: bool,
     load_caption_from_filename: bool,
     use_interrogator: str,
@@ -208,7 +211,7 @@ def load_files_from_dir(
     threshold_booru = custom_threshold_booru if use_custom_threshold_booru else shared.opts.interrogate_deepbooru_score_threshold
     threshold_waifu = custom_threshold_waifu if use_custom_threshold_waifu else shared.opts.interrogate_deepbooru_score_threshold
 
-    dataset_tag_editor.load_dataset(dir, recursive, load_caption_from_filename, interrogate_method, use_booru, use_blip, use_git, use_waifu, threshold_booru, threshold_waifu)
+    dataset_tag_editor.load_dataset(dir, caption_file_ext, recursive, load_caption_from_filename, interrogate_method, use_booru, use_blip, use_git, use_waifu, threshold_booru, threshold_waifu)
     img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=[])
     img_indices = dataset_tag_editor.get_filtered_imgindices(filters=[])
     path_filter = filters.PathFilter()
@@ -478,7 +481,7 @@ def remove_selected_tags():
 # Callbacks for "Move or Delete Files" tab
 # ================================================================
 
-def move_files(target_data: str, target_file: List[str], dest_dir: str, idx: int = -1):
+def move_files(target_data: str, target_file: List[str], caption_ext: str, dest_dir: str, idx: int = -1):
     move_img = 'Image File' in target_file
     move_txt = 'Caption Text File' in target_file
     move_bak = 'Caption Backup File' in target_file
@@ -486,16 +489,16 @@ def move_files(target_data: str, target_file: List[str], dest_dir: str, idx: int
         idx = int(idx)
         img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=get_filters())
         if  0 <= idx and idx < len(img_paths):
-            dataset_tag_editor.move_dataset_file(img_paths[idx], dest_dir, move_img, move_txt, move_bak)
+            dataset_tag_editor.move_dataset_file(img_paths[idx], caption_ext, dest_dir, move_img, move_txt, move_bak)
             dataset_tag_editor.construct_tag_counts()
         
     elif target_data == 'All Displayed Ones':
-        dataset_tag_editor.move_dataset(dest_dir, get_filters(), move_img, move_txt, move_bak)
+        dataset_tag_editor.move_dataset(dest_dir, caption_ext, get_filters(), move_img, move_txt, move_bak)
 
     return update_filter_and_gallery()
 
 
-def delete_files(target_data: str, target_file: List[str], idx: int = -1):
+def delete_files(target_data: str, target_file: List[str], caption_ext: str, idx: int = -1):
     delete_img = 'Image File' in target_file
     delete_txt = 'Caption Text File' in target_file
     delete_bak = 'Caption Backup File' in target_file
@@ -503,11 +506,11 @@ def delete_files(target_data: str, target_file: List[str], idx: int = -1):
         idx = int(idx)
         img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=get_filters())
         if  0 <= idx and idx < len(img_paths):
-            dataset_tag_editor.delete_dataset_file(delete_img, delete_txt, delete_bak)
+            dataset_tag_editor.delete_dataset_file(delete_img, caption_ext, delete_txt, delete_bak)
             dataset_tag_editor.construct_tag_counts()
     
     elif target_data == 'All Displayed Ones':
-        dataset_tag_editor.delete_dataset(get_filters(), delete_img, delete_txt, delete_bak)
+        dataset_tag_editor.delete_dataset(caption_ext, get_filters(), delete_img, delete_txt, delete_bak)
 
     return update_filter_and_gallery()
 
@@ -566,6 +569,8 @@ def on_ui_tabs():
                     with gr.Row():
                         with gr.Column(scale=3):
                             tb_img_directory = gr.Textbox(label='Dataset directory', placeholder='C:\\directory\\of\\datasets', value=cfg_general.dataset_dir)
+                        with gr.Column(scale=1, min_width=60):
+                            tb_caption_file_ext = gr.Textbox(label='Caption File Ext', placeholder='txt', value=cfg_general.caption_ext)
                         with gr.Column(scale=1, min_width=80):
                             btn_load_datasets = gr.Button(value='Load')
                     with gr.Accordion(label='Dataset Load Settings'):
@@ -703,6 +708,7 @@ def on_ui_tabs():
                 gr.HTML(value='<b>Note: </b>Moved or deleted images will be unloaded.')
                 rb_move_or_delete_target_data = gr.Radio(choices=['Selected One', 'All Displayed Ones'], value=cfg_file_move_delete.range, label='Move or Delete')
                 cbg_move_or_delete_target_file = gr.CheckboxGroup(choices=['Image File', 'Caption Text File', 'Caption Backup File'], label='Target', value=cfg_file_move_delete.target)
+                tb_move_or_delete_caption_ext = gr.Textbox(label='Caption File Ext', placeholder='txt', value=cfg_file_move_delete.caption_ext)
                 ta_move_or_delete_target_dataset_num = gr.HTML(value='Target dataset num: 0')
                 tb_move_or_delete_destination_dir = gr.Textbox(label='Destination Directory', value=cfg_file_move_delete.destination)
                 btn_move_or_delete_move_files = gr.Button(value='Move File(s)', variant='primary')
@@ -718,11 +724,11 @@ def on_ui_tabs():
         #----------------------------------------------------------------
         # General
 
-        components_general = [cb_backup, tb_img_directory, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_blip_to_prefill, cb_use_git_to_prefill, cb_use_booru_to_prefill, cb_use_waifu_to_prefill, cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu]
+        components_general = [cb_backup, tb_img_directory, tb_caption_file_ext, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_blip_to_prefill, cb_use_git_to_prefill, cb_use_booru_to_prefill, cb_use_waifu_to_prefill, cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu]
         components_filter = [tag_filter_ui.rb_sort_by, tag_filter_ui.rb_sort_order, tag_filter_ui.rb_logic, tag_filter_ui_neg.rb_sort_by, tag_filter_ui_neg.rb_sort_order, tag_filter_ui_neg.rb_logic]
         components_batch_edit = [cb_show_only_tags_selected, cb_prepend_tags, cb_use_regex, rb_sr_replace_target, tag_select_ui_remove.rb_sort_by, tag_select_ui_remove.rb_sort_order]
         components_edit_selected = [cb_copy_caption_automatically, cb_ask_save_when_caption_changed]
-        components_move_delete = [rb_move_or_delete_target_data, cbg_move_or_delete_target_file, tb_move_or_delete_destination_dir]
+        components_move_delete = [rb_move_or_delete_target_data, cbg_move_or_delete_target_file, tb_move_or_delete_caption_ext, tb_move_or_delete_destination_dir]
         
         configurable_components = components_general + components_filter + components_batch_edit + components_edit_selected + components_move_delete
 
@@ -810,7 +816,7 @@ def on_ui_tabs():
 
         btn_load_datasets.click(
             fn=load_files_from_dir,
-            inputs=[tb_img_directory, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_blip_to_prefill, cb_use_git_to_prefill, cb_use_booru_to_prefill, cb_use_waifu_to_prefill, cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu],
+            inputs=[tb_img_directory, tb_caption_file_ext, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, cb_use_blip_to_prefill, cb_use_git_to_prefill, cb_use_booru_to_prefill, cb_use_waifu_to_prefill, cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu],
             outputs=
             [gl_dataset_images, gl_filter_images, txt_gallery, txt_selection] +
             [cbg_hidden_dataset_filter, nb_hidden_dataset_filter_apply] +
@@ -1055,7 +1061,7 @@ def on_ui_tabs():
 
         btn_move_or_delete_move_files.click(
             fn=move_files,
-            inputs=[rb_move_or_delete_target_data, cbg_move_or_delete_target_file, tb_move_or_delete_destination_dir, nb_hidden_image_index],
+            inputs=[rb_move_or_delete_target_data, cbg_move_or_delete_target_file, tb_move_or_delete_caption_ext, tb_move_or_delete_destination_dir, nb_hidden_image_index],
             outputs=o_filter_and_gallery
         )
         btn_move_or_delete_move_files.click(
@@ -1066,7 +1072,7 @@ def on_ui_tabs():
 
         btn_move_or_delete_delete_files.click(
             fn=delete_files,
-            inputs=[rb_move_or_delete_target_data, cbg_move_or_delete_target_file, nb_hidden_image_index],
+            inputs=[rb_move_or_delete_target_data, cbg_move_or_delete_target_file, tb_move_or_delete_caption_ext, nb_hidden_image_index],
             outputs=o_filter_and_gallery
         )
         btn_move_or_delete_delete_files.click(
