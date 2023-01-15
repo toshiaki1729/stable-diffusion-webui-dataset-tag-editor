@@ -311,7 +311,6 @@ class DatasetTagEditor:
         
         if delete_image:
             self.dataset.remove(filtered_set)
-            print(list(self.dataset.datas.values()))
             self.construct_tag_counts()
 
 
@@ -335,7 +334,7 @@ class DatasetTagEditor:
                 if os.path.exists(img_path) and os.path.isfile(img_path):
                     os.remove(img_path)
                     self.dataset.remove_by_path(img_path)
-                    print(f'Deleted {img_path}')
+                    print(f'[tag-editor] Deleted {img_path}')
             except Exception as e:
                 print(e)
         
@@ -345,7 +344,7 @@ class DatasetTagEditor:
                 txt_path = filepath_noext + caption_ext
                 if os.path.exists(txt_path) and os.path.isfile(txt_path):
                     os.remove(txt_path)
-                    print(f'Deleted {txt_path}')
+                    print(f'[tag-editor] Deleted {txt_path}')
             except Exception as e:
                 print(e)
         
@@ -356,7 +355,7 @@ class DatasetTagEditor:
                     bak_path = filepath_noext + f'.{extnum:0>3d}'
                     if os.path.exists(bak_path) and os.path.isfile(bak_path):
                         os.remove(bak_path)
-                        print(f'Deleted {bak_path}')
+                        print(f'[tag-editor] Deleted {bak_path}')
             except Exception as e:
                 print(e)
     
@@ -374,7 +373,7 @@ class DatasetTagEditor:
                 if os.path.exists(img_path) and os.path.isfile(img_path):
                     os.replace(img_path, dst_path)
                     self.dataset.remove_by_path(img_path)
-                    print(f'Moved {img_path} -> {dst_path}')
+                    print(f'[tag-editor] Moved {img_path} -> {dst_path}')
             except Exception as e:
                 print(e)
         
@@ -385,7 +384,7 @@ class DatasetTagEditor:
                 dst_path = os.path.join(dest_dir, os.path.basename(txt_path))
                 if os.path.exists(txt_path) and os.path.isfile(txt_path):
                     os.replace(txt_path, dst_path)
-                    print(f'Moved {txt_path} -> {dst_path}')
+                    print(f'[tag-editor] Moved {txt_path} -> {dst_path}')
             except Exception as e:
                 print(e)
         
@@ -397,27 +396,27 @@ class DatasetTagEditor:
                     dst_path = os.path.join(dest_dir, os.path.basename(bak_path))
                     if os.path.exists(bak_path) and os.path.isfile(bak_path):
                         os.replace(bak_path, dst_path)
-                        print(f'Moved {bak_path} -> {dst_path}')
+                        print(f'[tag-editor] Moved {bak_path} -> {dst_path}')
             except Exception as e:
                 print(e)
 
 
     def load_dataset(self, img_dir: str, caption_ext:str, recursive: bool, load_caption_from_filename: bool, interrogate_method: InterrogateMethod, use_booru: bool, use_blip: bool, use_git:bool, use_waifu: bool, threshold_booru: float, threshold_waifu: float):
         self.clear()
-        print(f'Loading dataset from {img_dir}')
+        print(f'[tag-editor] Loading dataset from {img_dir}')
         if recursive:
-            print(f'Also loading from subdirectories.')
+            print(f'[tag-editor] Also loading from subdirectories.')
         
         try:
             filepath_set = get_filepath_set(dir=img_dir, recursive=recursive)
         except Exception as e:
             print(e)
-            print('Loading Aborted.')
+            print('[tag-editor] Loading Aborted.')
             return
 
         self.dataset_dir = img_dir
 
-        print(f'Total {len(filepath_set)} files under the directory including not image files.')
+        print(f'[tag-editor] Total {len(filepath_set)} files under the directory including not image files.')
 
         def load_images(filepath_set: Set[str], captionings: List[captioning.Captioning], taggers: List[tagger.Tagger]):
             for img_path in filepath_set:
@@ -455,7 +454,7 @@ class DatasetTagEditor:
                         img = Image.open(img_path).convert('RGB')
                     except Exception as e:
                         print(e)
-                        print(f'Cannot interrogate file: {img_path}')
+                        print(f'[tag-editor] Cannot interrogate file: {img_path}')
                     else:
                         for cap in captionings:
                             interrogate_tags += cap.predict(img)
@@ -508,7 +507,7 @@ class DatasetTagEditor:
             self.img_idx[p] = i
 
         self.construct_tag_counts()
-        print(f'Loading Completed: {len(self.dataset)} images found')
+        print(f'[tag-editor] Loading Completed: {len(self.dataset)} images found')
  
 
     def save_dataset(self, backup: bool, caption_ext: str):
@@ -532,13 +531,13 @@ class DatasetTagEditor:
                     else:
                         bak_path = None
                 if bak_path is None:
-                    print(f"There are too many backup files with same filename. A backup file of {txt_path} cannot be created.")
+                    print(f"[tag-editor] There are too many backup files with same filename. A backup file of {txt_path} cannot be created.")
                 else:
                     try:
                         os.rename(txt_path, bak_path)
                     except Exception as e:
                         print(e)
-                        print(f"A backup file of {txt_path} cannot be created.")
+                        print(f"[tag-editor] A backup file of {txt_path} cannot be created.")
                     else:
                         backup_num += 1
             # save
@@ -547,12 +546,12 @@ class DatasetTagEditor:
                     file.write(', '.join(tags))
             except Exception as e:
                 print(e)
-                print(f"Warning: {txt_path} cannot be saved.")
+                print(f"[tag-editor] Warning: {txt_path} cannot be saved.")
             else:
                 saved_num += 1
         
-        print(f'Backup text files: {backup_num}/{len(self.dataset)} under {self.dataset_dir}')
-        print(f'Saved text files: {saved_num}/{len(self.dataset)} under {self.dataset_dir}')
+        print(f'[tag-editor] Backup text files: {backup_num}/{len(self.dataset)} under {self.dataset_dir}')
+        print(f'[tag-editor] Saved text files: {saved_num}/{len(self.dataset)} under {self.dataset_dir}')
         return (saved_num, len(self.dataset), self.dataset_dir)
 
 

@@ -522,6 +522,7 @@ def delete_files(target_data: str, target_file: List[str], caption_ext: str, idx
 def on_ui_tabs():
     global tag_filter_ui, tag_filter_ui_neg, tag_select_ui_remove
     config.load()
+    print('[tag-editor] Settings has been read from config.json')
 
     cfg_general = read_general_config()
     cfg_filter_p, cfg_filter_n = read_filter_config()
@@ -735,6 +736,7 @@ def on_ui_tabs():
         def reload_config_file():
             config.load()
             p, n = read_filter_config()
+            print('[tag-editor] Reload config.json')
             return read_general_config() + p + n + read_batch_edit_config() + read_edit_selected_config() + read_move_delete_config()
 
         btn_reload_config_file.click(
@@ -754,6 +756,7 @@ def on_ui_tabs():
             write_edit_selected_config(*a[p:inc(len(components_edit_selected))])
             write_move_delete_config(*a[p:])
             config.save()
+            print('[tag-editor] Current settings have been saved into config.json')
 
         btn_save_setting_as_default.click(
             fn=save_settings_callback,
@@ -766,6 +769,7 @@ def on_ui_tabs():
             write_batch_edit_config(*CFG_BATCH_EDIT_DEFAULT)
             write_edit_selected_config(*CFG_EDIT_SELECTED_DEFAULT)
             write_move_delete_config(*CFG_MOVE_DELETE_DEFAULT)
+            print('[tag-editor] Restore default settings')
             return CFG_GENERAL_DEFAULT + CFG_FILTER_P_DEFAULT + CFG_FILTER_N_DEFAULT + CFG_BATCH_EDIT_DEFAULT + CFG_EDIT_SELECTED_DEFAULT + CFG_MOVE_DELETE_DEFAULT
             
 
