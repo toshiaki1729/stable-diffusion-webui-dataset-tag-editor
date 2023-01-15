@@ -24,6 +24,8 @@ class TagFilterUI:
         self.get_filters = get_filters
         self.logic = logic
         self.filter = filters.TagFilter({}, self.logic, self.filter_mode)
+        self.sort_by = sort_by
+        self.sort_order = sort_order
 
         import gradio as gr
         self.tb_search_tags = gr.Textbox(label='Search Tags', interactive=True)
