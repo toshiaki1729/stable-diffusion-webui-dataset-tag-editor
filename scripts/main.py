@@ -267,8 +267,8 @@ def update_common_tags():
     return [tags, tags]
 
 
-def save_all_changes(backup: bool):
-    saved, total, dir = dataset_tag_editor.save_dataset(backup=backup)
+def save_all_changes(backup: bool, caption_ext: str):
+    saved, total, dir = dataset_tag_editor.save_dataset(backup, caption_ext)
     return f'Saved text files : {saved}/{total} under {dir}' if total > 0 else ''
 
 
@@ -570,7 +570,7 @@ def on_ui_tabs():
                         with gr.Column(scale=3):
                             tb_img_directory = gr.Textbox(label='Dataset directory', placeholder='C:\\directory\\of\\datasets', value=cfg_general.dataset_dir)
                         with gr.Column(scale=1, min_width=60):
-                            tb_caption_file_ext = gr.Textbox(label='Caption File Ext', placeholder='txt', value=cfg_general.caption_ext)
+                            tb_caption_file_ext = gr.Textbox(label='Caption File Ext', placeholder='.txt (on Load and Save)', value=cfg_general.caption_ext)
                         with gr.Column(scale=1, min_width=80):
                             btn_load_datasets = gr.Button(value='Load')
                     with gr.Accordion(label='Dataset Load Settings'):
@@ -780,7 +780,7 @@ def on_ui_tabs():
 
         btn_save_all_changes.click(
             fn=save_all_changes,
-            inputs=[cb_backup],
+            inputs=[cb_backup, tb_caption_file_ext],
             outputs=[txt_result]
         )
 
