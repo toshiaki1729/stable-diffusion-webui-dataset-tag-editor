@@ -36,7 +36,8 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 - タグを一括で置換・削除・追加できます
 - タグまたはキャプション全体について一括置換ができます
   - [正規表現](https://docs.python.org/ja/3/library/re.html#regular-expression-syntax) が利用可能です
-- BLIP、DeepDanbooru、[WDv1.4 Tagger](https://huggingface.co/SmilingWolf/wd-v1-4-vit-tagger)を使用してタグの追加や編集ができます
+- Interrogatorを使用してタグの追加や編集ができます
+  - BLIP、DeepDanbooru、[WDv1.4 Tagger](https://huggingface.co/SmilingWolf)の各ネットワークによる学習結果（v1, v2）が使用可能です
 - 画像やキャプションファイルの一括移動・削除ができます
 
 
