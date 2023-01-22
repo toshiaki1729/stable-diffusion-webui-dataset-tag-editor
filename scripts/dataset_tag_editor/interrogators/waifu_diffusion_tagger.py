@@ -7,10 +7,10 @@ import launch
 
 class WaifuDiffusionTagger():
     # brought from https://huggingface.co/spaces/SmilingWolf/wd-v1-4-tags/blob/main/app.py and modified
-    MODEL_REPO = "SmilingWolf/wd-v1-4-vit-tagger"
     MODEL_FILENAME = "model.onnx"
     LABEL_FILENAME = "selected_tags.csv"
-    def __init__(self):
+    def __init__(self, model_name):
+        self.MODEL_REPO = model_name
         self.model = None
         self.labels = []
 
@@ -64,6 +64,3 @@ class WaifuDiffusionTagger():
         labels: List[Tuple[str, float]] = list(zip(self.labels, probs[0].astype(float)))
 
         return labels
-
-
-instance = WaifuDiffusionTagger()

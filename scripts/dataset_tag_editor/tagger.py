@@ -6,22 +6,17 @@ from typing import Optional, Dict
 from modules import devices, shared
 from modules import deepbooru as db
 
+from scripts.dataset_tag_editor.interrogator import Interrogator
 from scripts.dynamic_import import dynamic_import
 waifu_diffusion_tagger = dynamic_import('scripts/dataset_tag_editor/interrogators/waifu_diffusion_tagger.py')
 
 
-class Tagger:
-    def __enter__(self):
-        self.start()
-        return self
-    def __exit__(self, exception_type, exception_value, traceback):
-        self.stop()
-        pass
+class Tagger(Interrogator):
     def start(self):
         pass
     def stop(self):
         pass
-    def predict(self,image: Image.Image, threshold: Optional[float]):
+    def predict(self, image: Image.Image, threshold: Optional[float]):
         raise NotImplementedError
     def name(self):
         raise NotImplementedError
@@ -78,20 +73,26 @@ class DeepDanbooru(Tagger):
         return 'DeepDanbooru'
 
 
+WD_TAGGER_NAMES = ["wd-v1-4-vit-tagger", "wd-v1-4-convnext-tagger", "wd-v1-4-vit-tagger-v2", "wd-v1-4-convnext-tagger-v2", "wd-v1-4-swinv2-tagger-v2"]
+
 class WaifuDiffusion(Tagger):
+    def __init__(self, repo_name):
+        self.repo_name = repo_name
+        self.tagger_inst = waifu_diffusion_tagger.WaifuDiffusionTagger("SmilingWolf/" + repo_name)
+
     def start(self):
-        waifu_diffusion_tagger.instance.load()
+        self.tagger_inst.load()
         return self
 
     def stop(self):
-        waifu_diffusion_tagger.instance.unload()
+        self.tagger_inst.unload()
 
     # brought from https://huggingface.co/spaces/SmilingWolf/wd-v1-4-tags/blob/main/app.py and modified
     def predict(self, image: Image.Image, threshold: Optional[float] = None):        
         # may not use ratings
         # rating = dict(labels[:4])
         
-        labels = waifu_diffusion_tagger.instance.apply(image)
+        labels = self.tagger_inst.apply(image)
         
         if threshold:
             probability_dict = dict([(get_replaced_tag(x[0]), x[1]) for x in labels[4:] if x[1] > threshold])
@@ -101,4 +102,4 @@ class WaifuDiffusion(Tagger):
         return probability_dict
 
     def name(self):
-        return 'wd-v1-4-tagger'
+        return self.repo_name

@@ -15,6 +15,8 @@ filters = dynamic_import('scripts/dataset_tag_editor/filters.py')
 
 re_tags = re.compile(r'^(.+) \[\d+\]$')
 
+INTERROGATORS = [captioning.BLIP(), tagger.DeepDanbooru()] + [tagger.WaifuDiffusion(name) for name in tagger.WD_TAGGER_NAMES]
+INTERROGATOR_NAMES = [it.name() for it in INTERROGATORS]
 
 class InterrogateMethod(Enum):
     NONE = 0
@@ -24,14 +26,23 @@ class InterrogateMethod(Enum):
     APPEND = 4
 
 
-def interrogate_image_blip(path):
+def interrogate_image(path: str, interrogator_name: str, threshold_booru, threshold_wd):
     try:
         img = Image.open(path).convert('RGB')
     except:
         return ''
     else:
-        with captioning.BLIP() as cap:
-            res = cap.predict(img)
+        for it in INTERROGATORS:
+            if it.name() == interrogator_name:
+                if isinstance(it, tagger.DeepDanbooru):
+                    with it as tg:
+                        res = tg.predict(img, threshold_booru)
+                elif isinstance(it, tagger.WaifuDiffusion):
+                    with it as tg:
+                        res = tg.predict(img, threshold_wd)
+                else:
+                    with it as cap:
+                        res = cap.predict(img)
         return ', '.join(res)
 
 
@@ -64,6 +75,17 @@ def interrogate_image_waifu(path, threshold):
         return ''
     else:
         with tagger.WaifuDiffusion() as tg:
+            res = tg.predict(img, threshold=threshold)
+        return ', '.join(tagger.get_arranged_tags(res))
+
+
+def interrogate_image_waifu_v2(path, threshold):
+    try:
+        img = Image.open(path).convert('RGB')
+    except:
+        return ''
+    else:
+        with tagger.WaifuDiffusionV2() as tg:
             res = tg.predict(img, threshold=threshold)
         return ', '.join(tagger.get_arranged_tags(res))
             
@@ -401,7 +423,7 @@ class DatasetTagEditor:
                 print(e)
 
 
-    def load_dataset(self, img_dir: str, caption_ext:str, recursive: bool, load_caption_from_filename: bool, interrogate_method: InterrogateMethod, use_booru: bool, use_blip: bool, use_git:bool, use_waifu: bool, threshold_booru: float, threshold_waifu: float):
+    def load_dataset(self, img_dir: str, caption_ext:str, recursive: bool, load_caption_from_filename: bool, interrogate_method: InterrogateMethod, interrogator_names: List[str], threshold_booru: float, threshold_waifu: float):
         self.clear()
         print(f'[tag-editor] Loading dataset from {img_dir}')
         if recursive:
@@ -477,22 +499,17 @@ class DatasetTagEditor:
             captionings = []
             taggers = []
             if interrogate_method != InterrogateMethod.NONE:
-                if use_blip:
-                    cap = captioning.BLIP()
-                    cap.start()
-                    captionings.append(cap)
-                if use_git:
-                    cap = captioning.GITLarge()
-                    cap.start()
-                    captionings.append(cap)
-                if use_booru:
-                    tg = tagger.DeepDanbooru()
-                    tg.start()
-                    taggers.append((tg, threshold_booru))
-                if use_waifu:
-                    tg = tagger.WaifuDiffusion()
-                    tg.start()
-                    taggers.append((tg, threshold_waifu))
+                for it in INTERROGATORS:
+                    if it.name() in interrogator_names:
+                        it.start()
+                        if isinstance(it, tagger.Tagger):
+                            if isinstance(it, tagger.DeepDanbooru):
+                                taggers.append((it, threshold_booru))
+                            if isinstance(it, tagger.WaifuDiffusion):
+                                taggers.append((it, threshold_waifu))
+                        elif isinstance(it, captioning.Captioning):
+                            captionings.append(it)
+
 
             load_images(filepath_set=filepath_set, captionings=captionings, taggers=taggers)
             

@@ -1,15 +1,10 @@
 import modules.shared as shared
 
+from scripts.dataset_tag_editor.interrogator import Interrogator
 from scripts.dynamic_import import dynamic_import
 git_large_captioning = dynamic_import('scripts/dataset_tag_editor/interrogators/git_large_captioning.py')
 
-class Captioning:
-    def __enter__(self):
-        self.start()
-        return self
-    def __exit__(self, exception_type, exception_value, traceback):
-        self.stop()
-        pass
+class Captioning(Interrogator):
     def start(self):
         pass
     def stop(self):
