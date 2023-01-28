@@ -1,5 +1,6 @@
 import os
 import re
+import glob
 from typing import List, Set, Optional
 from modules import shared
 from modules.textual_inversion.dataset import re_numbers_at_start
@@ -89,26 +90,6 @@ def interrogate_image_waifu_v2(path, threshold):
             res = tg.predict(img, threshold=threshold)
         return ', '.join(tagger.get_arranged_tags(res))
             
-
-def get_filepath_set(dir: str, recursive: bool):
-    if recursive:
-        dirs_to_see = [dir]
-        result = set()
-        while len(dirs_to_see) > 0:
-            current_dir = dirs_to_see.pop()
-            basenames = os.listdir(current_dir)
-            paths = {os.path.join(current_dir, basename) for basename in basenames}
-            for path in paths:
-                if os.path.isdir(path):
-                    dirs_to_see.append(path)
-                elif os.path.isfile(path):
-                    result.add(path)
-        return result
-    else:
-        basenames = os.listdir(dir)
-        paths = {os.path.join(dir, basename) for basename in basenames}
-        return {path for path in paths if os.path.isfile(path)}
-
 
 class DatasetTagEditor:
     def __init__(self):
@@ -430,7 +411,7 @@ class DatasetTagEditor:
             print(f'[tag-editor] Also loading from subdirectories.')
         
         try:
-            filepath_set = get_filepath_set(dir=img_dir, recursive=recursive)
+            filepath_set = [p for p in glob.glob(os.path.join(img_dir, '**'), recursive=recursive) if os.path.isfile(p)]
         except Exception as e:
             print(e)
             print('[tag-editor] Loading Aborted.')
