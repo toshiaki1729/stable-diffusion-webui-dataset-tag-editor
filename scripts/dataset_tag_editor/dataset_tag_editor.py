@@ -144,9 +144,9 @@ class DatasetTagEditor:
                 return sorted(tags, reverse=True)
         elif sort_by == 'Frequency':
             if sort_order == 'Ascending':
-                return sorted(tags, key=lambda t:(self.tag_counts.get(t), t), reverse=False)
+                return sorted(tags, key=lambda t:(self.tag_counts.get(t, 0), t), reverse=False)
             elif sort_order == 'Descending':
-                return sorted(tags, key=lambda t:(-self.tag_counts.get(t), t), reverse=False)
+                return sorted(tags, key=lambda t:(-self.tag_counts.get(t, 0), t), reverse=False)
         return []
 
 
