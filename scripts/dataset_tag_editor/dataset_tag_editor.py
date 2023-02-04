@@ -180,6 +180,15 @@ class DatasetTagEditor:
             tags = self.dataset.get_tagset()
         
         return {tag for tag in tags if filter_word in tag}
+
+
+    def cleanup_tags(self, tags: List[str]):
+        current_dataset_tags = self.dataset.get_tagset()
+        return [t for t in tags if t in current_dataset_tags]
+    
+    def cleanup_tagset(self, tags: Set[str]):
+        current_dataset_tagset = self.dataset.get_tagset()
+        return tags & current_dataset_tagset
         
 
     def get_common_tags(self, filters: List[filters.Filter] = []):

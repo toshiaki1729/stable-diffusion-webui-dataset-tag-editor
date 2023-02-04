@@ -209,4 +209,18 @@ class DTEModifiedGallery{
         
     }
 
+    clickClose(){
+        if (!this.#elem) return;
+        
+        let imgPreview_close = this.#elem.querySelectorAll('div.modify-upload button')
+        if (imgPreview_close != null) {
+            imgPreview_close.forEach(function (e) {
+                if (e && e.parentElement.tagName == 'DIV') {
+                    e.click()
+                }
+            });
+        }
+        
+    }
+
 }

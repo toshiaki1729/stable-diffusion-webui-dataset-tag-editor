@@ -5,6 +5,8 @@ from enum import Enum
 class Filter:
     def apply(self, dataset):
         return dataset
+    def __str__(self):
+        return ''
 
 
 class TagFilter(Filter):
@@ -18,13 +20,13 @@ class TagFilter(Filter):
         INCLUSIVE = 1
         EXCLUSIVE = 2
         
-    def __init__(self, tags: Set[str] = {}, logic: Logic = Logic.NONE, mode: Mode = Mode.NONE):
+    def __init__(self, tags: Set[str] = set(), logic: Logic = Logic.NONE, mode: Mode = Mode.NONE):
         self.tags = tags
         self.logic = logic
         self.mode = mode
     
     def apply(self, dataset):
-        if not self.tags or self.logic == TagFilter.Logic.NONE or self.mode == TagFilter.Logic.NONE:
+        if not self.tags or self.logic == TagFilter.Logic.NONE or self.mode == TagFilter.Mode.NONE:
             return dataset
         
         paths_remove = []

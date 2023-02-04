@@ -11,9 +11,9 @@ class TagFilterUI:
         self.filter_word = ''
         self.sort_by = 'Alphabetical Order'
         self.sort_order = 'Ascending'
-        self.selected_tags = []
+        self.selected_tags = set()
         self.filter_mode = tag_filter_mode
-        self.filter = filters.TagFilter({}, self.logic, self.filter_mode)
+        self.filter = filters.TagFilter(logic=self.logic, mode=self.filter_mode)
         self.dataset_tag_editor = dataset_tag_editor
         self.get_filters = lambda:[]
     
@@ -23,7 +23,7 @@ class TagFilterUI:
     def create_ui(self, get_filters: Callable[[], List[filters.Filter]], logic = filters.TagFilter.Logic.AND, sort_by = 'Alphabetical Order', sort_order = 'Ascending'):
         self.get_filters = get_filters
         self.logic = logic
-        self.filter = filters.TagFilter({}, self.logic, self.filter_mode)
+        self.filter = filters.TagFilter(logic=self.logic, mode=self.filter_mode)
         self.sort_by = sort_by
         self.sort_order = sort_order
 
@@ -37,12 +37,12 @@ class TagFilterUI:
         self.cbg_tags = gr.CheckboxGroup(label='Filter Images by Tags', interactive=True)
     
 
-    def set_callbacks(self, on_filter_update: Callable[[List], List] = lambda:[], inputs=[], outputs=[]):
+    def set_callbacks(self, on_filter_update: Callable[[List], List] = lambda:[], inputs=[], outputs=[], _js=None):
         self.tb_search_tags.change(fn=self.tb_search_tags_changed, inputs=self.tb_search_tags, outputs=self.cbg_tags)
         self.rb_sort_by.change(fn=self.rd_sort_by_changed, inputs=self.rb_sort_by, outputs=self.cbg_tags)
         self.rb_sort_order.change(fn=self.rd_sort_order_changed, inputs=self.rb_sort_order, outputs=self.cbg_tags)
-        self.rb_logic.change(fn=lambda a, *b:[self.rd_logic_changed(a)] + on_filter_update(*b), inputs=[self.rb_logic] + inputs, outputs=[self.cbg_tags] + outputs)
-        self.cbg_tags.change(fn=lambda a, *b:[self.cbg_tags_changed(a)] + on_filter_update(*b), inputs=[self.cbg_tags] + inputs, outputs=[self.cbg_tags] + outputs)
+        self.rb_logic.change(fn=lambda a, *b:[self.rd_logic_changed(a)] + on_filter_update(*b), _js=_js, inputs=[self.rb_logic] + inputs, outputs=[self.cbg_tags] + outputs)
+        self.cbg_tags.change(fn=lambda a, *b:[self.cbg_tags_changed(a)] + on_filter_update(*b), _js=_js, inputs=[self.cbg_tags] + inputs, outputs=[self.cbg_tags] + outputs)
 
 
     def tb_search_tags_changed(self, tb_search_tags: str):
@@ -62,23 +62,28 @@ class TagFilterUI:
 
     def rd_logic_changed(self, rd_logic: str):
         self.logic = filters.TagFilter.Logic.AND if rd_logic == 'AND' else filters.TagFilter.Logic.OR if rd_logic == 'OR' else filters.TagFilter.Logic.NONE
-        self.filter = filters.TagFilter(set(self.selected_tags), self.logic, self.filter_mode)
+        self.filter = filters.TagFilter(self.selected_tags, self.logic, self.filter_mode)
         return self.cbg_tags_update()
 
 
     def cbg_tags_changed(self, cbg_tags: List[str]):
-        self.selected_tags = self.dataset_tag_editor.read_tags(cbg_tags)
-        self.filter = filters.TagFilter(set(self.selected_tags), self.logic, self.filter_mode)
+        self.selected_tags = self.dataset_tag_editor.cleanup_tagset(set(self.dataset_tag_editor.read_tags(cbg_tags)))
         return self.cbg_tags_update()
 
 
     def cbg_tags_update(self):
+        self.selected_tags = self.dataset_tag_editor.cleanup_tagset(self.selected_tags)
+        self.filter = filters.TagFilter(self.selected_tags, self.logic, self.filter_mode)
+        
         if self.filter_mode == filters.TagFilter.Mode.INCLUSIVE:
-            filtered_tags = self.dataset_tag_editor.get_filtered_tags(self.get_filters(), self.filter_word, self.filter.logic == filters.TagFilter.Logic.AND)
+            tags = self.dataset_tag_editor.get_filtered_tags(self.get_filters(), self.filter_word, self.filter.logic == filters.TagFilter.Logic.AND)
         else:
-            filtered_tags = self.dataset_tag_editor.get_filtered_tags(self.get_filters(), self.filter_word, self.filter.logic == filters.TagFilter.Logic.OR)
-        tags = self.dataset_tag_editor.sort_tags(tags=filtered_tags, sort_by=self.sort_by, sort_order=self.sort_order)
-        tags_in_filter = self.dataset_tag_editor.sort_tags(tags=list(self.filter.tags), sort_by=self.sort_by, sort_order=self.sort_order)
+            tags = self.dataset_tag_editor.get_filtered_tags(self.get_filters(), self.filter_word, self.filter.logic == filters.TagFilter.Logic.OR)
+        tags_in_filter = self.filter.tags
+        
+        tags = self.dataset_tag_editor.sort_tags(tags=tags, sort_by=self.sort_by, sort_order=self.sort_order)
+        tags_in_filter = self.dataset_tag_editor.sort_tags(tags=tags_in_filter, sort_by=self.sort_by, sort_order=self.sort_order)
+
         tags = tags_in_filter + [tag for tag in tags if tag not in self.filter.tags]
         tags = self.dataset_tag_editor.write_tags(tags)
         tags_in_filter = self.dataset_tag_editor.write_tags(tags_in_filter)
@@ -88,9 +93,9 @@ class TagFilterUI:
 
 
     def clear_filter(self):
-        self.filter = filters.TagFilter({}, self.logic, self.filter_mode)
+        self.filter = filters.TagFilter(logic=self.logic, mode=self.filter_mode)
         self.filter_word = ''
-        self.selected_tags = []
+        self.selected_tags = set()
 
 
 class TagSelectUI:

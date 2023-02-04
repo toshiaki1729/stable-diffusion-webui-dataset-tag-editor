@@ -20,6 +20,14 @@ function dataset_tag_editor_gl_dataset_images_clear_filter() {
     return []
 }
 
+function dataset_tag_editor_gl_dataset_images_close() {
+    dteModifiedGallery_dataset.clickClose()
+}
+
+function dataset_tag_editor_gl_filter_images_close() {
+    dteModifiedGallery_filter.clickClose()
+}
+
 let dataset_tag_editor_gl_dataset_images_clicked = function () {
     dteModifiedGallery_dataset.updateFilter()
     dteModifiedGallery_dataset.clickHandler()

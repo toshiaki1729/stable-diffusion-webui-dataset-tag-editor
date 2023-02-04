@@ -332,11 +332,10 @@ def remove_image_selection(idx: int):
     global tmp_selection_img_path_set, selection_selected_image_path
     idx = int(idx)
     img_paths = arrange_selection_order(tmp_selection_img_path_set)
-    if idx < 0 or len(img_paths) <= idx:
-        idx = -1
-    else:
+    if 0 < idx and idx < len(img_paths):
         tmp_selection_img_path_set.remove(img_paths[idx])
         selection_selected_image_path = ''
+    idx = -1
 
     return [
         arrange_selection_order(tmp_selection_img_path_set),
@@ -396,7 +395,6 @@ def gallery_index_changed(prev_idx: int, next_idx: int, edit_caption: str, copy_
 
 
 def dialog_selected_save_caption_change(prev_idx: int, edit_caption: str):
-    global gallery_selected_image_path
     prev_idx = int(prev_idx)
     return change_selected_image_caption(edit_caption, prev_idx)
 
@@ -768,15 +766,27 @@ def on_ui_tabs():
             outputs=configurable_components
         )
 
-
-        #----------------------------------------------------------------
-        # Filter and Edit Tags tab
-
         btn_save_all_changes.click(
             fn=save_all_changes,
             inputs=[cb_backup, tb_caption_file_ext],
             outputs=[txt_result]
         )
+
+        btn_load_datasets.click(
+            fn=load_files_from_dir,
+            inputs=[tb_img_directory, tb_caption_file_ext, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, dd_intterogator_names, cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu],
+            outputs=
+            [gl_dataset_images, gl_filter_images, txt_gallery, txt_selection] +
+            [cbg_hidden_dataset_filter, nb_hidden_dataset_filter_apply] +
+            o_filter_and_gallery
+        )
+        btn_load_datasets.click(
+            fn=lambda:['', '', '', -1, -1, -1],
+            outputs=[tb_common_tags, tb_edit_tags, tb_caption_selected_image, nb_hidden_image_index, nb_hidden_image_index_prev, nb_hidden_image_index_save_or_not]
+        )
+
+        #----------------------------------------------------------------
+        # Filter by Tags tab
 
         tag_filter_ui.set_callbacks(
             on_filter_update=lambda a, b:
@@ -791,7 +801,8 @@ def on_ui_tabs():
             [tb_common_tags, tb_edit_tags] +
             [tb_sr_selected_tags] +
             [ta_move_or_delete_target_dataset_num]+
-            [tag_select_ui_remove.cbg_tags]
+            [tag_select_ui_remove.cbg_tags],
+            _js='(...args) => {dataset_tag_editor_gl_dataset_images_close(); return args}'
         )
 
         tag_filter_ui_neg.set_callbacks(
@@ -805,20 +816,8 @@ def on_ui_tabs():
             [cbg_hidden_dataset_filter, nb_hidden_dataset_filter_apply, nb_hidden_image_index, nb_hidden_image_index_prev, nb_hidden_image_index_save_or_not, txt_gallery] +
             [tb_common_tags, tb_edit_tags] +
             [ta_move_or_delete_target_dataset_num] +
-            [tag_select_ui_remove.cbg_tags]
-        )
-
-        btn_load_datasets.click(
-            fn=load_files_from_dir,
-            inputs=[tb_img_directory, tb_caption_file_ext, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, dd_intterogator_names, cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu],
-            outputs=
-            [gl_dataset_images, gl_filter_images, txt_gallery, txt_selection] +
-            [cbg_hidden_dataset_filter, nb_hidden_dataset_filter_apply] +
-            o_filter_and_gallery
-        )
-        btn_load_datasets.click(
-            fn=lambda:['', '', '', -1, -1, -1],
-            outputs=[tb_common_tags, tb_edit_tags, tb_caption_selected_image, nb_hidden_image_index, nb_hidden_image_index_prev, nb_hidden_image_index_save_or_not]
+            [tag_select_ui_remove.cbg_tags],
+            _js='(...args) => {dataset_tag_editor_gl_dataset_images_close(); return args}'
         )
 
         nb_hidden_dataset_filter_apply.change(
@@ -898,6 +897,10 @@ def on_ui_tabs():
             inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
             outputs=[ta_move_or_delete_target_dataset_num]
         )
+        btn_apply_image_selection_filter.click(
+            fn=None,
+            _js='() => dataset_tag_editor_gl_dataset_images_close()'
+        )
 
         #----------------------------------------------------------------
         # Batch Edit Captions tab
@@ -912,6 +915,10 @@ def on_ui_tabs():
             inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
             outputs=[ta_move_or_delete_target_dataset_num]
         )
+        btn_apply_edit_tags.click(
+            fn=None,
+            _js='() => dataset_tag_editor_gl_dataset_images_close()'
+        )
 
         btn_apply_sr_tags.click(
             fn=search_and_replace,
@@ -922,6 +929,10 @@ def on_ui_tabs():
             fn=get_current_move_or_delete_target_num,
             inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
             outputs=[ta_move_or_delete_target_dataset_num]
+        )
+        btn_apply_sr_tags.click(
+            fn=None,
+            _js='() => dataset_tag_editor_gl_dataset_images_close()'
         )
 
         cb_show_only_tags_selected.change(
@@ -1027,6 +1038,12 @@ def on_ui_tabs():
             inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
             outputs=[ta_move_or_delete_target_dataset_num]
         )
+        btn_apply_changes_selected_image.click(
+            fn=None,
+            _js='() => dataset_tag_editor_gl_dataset_images_close()'
+        )
+
+        
 
         #----------------------------------------------------------------
         # Move or Delete Files
@@ -1047,6 +1064,10 @@ def on_ui_tabs():
             inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
             outputs=[ta_move_or_delete_target_dataset_num]
         )
+        btn_move_or_delete_move_files.click(
+            fn=None,
+            _js='() => dataset_tag_editor_gl_dataset_images_close()'
+        )
 
         btn_move_or_delete_delete_files.click(
             fn=delete_files,
@@ -1057,6 +1078,10 @@ def on_ui_tabs():
             fn=get_current_move_or_delete_target_num,
             inputs=[rb_move_or_delete_target_data, nb_hidden_image_index],
             outputs=[ta_move_or_delete_target_dataset_num]
+        )
+        btn_move_or_delete_delete_files.click(
+            fn=None,
+            _js='() => dataset_tag_editor_gl_dataset_images_close()'
         )
 
     return [(dataset_tag_editor_interface, "Dataset Tag Editor", "dataset_tag_editor_interface")]
