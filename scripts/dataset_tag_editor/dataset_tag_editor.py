@@ -411,7 +411,8 @@ class DatasetTagEditor:
             print(f'[tag-editor] Also loading from subdirectories.')
         
         try:
-            filepath_set = [p for p in glob.glob(os.path.join(img_dir, '**'), recursive=recursive) if os.path.isfile(p)]
+            load_dir = glob.escape(os.path.abspath(img_dir))
+            filepath_set = [p for p in glob.glob(os.path.join(load_dir, '**'), recursive=recursive) if os.path.isfile(p)]
         except Exception as e:
             print(e)
             print('[tag-editor] Loading Aborted.')
