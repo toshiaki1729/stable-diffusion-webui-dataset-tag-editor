@@ -48,14 +48,20 @@ GeneralConfig = namedtuple('GeneralConfig', [
     'use_custom_threshold_booru', 
     'custom_threshold_booru', 
     'use_custom_threshold_waifu', 
-    'custom_threshold_waifu'
+    'custom_threshold_waifu',
+    'save_kohya_metadata',
+    'meta_output_path',
+    'meta_input_path',
+    'meta_overwrite',
+    'meta_save_as_caption',
+    'meta_use_full_path'
     ])
 FilterConfig = namedtuple('FilterConfig', ['sort_by', 'sort_order', 'logic'])
 BatchEditConfig = namedtuple('BatchEditConfig', ['show_only_selected', 'prepend', 'use_regex', 'target', 'sory_by', 'sort_order'])
 EditSelectedConfig = namedtuple('EditSelectedConfig', ['auto_copy', 'warn_change_not_saved', 'use_interrogator_name'])
 MoveDeleteConfig = namedtuple('MoveDeleteConfig', ['range', 'target', 'caption_ext', 'destination'])
 
-CFG_GENERAL_DEFAULT = GeneralConfig(True, '', '.txt', False, True, 'No', [], False, 0.7, False, 0.5)
+CFG_GENERAL_DEFAULT = GeneralConfig(True, '', '.txt', False, True, 'No', [], False, 0.7, False, 0.5, False, '', '', True, False, False)
 CFG_FILTER_P_DEFAULT = FilterConfig('Alphabetical Order', 'Ascending', 'AND')
 CFG_FILTER_N_DEFAULT = FilterConfig('Alphabetical Order', 'Ascending', 'OR')
 CFG_BATCH_EDIT_DEFAULT = BatchEditConfig(True, False, False, 'Only Selected Tags', 'Alphabetical Order', 'Ascending')
@@ -278,8 +284,10 @@ def update_common_tags():
     return [tags, tags]
 
 
-def save_all_changes(backup: bool, caption_ext: str):
-    saved, total, dir = dataset_tag_editor.save_dataset(backup, caption_ext)
+def save_all_changes(backup: bool, caption_ext: str, save_kohya_metadata:bool, metadata_output:str, metadata_input:str, metadata_overwrite:bool, metadata_as_caption:bool, metadata_use_fullpath:bool):
+    if not metadata_input:
+        metadata_input = None
+    saved, total, dir = dataset_tag_editor.save_dataset(backup, caption_ext, save_kohya_metadata, metadata_output, metadata_input, metadata_overwrite, metadata_as_caption, metadata_use_fullpath)
     return f'Saved text files : {saved}/{total} under {dir}' if total > 0 else ''
 
 
@@ -549,6 +557,16 @@ def on_ui_tabs():
                 with gr.Column(scale=2):
                     cb_backup = gr.Checkbox(value=cfg_general.backup, label='Backup original text file (original file will be renamed like filename.000, .001, .002, ...)', interactive=True)
             gr.HTML(value='<b>Note:</b> New text file will be created if you are using filename as captions.')
+            with gr.Row():
+                cb_save_kohya_metadata = gr.Checkbox(value=cfg_general.save_kohya_metadata, label="Save kohya-ss's finetuning metadata json", interactive=True)
+            with gr.Row():
+                with gr.Column(variant='panel', visible=cfg_general.save_kohya_metadata) as kohya_metadata:
+                    tb_metadata_output = gr.Textbox(label='json output path', placeholder='C:\\path\\to\\metadata.json',value=cfg_general.meta_output_path)
+                    tb_metadata_input = gr.Textbox(label='json input path (Optional)', placeholder='C:\\path\\to\\metadata.json',value=cfg_general.meta_input_path)
+                    with gr.Row():
+                        cb_metadata_overwrite = gr.Checkbox(value=cfg_general.meta_overwrite, label="Overwrite if output file exists", interactive=True)
+                        cb_metadata_as_caption = gr.Checkbox(value=cfg_general.meta_save_as_caption, label="Save metadata as caption", interactive=True)
+                        cb_metadata_use_fullpath = gr.Checkbox(value=cfg_general.meta_use_full_path, label="Save metadata image key as fullpath", interactive=True)
             with gr.Row(visible=False):
                 txt_result = gr.Textbox(label='Results', interactive=False)
         
@@ -713,7 +731,12 @@ def on_ui_tabs():
         #----------------------------------------------------------------
         # General
 
-        components_general = [cb_backup, tb_img_directory, tb_caption_file_ext, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, dd_intterogator_names, cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu]
+        components_general = [
+            cb_backup, tb_img_directory, tb_caption_file_ext, cb_load_recursive,
+            cb_load_caption_from_filename, rb_use_interrogator, dd_intterogator_names,
+            cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu,
+            cb_save_kohya_metadata, tb_metadata_output, tb_metadata_input, cb_metadata_overwrite, cb_metadata_as_caption, cb_metadata_use_fullpath
+        ]
         components_filter = [tag_filter_ui.rb_sort_by, tag_filter_ui.rb_sort_order, tag_filter_ui.rb_logic, tag_filter_ui_neg.rb_sort_by, tag_filter_ui_neg.rb_sort_order, tag_filter_ui_neg.rb_logic]
         components_batch_edit = [cb_show_only_tags_selected, cb_prepend_tags, cb_use_regex, rb_sr_replace_target, tag_select_ui_remove.rb_sort_by, tag_select_ui_remove.rb_sort_order]
         components_edit_selected = [cb_copy_caption_automatically, cb_ask_save_when_caption_changed, dd_intterogator_names_si]
@@ -768,7 +791,7 @@ def on_ui_tabs():
 
         btn_save_all_changes.click(
             fn=save_all_changes,
-            inputs=[cb_backup, tb_caption_file_ext],
+            inputs=[cb_backup, tb_caption_file_ext, cb_save_kohya_metadata, tb_metadata_output, tb_metadata_input, cb_metadata_overwrite, cb_metadata_as_caption, cb_metadata_use_fullpath],
             outputs=[txt_result]
         )
 
@@ -783,6 +806,12 @@ def on_ui_tabs():
         btn_load_datasets.click(
             fn=lambda:['', '', '', -1, -1, -1],
             outputs=[tb_common_tags, tb_edit_tags, tb_caption_selected_image, nb_hidden_image_index, nb_hidden_image_index_prev, nb_hidden_image_index_save_or_not]
+        )
+
+        cb_save_kohya_metadata.change(
+            fn=lambda x:gr.update(visible=x),
+            inputs=cb_save_kohya_metadata,
+            outputs=kohya_metadata
         )
 
         #----------------------------------------------------------------

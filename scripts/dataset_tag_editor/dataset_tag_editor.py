@@ -12,6 +12,7 @@ ds = dynamic_import('scripts/dataset_tag_editor/dataset.py')
 tagger = dynamic_import('scripts/dataset_tag_editor/tagger.py')
 captioning = dynamic_import('scripts/dataset_tag_editor/captioning.py')
 filters = dynamic_import('scripts/dataset_tag_editor/filters.py')
+kohya_metadata = dynamic_import('scripts/dataset_tag_editor/kohya-ss_finetune_metadata.py')
 
 
 re_tags = re.compile(r'^(.+) \[\d+\]$')
@@ -421,7 +422,7 @@ class DatasetTagEditor:
         
         try:
             load_dir = glob.escape(os.path.abspath(img_dir))
-            filepath_set = [p for p in glob.glob(os.path.join(load_dir, '**'), recursive=recursive) if os.path.isfile(p)]
+            filepaths = [p for p in glob.glob(os.path.join(load_dir, '**'), recursive=recursive) if os.path.isfile(p)]
         except Exception as e:
             print(e)
             print('[tag-editor] Loading Aborted.')
@@ -429,10 +430,10 @@ class DatasetTagEditor:
 
         self.dataset_dir = img_dir
 
-        print(f'[tag-editor] Total {len(filepath_set)} files under the directory including not image files.')
+        print(f'[tag-editor] Total {len(filepaths)} files under the directory including not image files.')
 
-        def load_images(filepath_set: Set[str], captionings: List[captioning.Captioning], taggers: List[tagger.Tagger]):
-            for img_path in filepath_set:
+        def load_images(filepaths: List[str], captionings: List[captioning.Captioning], taggers: List[tagger.Tagger]):
+            for img_path in filepaths:
                 img_dir = os.path.dirname(img_path)
                 img_filename, img_ext = os.path.splitext(os.path.basename(img_path))
                 if img_ext == caption_ext:
@@ -502,7 +503,7 @@ class DatasetTagEditor:
                             captionings.append(it)
 
 
-            load_images(filepath_set=filepath_set, captionings=captionings, taggers=taggers)
+            load_images(filepaths=filepaths, captionings=captionings, taggers=taggers)
             
         finally:
             if interrogate_method != InterrogateMethod.NONE:
@@ -518,7 +519,7 @@ class DatasetTagEditor:
         print(f'[tag-editor] Loading Completed: {len(self.dataset)} images found')
  
 
-    def save_dataset(self, backup: bool, caption_ext: str):
+    def save_dataset(self, backup: bool, caption_ext: str, write_kohya_metadata: bool, meta_out_path: str, meta_in_path: Optional[str], meta_overwrite:bool, meta_as_caption: bool, meta_full_path: bool):
         if len(self.dataset) == 0:
             return (0, 0, '')
 
@@ -557,9 +558,12 @@ class DatasetTagEditor:
                 print(f"[tag-editor] Warning: {txt_path} cannot be saved.")
             else:
                 saved_num += 1
-        
         print(f'[tag-editor] Backup text files: {backup_num}/{len(self.dataset)} under {self.dataset_dir}')
         print(f'[tag-editor] Saved text files: {saved_num}/{len(self.dataset)} under {self.dataset_dir}')
+        
+        if(write_kohya_metadata):
+            kohya_metadata.write(dataset=self.dataset, dataset_dir=self.dataset_dir, out_path=meta_out_path, in_path=meta_in_path, overwrite=meta_overwrite, save_as_caption=meta_as_caption, use_full_path=meta_full_path)
+            print(f'[tag-editor] Saved json metadata file in {meta_out_path}')
         return (saved_num, len(self.dataset), self.dataset_dir)
 
 
