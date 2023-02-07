@@ -30,7 +30,7 @@ class TagFilterUI:
         import gradio as gr
         self.tb_search_tags = gr.Textbox(label='Search Tags', interactive=True)
         with gr.Row():
-            self.rb_sort_by = gr.Radio(choices=['Alphabetical Order', 'Frequency'], value=sort_by, interactive=True, label='Sort by')
+            self.rb_sort_by = gr.Radio(choices=['Alphabetical Order', 'Frequency', 'Length'], value=sort_by, interactive=True, label='Sort by')
             self.rb_sort_order = gr.Radio(choices=['Ascending', 'Descending'], value=sort_order, interactive=True, label='Sort Order')
         v = 'AND' if self.logic==filters.TagFilter.Logic.AND else 'OR' if self.logic==filters.TagFilter.Logic.OR else 'NONE'
         self.rb_logic = gr.Radio(choices=['AND', 'OR', 'NONE'], value=v, label='Filter Logic', interactive=True)

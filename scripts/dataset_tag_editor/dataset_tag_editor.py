@@ -148,6 +148,11 @@ class DatasetTagEditor:
                 return sorted(tags, key=lambda t:(self.tag_counts.get(t, 0), t), reverse=False)
             elif sort_order == 'Descending':
                 return sorted(tags, key=lambda t:(-self.tag_counts.get(t, 0), t), reverse=False)
+        elif sort_by == 'Length':
+            if sort_order == 'Ascending':
+                return sorted(tags, key=lambda t:(len(t), t), reverse=False)
+            elif sort_order == 'Descending':
+                return sorted(tags, key=lambda t:(-len(t), t), reverse=False)
         return []
 
 
