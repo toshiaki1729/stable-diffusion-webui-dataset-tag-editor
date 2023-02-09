@@ -115,7 +115,7 @@ class TagSelectUI:
         import gradio as gr
         self.tb_search_tags = gr.Textbox(label='Search Tags', interactive=True)
         with gr.Row():
-            self.rb_sort_by = gr.Radio(choices=['Alphabetical Order', 'Frequency'], value=sort_by, interactive=True, label='Sort by')
+            self.rb_sort_by = gr.Radio(choices=['Alphabetical Order', 'Frequency', 'Length'], value=sort_by, interactive=True, label='Sort by')
             self.rb_sort_order = gr.Radio(choices=['Ascending', 'Descending'], value=sort_order, interactive=True, label='Sort Order')
         with gr.Row():
             self.btn_select_visibles = gr.Button(value='Select visible tags')
