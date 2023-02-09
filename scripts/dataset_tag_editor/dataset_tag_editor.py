@@ -176,16 +176,45 @@ class DatasetTagEditor:
         return [self.img_idx.get(p) for p in img_paths]
 
 
-    def get_filtered_tags(self, filters: List[filters.Filter] = [], filter_word: str = '', filter_tags = True):
+    def get_filtered_tags(self, filters: List[filters.Filter] = [], filter_word: str = '', filter_tags = True, prefix=False, suffix=False, regex=False):
         if filter_tags:
             filtered_set = self.dataset.copy()
             for filter in filters:
                 filtered_set.filter(filter)
-            tags = filtered_set.get_tagset()
+            tags:Set[str] = filtered_set.get_tagset()
         else:
-            tags = self.dataset.get_tagset()
+            tags:Set[str] = self.dataset.get_tagset()
         
-        return {tag for tag in tags if filter_word in tag}
+        result = set()
+        for tag in tags:
+            if prefix:
+                if regex:
+                    if re.search("^" + filter_word, tag) is not None:
+                        result.add(tag)
+                        continue
+                else:
+                    if tag.startswith(filter_word):
+                        result.add(tag)
+                        continue
+            if suffix:
+                if regex:
+                    if re.search(filter_word + "$", tag) is not None:
+                        result.add(tag)
+                        continue
+                else:
+                    if tag.endswith(filter_word):
+                        result.add(tag)
+                        continue
+            if not prefix and not suffix:
+                if regex:
+                    if re.search(filter_word, tag) is not None:
+                        result.add(tag)
+                        continue
+                else:
+                    if filter_word in tag:
+                        result.add(tag)
+                        continue
+        return result
 
 
     def cleanup_tags(self, tags: List[str]):

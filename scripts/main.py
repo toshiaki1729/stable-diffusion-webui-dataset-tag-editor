@@ -56,15 +56,15 @@ GeneralConfig = namedtuple('GeneralConfig', [
     'meta_save_as_caption',
     'meta_use_full_path'
     ])
-FilterConfig = namedtuple('FilterConfig', ['sort_by', 'sort_order', 'logic'])
-BatchEditConfig = namedtuple('BatchEditConfig', ['show_only_selected', 'prepend', 'use_regex', 'target', 'sory_by', 'sort_order'])
+FilterConfig = namedtuple('FilterConfig', ['sw_prefix', 'sw_suffix', 'sw_regex','sort_by', 'sort_order', 'logic'])
+BatchEditConfig = namedtuple('BatchEditConfig', ['show_only_selected', 'prepend', 'use_regex', 'target', 'sw_prefix', 'sw_suffix', 'sw_regex', 'sory_by', 'sort_order'])
 EditSelectedConfig = namedtuple('EditSelectedConfig', ['auto_copy', 'warn_change_not_saved', 'use_interrogator_name'])
 MoveDeleteConfig = namedtuple('MoveDeleteConfig', ['range', 'target', 'caption_ext', 'destination'])
 
 CFG_GENERAL_DEFAULT = GeneralConfig(True, '', '.txt', False, True, 'No', [], False, 0.7, False, 0.5, False, '', '', True, False, False)
-CFG_FILTER_P_DEFAULT = FilterConfig('Alphabetical Order', 'Ascending', 'AND')
-CFG_FILTER_N_DEFAULT = FilterConfig('Alphabetical Order', 'Ascending', 'OR')
-CFG_BATCH_EDIT_DEFAULT = BatchEditConfig(True, False, False, 'Only Selected Tags', 'Alphabetical Order', 'Ascending')
+CFG_FILTER_P_DEFAULT = FilterConfig(False, False, False, 'Alphabetical Order', 'Ascending', 'AND')
+CFG_FILTER_N_DEFAULT = FilterConfig(False, False, False, 'Alphabetical Order', 'Ascending', 'OR')
+CFG_BATCH_EDIT_DEFAULT = BatchEditConfig(True, False, False, 'Only Selected Tags', False, False, False, 'Alphabetical Order', 'Ascending')
 CFG_EDIT_SELECTED_DEFAULT = EditSelectedConfig(False, False, '')
 CFG_MOVE_DELETE_DEFAULT = MoveDeleteConfig('Selected One', [], '.txt', '')
 
@@ -614,13 +614,13 @@ def on_ui_tabs():
                     with gr.Column(variant='panel'):
                         gr.HTML(value='Search tags / Filter images by tags <b>(INCLUSIVE)</b>')
                         logic_p = filters.TagFilter.Logic.OR if cfg_filter_p.logic=='OR' else filters.TagFilter.Logic.NONE if cfg_filter_p.logic=='NONE' else filters.TagFilter.Logic.AND
-                        tag_filter_ui.create_ui(get_filters, logic_p, cfg_filter_p.sort_by, cfg_filter_p.sort_order)
+                        tag_filter_ui.create_ui(get_filters, logic_p, cfg_filter_p.sort_by, cfg_filter_p.sort_order, cfg_filter_p.sw_prefix, cfg_filter_p.sw_suffix, cfg_filter_p.sw_regex)
 
                 with gr.Tab(label='Negative Filter'):
                     with gr.Column(variant='panel'):
                         gr.HTML(value='Search tags / Filter images by tags <b>(EXCLUSIVE)</b>')
                         logic_n = filters.TagFilter.Logic.AND if cfg_filter_n.logic=='AND' else filters.TagFilter.Logic.NONE if cfg_filter_n.logic=='NONE' else filters.TagFilter.Logic.OR
-                        tag_filter_ui_neg.create_ui(get_filters, logic_n, cfg_filter_n.sort_by, cfg_filter_n.sort_order)
+                        tag_filter_ui_neg.create_ui(get_filters, logic_n, cfg_filter_n.sort_by, cfg_filter_n.sort_order, cfg_filter_n.sw_prefix, cfg_filter_n.sw_suffix, cfg_filter_n.sw_regex)
             
             with gr.Tab(label='Filter by Selection'):
                 with gr.Row(visible=False):
@@ -685,7 +685,7 @@ def on_ui_tabs():
                     with gr.Column(variant='panel'):
                         gr.HTML('Remove <b>selected</b> tags from the images displayed.')
                         btn_remove_selected = gr.Button(value='Remove selected tags', variant='primary')
-                        tag_select_ui_remove.create_ui(get_filters, cfg_batch_edit.sory_by, cfg_batch_edit.sort_order)
+                        tag_select_ui_remove.create_ui(get_filters, cfg_batch_edit.sory_by, cfg_batch_edit.sort_order, cfg_batch_edit.sw_prefix, cfg_batch_edit.sw_suffix, cfg_batch_edit.sw_regex)
                     
             with gr.Tab(label='Edit Caption of Selected Image'):
                 with gr.Tab(label='Read Caption from Selected Image'):
@@ -737,8 +737,10 @@ def on_ui_tabs():
             cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu,
             cb_save_kohya_metadata, tb_metadata_output, tb_metadata_input, cb_metadata_overwrite, cb_metadata_as_caption, cb_metadata_use_fullpath
         ]
-        components_filter = [tag_filter_ui.rb_sort_by, tag_filter_ui.rb_sort_order, tag_filter_ui.rb_logic, tag_filter_ui_neg.rb_sort_by, tag_filter_ui_neg.rb_sort_order, tag_filter_ui_neg.rb_logic]
-        components_batch_edit = [cb_show_only_tags_selected, cb_prepend_tags, cb_use_regex, rb_sr_replace_target, tag_select_ui_remove.rb_sort_by, tag_select_ui_remove.rb_sort_order]
+        components_filter = \
+            [tag_filter_ui.cb_prefix, tag_filter_ui.cb_suffix, tag_filter_ui.cb_regex, tag_filter_ui.rb_sort_by, tag_filter_ui.rb_sort_order, tag_filter_ui.rb_logic] +\
+            [tag_filter_ui_neg.cb_prefix, tag_filter_ui_neg.cb_suffix, tag_filter_ui_neg.cb_regex, tag_filter_ui_neg.rb_sort_by, tag_filter_ui_neg.rb_sort_order, tag_filter_ui_neg.rb_logic]
+        components_batch_edit = [cb_show_only_tags_selected, cb_prepend_tags, cb_use_regex, rb_sr_replace_target, tag_select_ui_remove.cb_prefix, tag_select_ui_remove.cb_suffix, tag_select_ui_remove.cb_regex, tag_select_ui_remove.rb_sort_by, tag_select_ui_remove.rb_sort_order]
         components_edit_selected = [cb_copy_caption_automatically, cb_ask_save_when_caption_changed, dd_intterogator_names_si]
         components_move_delete = [rb_move_or_delete_target_data, cbg_move_or_delete_target_file, tb_move_or_delete_caption_ext, tb_move_or_delete_destination_dir]
         

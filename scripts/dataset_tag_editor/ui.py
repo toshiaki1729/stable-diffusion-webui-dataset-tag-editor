@@ -6,7 +6,7 @@ filters = dte.filters
 
 
 class TagFilterUI:
-    def __init__(self, dataset_tag_editor: dte.DatasetTagEditor, tag_filter_mode: filters.TagFilter.Mode = filters.TagFilter.Mode.INCLUSIVE):
+    def __init__(self, dataset_tag_editor, tag_filter_mode = filters.TagFilter.Mode.INCLUSIVE):
         self.logic = filters.TagFilter.Logic.AND
         self.filter_word = ''
         self.sort_by = 'Alphabetical Order'
@@ -16,19 +16,29 @@ class TagFilterUI:
         self.filter = filters.TagFilter(logic=self.logic, mode=self.filter_mode)
         self.dataset_tag_editor = dataset_tag_editor
         self.get_filters = lambda:[]
+        self.prefix = False
+        self.suffix = False
+        self.regex = False
     
     def get_filter(self):
         return self.filter
 
-    def create_ui(self, get_filters: Callable[[], List[filters.Filter]], logic = filters.TagFilter.Logic.AND, sort_by = 'Alphabetical Order', sort_order = 'Ascending'):
+    def create_ui(self, get_filters: Callable[[], List[filters.Filter]], logic = filters.TagFilter.Logic.AND, sort_by = 'Alphabetical Order', sort_order = 'Ascending', prefix=False, suffix=False, regex=False):
         self.get_filters = get_filters
         self.logic = logic
         self.filter = filters.TagFilter(logic=self.logic, mode=self.filter_mode)
         self.sort_by = sort_by
         self.sort_order = sort_order
+        self.prefix = prefix
+        self.suffix = suffix
+        self.regex = regex
 
         import gradio as gr
         self.tb_search_tags = gr.Textbox(label='Search Tags', interactive=True)
+        with gr.Row():
+            self.cb_prefix = gr.Checkbox(label='Prefix', value=self.prefix, interactive=True)
+            self.cb_suffix = gr.Checkbox(label='Suffix', value=self.suffix, interactive=True)
+            self.cb_regex = gr.Checkbox(label='Use regex', value=self.regex, interactive=True)
         with gr.Row():
             self.rb_sort_by = gr.Radio(choices=['Alphabetical Order', 'Frequency', 'Length'], value=sort_by, interactive=True, label='Sort by')
             self.rb_sort_order = gr.Radio(choices=['Ascending', 'Descending'], value=sort_order, interactive=True, label='Sort Order')
@@ -39,16 +49,35 @@ class TagFilterUI:
 
     def set_callbacks(self, on_filter_update: Callable[[List], List] = lambda:[], inputs=[], outputs=[], _js=None):
         self.tb_search_tags.change(fn=self.tb_search_tags_changed, inputs=self.tb_search_tags, outputs=self.cbg_tags)
+        self.cb_prefix.change(fn=self.cb_prefix_changed, inputs=self.cb_prefix, outputs=self.cbg_tags)
+        self.cb_suffix.change(fn=self.cb_suffix_changed, inputs=self.cb_suffix, outputs=self.cbg_tags)
+        self.cb_regex.change(fn=self.cb_regex_changed, inputs=self.cb_regex, outputs=self.cbg_tags)
         self.rb_sort_by.change(fn=self.rd_sort_by_changed, inputs=self.rb_sort_by, outputs=self.cbg_tags)
         self.rb_sort_order.change(fn=self.rd_sort_order_changed, inputs=self.rb_sort_order, outputs=self.cbg_tags)
         self.rb_logic.change(fn=lambda a, *b:[self.rd_logic_changed(a)] + on_filter_update(*b), _js=_js, inputs=[self.rb_logic] + inputs, outputs=[self.cbg_tags] + outputs)
         self.cbg_tags.change(fn=lambda a, *b:[self.cbg_tags_changed(a)] + on_filter_update(*b), _js=_js, inputs=[self.cbg_tags] + inputs, outputs=[self.cbg_tags] + outputs)
 
 
+
     def tb_search_tags_changed(self, tb_search_tags: str):
         self.filter_word = tb_search_tags
         return self.cbg_tags_update()
 
+
+    def cb_prefix_changed(self, prefix:bool):
+        self.prefix = prefix
+        return self.cbg_tags_update()
+    
+
+    def cb_suffix_changed(self, suffix:bool):
+        self.suffix = suffix
+        return self.cbg_tags_update()
+    
+
+    def cb_regex_changed(self, use_regex:bool):
+        self.regex = use_regex
+        return self.cbg_tags_update()
+    
 
     def rd_sort_by_changed(self, rb_sort_by: str):
         self.sort_by = rb_sort_by
@@ -76,9 +105,9 @@ class TagFilterUI:
         self.filter = filters.TagFilter(self.selected_tags, self.logic, self.filter_mode)
         
         if self.filter_mode == filters.TagFilter.Mode.INCLUSIVE:
-            tags = self.dataset_tag_editor.get_filtered_tags(self.get_filters(), self.filter_word, self.filter.logic == filters.TagFilter.Logic.AND)
+            tags = self.dataset_tag_editor.get_filtered_tags(self.get_filters(), self.filter_word, self.filter.logic == filters.TagFilter.Logic.AND, prefix=self.prefix, suffix=self.suffix, regex=self.regex)
         else:
-            tags = self.dataset_tag_editor.get_filtered_tags(self.get_filters(), self.filter_word, self.filter.logic == filters.TagFilter.Logic.OR)
+            tags = self.dataset_tag_editor.get_filtered_tags(self.get_filters(), self.filter_word, self.filter.logic == filters.TagFilter.Logic.OR, prefix=self.prefix, suffix=self.suffix, regex=self.regex)
         tags_in_filter = self.filter.tags
         
         tags = self.dataset_tag_editor.sort_tags(tags=tags, sort_by=self.sort_by, sort_order=self.sort_order)
@@ -99,7 +128,7 @@ class TagFilterUI:
 
 
 class TagSelectUI:
-    def __init__(self, dataset_tag_editor: dte.DatasetTagEditor):
+    def __init__(self, dataset_tag_editor):
         self.filter_word = ''
         self.sort_by = 'Alphabetical Order'
         self.sort_order = 'Ascending'
@@ -107,13 +136,23 @@ class TagSelectUI:
         self.tags = set()
         self.dataset_tag_editor = dataset_tag_editor
         self.get_filters = lambda:[]
+        self.prefix = False
+        self.suffix = False
+        self.regex = False
 
 
-    def create_ui(self, get_filters: Callable[[], List[filters.Filter]], sort_by = 'Alphabetical Order', sort_order = 'Ascending'):
+    def create_ui(self, get_filters: Callable[[], List[filters.Filter]], sort_by = 'Alphabetical Order', sort_order = 'Ascending', prefix=False, suffix=False, regex=False):
         self.get_filters = get_filters
+        self.prefix = prefix
+        self.suffix = suffix
+        self.regex = regex
 
         import gradio as gr
         self.tb_search_tags = gr.Textbox(label='Search Tags', interactive=True)
+        with gr.Row():
+            self.cb_prefix = gr.Checkbox(label='Prefix', value=False, interactive=True)
+            self.cb_suffix = gr.Checkbox(label='Suffix', value=False, interactive=True)
+            self.cb_regex = gr.Checkbox(label='Use regex', value=False, interactive=True)
         with gr.Row():
             self.rb_sort_by = gr.Radio(choices=['Alphabetical Order', 'Frequency', 'Length'], value=sort_by, interactive=True, label='Sort by')
             self.rb_sort_order = gr.Radio(choices=['Ascending', 'Descending'], value=sort_order, interactive=True, label='Sort Order')
@@ -125,6 +164,9 @@ class TagSelectUI:
 
     def set_callbacks(self):
         self.tb_search_tags.change(fn=self.tb_search_tags_changed, inputs=self.tb_search_tags, outputs=self.cbg_tags)
+        self.cb_prefix.change(fn=self.cb_prefix_changed, inputs=self.cb_prefix, outputs=self.cbg_tags)
+        self.cb_suffix.change(fn=self.cb_suffix_changed, inputs=self.cb_suffix, outputs=self.cbg_tags)
+        self.cb_regex.change(fn=self.cb_regex_changed, inputs=self.cb_regex, outputs=self.cbg_tags)
         self.rb_sort_by.change(fn=self.rd_sort_by_changed, inputs=self.rb_sort_by, outputs=self.cbg_tags)
         self.rb_sort_order.change(fn=self.rd_sort_order_changed, inputs=self.rb_sort_order, outputs=self.cbg_tags)
         self.btn_select_visibles.click(fn=self.btn_select_visibles_clicked, outputs=self.cbg_tags)
@@ -134,6 +176,21 @@ class TagSelectUI:
 
     def tb_search_tags_changed(self, tb_search_tags: str):
         self.filter_word = tb_search_tags
+        return self.cbg_tags_update()
+
+
+    def cb_prefix_changed(self, prefix:bool):
+        self.prefix = prefix
+        return self.cbg_tags_update()
+    
+
+    def cb_suffix_changed(self, suffix:bool):
+        self.suffix = suffix
+        return self.cbg_tags_update()
+    
+
+    def cb_regex_changed(self, regex:bool):
+        self.regex = regex
         return self.cbg_tags_update()
 
 
@@ -166,8 +223,8 @@ class TagSelectUI:
 
 
     def cbg_tags_update(self):
-        tags = self.dataset_tag_editor.get_filtered_tags(self.get_filters(), self.filter_word, True)
-        self.tags = set(self.dataset_tag_editor.get_filtered_tags(self.get_filters(), filter_tags=True))
+        tags = self.dataset_tag_editor.get_filtered_tags(self.get_filters(), self.filter_word, True, prefix=self.prefix, suffix=self.suffix, regex=self.regex)
+        self.tags = set(self.dataset_tag_editor.get_filtered_tags(self.get_filters(), filter_tags=True, prefix=self.prefix, suffix=self.suffix, regex=self.regex))
         self.selected_tags &= self.tags
         tags = self.dataset_tag_editor.sort_tags(tags=tags, sort_by=self.sort_by, sort_order=self.sort_order)
         tags = self.dataset_tag_editor.write_tags(tags)
