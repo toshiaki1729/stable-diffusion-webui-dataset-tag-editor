@@ -305,7 +305,8 @@ class DatasetTagEditor:
                 tags = [t.replace(search_text, replace_text) for t in tags]
             else:
                 tags = [t.replace(search_text, replace_text) if t in selected_tags else t for t in tags]
-        return [t for t in tags if t]        
+        tags = [t2 for t1 in tags for t2 in t1.split(',') if t2]
+        return [t for t in tags if t]
 
 
     def search_and_replace_tag_set(self, search_text: str, replace_text: str, tags: Set[str], selected_tags: Optional[Set[str]] = None, use_regex: bool = False):
@@ -319,6 +320,7 @@ class DatasetTagEditor:
                 tags = {t.replace(search_text, replace_text) for t in tags}
             else:
                 tags = {t.replace(search_text, replace_text) if t in selected_tags else t for t in tags}
+        tags = {t2 for t1 in tags for t2 in t1.split(',') if t2}
         return {t for t in tags if t}
     
 
