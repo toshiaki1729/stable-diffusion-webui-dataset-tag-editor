@@ -75,28 +75,28 @@ Basic workflow is as follows:
 
 ### 2. How can I edit as I want?
 - **I want to add some new tags**
-1. Go to "Batch Edit Captions" tab
-1. Append tags to "Edit tags" textbox
-1. Push "Apply changes to filtered images" button
-![](pic/ss08.png)  
-"foo" and "bar" will be added to all images displayed.
+  1. Go to "Batch Edit Captions" tab
+  1. Append tags to "Edit tags" textbox
+  1. Push "Apply changes to filtered images" button  
+  ![](pic/ss08.png)  
+  "foo" and "bar" will be added to all images displayed.
 
 - **I want to replace the tags which are common to displayed images**
-1. Go to "Batch Edit Captions" tab
-1. Append tags to "Edit tags" textbox
-1. Push "Apply changes to filtered images" button
-![](pic/ss09.png)  
-"male focus" and "solo" will be replaced with "foo" and "bar".
+  1. Go to "Batch Edit Captions" tab
+  1. Append tags to "Edit tags" textbox
+  1. Push "Apply changes to filtered images" button  
+  ![](pic/ss09.png)  
+  "male focus" and "solo" will be replaced with "foo" and "bar".
 
 - **I want to replace tags more flexibly**
-1. Go to "Batch Edit Captions" tab
-2. Use "Search and Replace" with "Use regex" checked
-![](pic/ss10.png)  
-"1boy", "2boys", … will be replaced with "1girl", "2girls", … in each tags of images displayed.
+  1. Go to "Batch Edit Captions" tab
+  2. Use "Search and Replace" with "Use regex" checked  
+  ![](pic/ss10.png)  
+  "1boy", "2boys", … will be replaced with "1girl", "2girls", … in each tags of images displayed.
 
 - **I want to remove some tags**  
-The same as replacing. Just replace the tags with "blank".  
-Also you can use "Remove" tab in "Batch Edit Captions".
+  The same as replacing. Just replace the tags with "blank".  
+  Also you can use "Remove" tab in "Batch Edit Captions".
 
 
 ## Description of Display
