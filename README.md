@@ -56,131 +56,49 @@ Note. "tag" means each blocks of caption separated by commas.
 1. Click "Save all changes" button
 
 
+## By the way, how can I edit tags quickly?
+
+Basic workflow is as follows:
+1. Filter images
+1. Batch edit  
+  Please note that all batch editing will be applyed **only to displayed images (=filtered images)**.
+
+### 1. Which filter is appropriate?
+- **I want to edit all at once**  
+  No filter is required.
+- **Some images require editing**  
+  1. **They should / shouldn't already have a same tag**  
+    Go to "Filter by Tags" so that the only images to be edited are displayed.
+  1. **They have nothing in common**  
+    Go to "Filter by Selection" and apply.  
+    Images can also be added to the filter by pushing [Enter] key.
+
+### 2. How can I edit as I want?
+- **I want to add some new tags**
+1. Go to "Batch Edit Captions" tab
+1. Append tags to "Edit tags" textbox
+1. Push "Apply changes to filtered images" button
+![](pic/ss08.png)
+"foo" and "bar" will be added to all images displayed.
+
+- **I want to replace the tags which are common to displayed images**
+1. Go to "Batch Edit Captions" tab
+1. Append tags to "Edit tags" textbox
+1. Push "Apply changes to filtered images" button
+![](pic/ss09.png)
+"male focus" and "solo" will be replaced with "foo" and "bar".
+
+- **I want to replace tags more flexibly**
+1. Go to "Batch Edit Captions" tab
+2. Use "Search and Replace" with "Use regex" checked
+![](pic/ss10.png)
+"1boy", "2boys", … will be replaced with "1girl", "2girls", … in each tags of images displayed.
+
+- **I want to remove some tags**  
+The same as replacing. Just replace the tags with "blank".  
+Also you can use "Remove" tab in "Batch Edit Captions".
+
+
 ## Description of Display
 
-### Common
-![](pic/ss02.png)
-- "Save all changes" buttton
-  - save captions to text file
-    - changes will not be applied to the text files until you press this button
-  - if "Backup original text file" is checked, original text files will be renamed not to be overwritten
-    - backup file name will be like filename.000, -.001, -.002, ...
-  - new caption text file will be created if it does not exist
-- "Reload/Save Settings" Accordion (closed initially)
-  - you can reload/save/restore all settings in the UI here
-  - settings will be saved in `.../tag-editor-root-dir/config.json`
-- "Dataset Directory" text box
-  - input the directory of training images and load them by clicking "Load" button
-  - loading options are below
-  - you can make caption on loading by using interrogator if needed
-- "Dataset Images" gallery
-  - to view and select images
-  - the number of colums can be changed in web UI's "Settings" tab
-
-***
-
-### "Filter by Tags" tab
-![](pic/ss03.png)
-#### Common
-- "Clear tag filters" button
-  - clear tag search text and tag selection
-- "Clear ALL filters" button
-  - clear all filters including image selection filter in the next tab
-
-#### Search tags / Filter images by tags
-Positive (inclusive) / Negative (exclusive) filters can be used by toglling tabs.
-- "Search Tags" text box
-  - search and filter the tags displayed below
-- "Sort by / Sort order" radio buttons
-  - change sort order of the tags displayed below
-- "Filter Images by Tags" checkboxes
-  - filter images displayed in the left gallery by tags
-    - also filter tags depending on captions of the displayed images
-
-***
-
-### "Filter by Selection" tab
-![](pic/ss04.png)
-
-- "Add selection" button
-  - to include selected dataset image in selection
-  - "Enter" is shortcut key
-  - Tips: you can change the selected image in gallery using arrow keys
-- "Remove selection" button
-  - to remove selected image from selection
-  - "Delete" is shortcut key
-- "Invert selection" button
-  - select all images in the entire dataset that have not been selected
-- "Clear selection" button
-  - to remove all current selection, not to clear current filter
-- "Apply selection filter" button
-  - apply selection filter on displaying dataset images
-
-***
-
-### "Batch Edit Captions" tab
-![](pic/ss05.png)
-#### "Search and Replace" tab
-
-- "Edit common tags" is a simple way to edit tags.
-  - "Common Tags" text box (not editable)
-    - shows the common tags among the displayed images in comma separated style
-  - "Edit Tags" text box
-    - you can edit the selected tags for all captions of the displayed images
-      - each tags will be replaced by the tags in "same place"
-      - erase tags by changing it into blank
-      - you can add some tags to the captions by appending new tags
-        - the tags will be added to the beggining/end of text files depending on the checkbox below
-  - "Apply changes to filtered images" button
-    - apply the tag changes only to displayed images
-
-- "Search and Replace" is a little complicated but powerful way to edit tags.
-  - Regular expression can be used here.
-  - "Search/Replace Text" textboxes
-    - "Search Text" will be replaced by "Replace Text"
-  - "Search and Replace in" radio buttons 
-    - to select the replacing method
-      - "Only Selected Tags" : do replace sepalately in each only selected tags
-      - "Each Tags" : do replace sepalately in each tags
-      - "Entire Caption" : do replace in entire caption at once
-  - "Search and Replace" button to apply
-
-#### "Remove" tab
-Simple way to batch remove tags
-- "Remove duplicate tags" button
-  - make each tags in each captions appear only once
-- "Remove selected tags" button
-  - remove tags selected below
-
-***
-
-### "Edit Caption of Selected Image" tab
-![](pic/ss06.png)
-
-#### "Read Caption from Selected Image" tab
-- "Caption of Selected Image" textbox
-  - shows the caption of the selected image in the dataset gallery
-
-#### "Interrogate Selected Image" tab
-- "Interrogate Result" textbox
-  - shows the result of interrogator
-
-#### Common
-- "Copy and Overwrite / Prepend / Apppend" button
-  - copy/prepend/append the content in the textbox above to the textbox below
-- "Edit Caption" textbox
-  - edit caption here
-- "Apply changes to selected image" button
-  - change the caption of selected image into the text in "Edit Tags" textbox
-
-***
-
-  ### "Move or Delete Files" tab
-![](pic/ss07.png)
-- "Move or Delete" radio buttons to select target image
-- "Target" checkboxes to select which files to be moved or deleted
-- "Move File(s)" button
-  - move files to "Destination Directory"
-- "DELETE File(s)" button
-  - delete files
-  - Note: This won't move the files into $Recycle.Bin, just do DELETE them completely.
+Moved to [here](DESCRIPTION_OF_DISPLAY.md)
