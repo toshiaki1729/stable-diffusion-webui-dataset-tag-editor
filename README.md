@@ -90,16 +90,17 @@ Please note that all batch editing will be applyed **only to displayed images (=
   ![](pic/ss09.png)  
   "male focus" and "solo" will be replaced with "foo" and "bar".
 
-- **I want to replace tags more flexibly**
-  1. Go to "Batch Edit Captions" tab
-  2. Use "Search and Replace" with "Use regex" checked  
-  ![](pic/ss10.png)  
-  "1boy", "2boys", … will be replaced with "1girl", "2girls", … in each tags of images displayed.
-
 - **I want to remove some tags**  
   The same as replacing. Just replace the tags with "blank".  
   Also you can use "Remove" tab in "Batch Edit Captions".
 
+- **I want to add/replace/remove tags more flexibly**
+  1. Go to "Batch Edit Captions" tab
+  2. Use "Search and Replace" with "Use regex" checked  
+  ![](pic/ss10.png)  
+  "1boy", "2boys", … will be replaced with "1girl", "2girls", … in each tags of images displayed.  
+  The comma will be regarded as the sepalator of tags.
+  By using regex, you can add/replace/remove tags according to more complex conditions.
 
 ## Description of Display
 
