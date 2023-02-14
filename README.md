@@ -67,7 +67,7 @@ Basic workflow is as follows:
 - **I want to edit all at once**  
   No filter is required.
 - **Some images require editing**  
-  1. **They should / shouldn't already have a same tag**  
+  1. **They should / shouldn't already have same tag(s)**  
     Go to "Filter by Tags" so that the only images to be edited are displayed.
   1. **They have nothing in common**  
     Go to "Filter by Selection" and apply.  
