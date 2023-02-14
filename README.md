@@ -59,9 +59,11 @@ Note. "tag" means each blocks of caption separated by commas.
 ## By the way, how can I edit tags quickly?
 
 Basic workflow is as follows:
+
 1. Filter images
-1. Batch edit  
-  Please note that all batch editing will be applyed **only to displayed images (=filtered images)**.
+1. Batch edit
+
+Please note that all batch editing will be applyed **only to displayed images (=filtered images)**.
 
 ### 1. Which filter is appropriate?
 - **I want to edit all at once**  
