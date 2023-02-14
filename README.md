@@ -85,7 +85,7 @@ Please note that all batch editing will be applyed **only to displayed images (=
 
 - **I want to replace the tags which are common to displayed images**
   1. Go to "Batch Edit Captions" tab
-  1. Append tags to "Edit tags" textbox
+  1. Replace tags in "Edit tags" textbox
   1. Push "Apply changes to filtered images" button  
   ![](pic/ss09.png)  
   "male focus" and "solo" will be replaced with "foo" and "bar".
