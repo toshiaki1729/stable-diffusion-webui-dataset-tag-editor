@@ -99,7 +99,7 @@ Please note that all batch editing will be applyed **only to displayed images (=
   2. Use "Search and Replace" with "Use regex" checked  
   ![](pic/ss10.png)  
   "1boy", "2boys", … will be replaced with "1girl", "2girls", … in each tags of images displayed.  
-  The comma will be regarded as the sepalator of tags.  
+  A comma will be regarded as the sepalator of two tags.  
   By using regex, you can add/replace/remove tags according to more complex conditions.
 
 ## Description of Display
