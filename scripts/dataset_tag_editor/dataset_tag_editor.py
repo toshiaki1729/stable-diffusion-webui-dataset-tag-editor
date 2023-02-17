@@ -100,6 +100,7 @@ class DatasetTagEditor:
         self.img_idx = dict()
         self.tag_counts = {}
         self.dataset_dir = ''
+        self.images = {}
 
     def get_tag_list(self):
         if len(self.tag_counts) == 0:
@@ -164,6 +165,16 @@ class DatasetTagEditor:
         img_paths = sorted(filtered_set.datas.keys())
         
         return img_paths
+    
+
+    def get_filtered_imgs(self, filters: List[filters.Filter] = []):
+        filtered_set = self.dataset.copy()
+        for filter in filters:
+            filtered_set.filter(filter)
+        
+        img_paths = sorted(filtered_set.datas.keys())
+        
+        return [self.images.get(path) for path in img_paths]
 
 
     def get_filtered_imgindices(self, filters: List[filters.Filter] = []):
@@ -480,7 +491,8 @@ class DatasetTagEditor:
                 except:
                     continue
                 else:
-                    img.close()
+                    img.already_saved_as = img_path
+                    self.images[img_path] = img
                 
                 text_filename = os.path.join(img_dir, img_filename+caption_ext)
                 caption_text = ''
@@ -500,20 +512,13 @@ class DatasetTagEditor:
                 caption_tags =  [t.strip() for t in caption_text.split(',')]
                 caption_tags = [t for t in caption_tags if t]
                 if interrogate_method != InterrogateMethod.NONE and ((interrogate_method != InterrogateMethod.PREFILL) or (interrogate_method == InterrogateMethod.PREFILL and not caption_tags)):
-                    try:
-                        img = Image.open(img_path).convert('RGB')
-                    except Exception as e:
-                        print(e)
-                        print(f'[tag-editor] Cannot interrogate file: {img_path}')
-                    else:
-                        for cap in captionings:
-                            interrogate_tags += cap.predict(img)
-                            
-                        for tg, threshold in taggers:
-                            probs = tg.predict(img)
-                            interrogate_tags += [t for t, p in probs.items() if p > threshold]
-
-                        img.close()
+                    img = img.convert('RGB')
+                    for cap in captionings:
+                        interrogate_tags += cap.predict(img)
+                        
+                    for tg, threshold in taggers:
+                        probs = tg.predict(img)
+                        interrogate_tags += [t for t, p in probs.items() if p > threshold]
                 
                 if interrogate_method == InterrogateMethod.OVERWRITE:
                     tags = interrogate_tags
@@ -608,6 +613,7 @@ class DatasetTagEditor:
         self.tag_counts.clear()
         self.img_idx.clear()
         self.dataset_dir = ''
+        self.images = {}
 
 
     def construct_tag_counts(self):

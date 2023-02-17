@@ -229,7 +229,7 @@ def load_files_from_dir(
     threshold_waifu = custom_threshold_waifu if use_custom_threshold_waifu else shared.opts.interrogate_deepbooru_score_threshold
 
     dataset_tag_editor.load_dataset(dir, caption_file_ext, recursive, load_caption_from_filename, interrogate_method, use_interrogator_names, threshold_booru, threshold_waifu)
-    img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=[])
+    imgs = dataset_tag_editor.get_filtered_imgs(filters=[])
     img_indices = dataset_tag_editor.get_filtered_imgindices(filters=[])
     path_filter = filters.PathFilter()
     total_image_num = displayed_image_num = len(dataset_tag_editor.get_img_path_set())
@@ -237,7 +237,7 @@ def load_files_from_dir(
     gallery_selected_image_path = ''
     selection_selected_image_path = ''
     return [
-        img_paths,
+        imgs,
         [],
         get_current_gallery_txt(),
         get_current_txt_selection()
