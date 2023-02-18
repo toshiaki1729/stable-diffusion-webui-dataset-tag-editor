@@ -439,9 +439,6 @@ class DatasetTagEditor:
                         del self.images[img_path]
                     os.replace(img_path, dst_path)
                     self.dataset.remove_by_path(img_path)
-                    img = Image.open(dst_path)
-                    img.already_saved_as = dst_path
-                    self.images[dst_path] = img
                     print(f'[tag-editor] Moved {img_path} -> {dst_path}')
             except Exception as e:
                 print(e)
