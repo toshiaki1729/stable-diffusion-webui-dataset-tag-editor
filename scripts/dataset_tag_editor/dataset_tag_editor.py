@@ -393,6 +393,7 @@ class DatasetTagEditor:
             try:
                 if os.path.exists(img_path) and os.path.isfile(img_path):
                     if img_path in self.images:
+                        self.images[img_path].close()
                         del self.images[img_path]
                     os.remove(img_path)
                     self.dataset.remove_by_path(img_path)
@@ -434,10 +435,12 @@ class DatasetTagEditor:
                 dst_path = os.path.join(dest_dir, os.path.basename(img_path))
                 if os.path.exists(img_path) and os.path.isfile(img_path):
                     if img_path in self.images:
-                        img = self.images[img_path]
+                        self.images[img_path].close()
                         del self.images[img_path]
                     os.replace(img_path, dst_path)
                     self.dataset.remove_by_path(img_path)
+                    img = Image.open(dst_path)
+                    img.already_saved_as = dst_path
                     self.images[dst_path] = img
                     print(f'[tag-editor] Moved {img_path} -> {dst_path}')
             except Exception as e:
