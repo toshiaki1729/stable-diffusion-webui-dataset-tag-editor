@@ -34,6 +34,7 @@ Note. "tag" means each blocks of caption separated by commas.
 - Filter images to edit their caption by tags
   - AND/OR logic can be used in each Positive/Negative filters
 - Batch replace/remove/append tags
+- Batch sort tags
 - Batch search and replace
   - [regular expression](https://docs.python.org/3/library/re.html#regular-expression-syntax) can be used
 - Use interrogators
