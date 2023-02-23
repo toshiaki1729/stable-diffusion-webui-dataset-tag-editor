@@ -138,7 +138,7 @@ class DatasetTagEditor:
             return []
 
 
-    def sort_tags(self, tags: List[str], sort_by: str, sort_order: str):
+    def sort_tags(self, tags: List[str], sort_by: str = 'Alphabetical Order', sort_order: str = 'Ascending'):
         if sort_by == 'Alphabetical Order':
             if sort_order == 'Ascending':
                 return sorted(tags, reverse=False)
@@ -154,7 +154,7 @@ class DatasetTagEditor:
                 return sorted(tags, key=lambda t:(len(t), t), reverse=False)
             elif sort_order == 'Descending':
                 return sorted(tags, key=lambda t:(-len(t), t), reverse=False)
-        return []
+        return tags
 
 
     def get_filtered_imgpaths(self, filters: List[filters.Filter] = []):
@@ -353,6 +353,12 @@ class DatasetTagEditor:
             res = [t for t in res if t not in tags]
             self.set_tags_by_image_path(path, res)
 
+    def sort_filtered_tags(self, filters: List[filters.Filter] = [], **sort_args):
+        img_paths = self.get_filtered_imgpaths(filters)
+        for path in img_paths:
+            tags = self.dataset.get_data_tags(path)
+            res = self.sort_tags(tags, **sort_args)
+            self.set_tags_by_image_path(path, res)
 
     def get_img_path_list(self):
         return [k for k in self.dataset.datas.keys() if k]

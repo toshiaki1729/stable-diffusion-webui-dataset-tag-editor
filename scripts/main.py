@@ -58,14 +58,14 @@ GeneralConfig = namedtuple('GeneralConfig', [
     ])
 FilterConfig = namedtuple('FilterConfig', ['sw_prefix', 'sw_suffix', 'sw_regex','sort_by', 'sort_order', 'logic'])
 BatchEditConfig = namedtuple('BatchEditConfig', ['show_only_selected', 'prepend', 'use_regex', 'target', 'sw_prefix', 'sw_suffix', 'sw_regex', 'sory_by', 'sort_order'])
-EditSelectedConfig = namedtuple('EditSelectedConfig', ['auto_copy', 'warn_change_not_saved', 'use_interrogator_name'])
+EditSelectedConfig = namedtuple('EditSelectedConfig', ['auto_copy', 'sort_on_save', 'warn_change_not_saved', 'use_interrogator_name'])
 MoveDeleteConfig = namedtuple('MoveDeleteConfig', ['range', 'target', 'caption_ext', 'destination'])
 
 CFG_GENERAL_DEFAULT = GeneralConfig(True, '', '.txt', False, True, 'No', [], False, 0.7, False, 0.5, False, '', '', True, False, False)
 CFG_FILTER_P_DEFAULT = FilterConfig(False, False, False, 'Alphabetical Order', 'Ascending', 'AND')
 CFG_FILTER_N_DEFAULT = FilterConfig(False, False, False, 'Alphabetical Order', 'Ascending', 'OR')
 CFG_BATCH_EDIT_DEFAULT = BatchEditConfig(True, False, False, 'Only Selected Tags', False, False, False, 'Alphabetical Order', 'Ascending')
-CFG_EDIT_SELECTED_DEFAULT = EditSelectedConfig(False, False, '')
+CFG_EDIT_SELECTED_DEFAULT = EditSelectedConfig(False, False, False, '')
 CFG_MOVE_DELETE_DEFAULT = MoveDeleteConfig('Selected One', [], '.txt', '')
 
 class Config:
@@ -402,17 +402,20 @@ def gallery_index_changed(prev_idx: int, next_idx: int, edit_caption: str, copy_
         [get_current_gallery_txt()]
 
 
-def dialog_selected_save_caption_change(prev_idx: int, edit_caption: str):
+def dialog_selected_save_caption_change(prev_idx: int, edit_caption: str, sort: bool = False):
     prev_idx = int(prev_idx)
     return change_selected_image_caption(edit_caption, prev_idx)
 
 
-def change_selected_image_caption(tags_text: str, idx: int):
+def change_selected_image_caption(tags_text: str, idx: int, sort: bool = False):
     idx = int(idx)
     img_paths = dataset_tag_editor.get_filtered_imgpaths(filters=get_filters())
 
     edited_tags = [t.strip() for t in tags_text.split(',')]
     edited_tags = [t for t in edited_tags if t]
+
+    if sort:
+        edited_tags = dataset_tag_editor.sort_tags(edited_tags)
 
     if 0 <= idx and idx < len(img_paths):
         dataset_tag_editor.set_tags_by_image_path(imgpath=img_paths[idx], tags=edited_tags)
@@ -478,6 +481,9 @@ def remove_selected_tags():
     dataset_tag_editor.remove_tags(tag_select_ui_remove.selected_tags, get_filters())
     return update_filter_and_gallery()
 
+def sort_selected_tags(**sort_args):
+    dataset_tag_editor.sort_filtered_tags(get_filters(), **sort_args)
+    return update_filter_and_gallery()
 
 # ================================================================
 # Callbacks for "Move or Delete Files" tab
@@ -686,7 +692,11 @@ def on_ui_tabs():
                         gr.HTML('Remove <b>selected</b> tags from the images displayed.')
                         btn_remove_selected = gr.Button(value='Remove selected tags', variant='primary')
                         tag_select_ui_remove.create_ui(get_filters, cfg_batch_edit.sory_by, cfg_batch_edit.sort_order, cfg_batch_edit.sw_prefix, cfg_batch_edit.sw_suffix, cfg_batch_edit.sw_regex)
-                    
+                with gr.Tab(label='Extras'):
+                    with gr.Column(variant='panel'):
+                        gr.HTML('Sort tags from the images displayed.')
+                        btn_sort_selected = gr.Button(value='Sort selected tags', variant='primary')
+
             with gr.Tab(label='Edit Caption of Selected Image'):
                 with gr.Tab(label='Read Caption from Selected Image'):
                     tb_caption_selected_image = gr.Textbox(label='Caption of Selected Image', interactive=True, lines=6)
@@ -705,6 +715,7 @@ def on_ui_tabs():
                         btn_prepend_interrogate = gr.Button(value='Prepend')
                         btn_append_interrogate = gr.Button(value='Append')
                 cb_copy_caption_automatically = gr.Checkbox(value=cfg_edit_selected.auto_copy, label='Copy caption from selected images automatically')
+                cb_sort_caption_on_save = gr.Checkbox(value=cfg_edit_selected.sort_on_save, label='Sort caption on save')
                 cb_ask_save_when_caption_changed = gr.Checkbox(value=cfg_edit_selected.warn_change_not_saved, label='Warn if changes in caption is not saved')
                 tb_edit_caption_selected_image = gr.Textbox(label='Edit Caption', interactive=True, lines=6)
                 btn_apply_changes_selected_image = gr.Button(value='Apply changes to selected image', variant='primary')
@@ -741,7 +752,7 @@ def on_ui_tabs():
             [tag_filter_ui.cb_prefix, tag_filter_ui.cb_suffix, tag_filter_ui.cb_regex, tag_filter_ui.rb_sort_by, tag_filter_ui.rb_sort_order, tag_filter_ui.rb_logic] +\
             [tag_filter_ui_neg.cb_prefix, tag_filter_ui_neg.cb_suffix, tag_filter_ui_neg.cb_regex, tag_filter_ui_neg.rb_sort_by, tag_filter_ui_neg.rb_sort_order, tag_filter_ui_neg.rb_logic]
         components_batch_edit = [cb_show_only_tags_selected, cb_prepend_tags, cb_use_regex, rb_sr_replace_target, tag_select_ui_remove.cb_prefix, tag_select_ui_remove.cb_suffix, tag_select_ui_remove.cb_regex, tag_select_ui_remove.rb_sort_by, tag_select_ui_remove.rb_sort_order]
-        components_edit_selected = [cb_copy_caption_automatically, cb_ask_save_when_caption_changed, dd_intterogator_names_si]
+        components_edit_selected = [cb_copy_caption_automatically, cb_sort_caption_on_save, cb_ask_save_when_caption_changed, dd_intterogator_names_si]
         components_move_delete = [rb_move_or_delete_target_data, cbg_move_or_delete_target_file, tb_move_or_delete_caption_ext, tb_move_or_delete_destination_dir]
         
         configurable_components = components_general + components_filter + components_batch_edit + components_edit_selected + components_move_delete
@@ -984,6 +995,11 @@ def on_ui_tabs():
             outputs=o_filter_and_gallery
         )
 
+        btn_sort_selected.click(
+            fn=sort_selected_tags,
+            outputs=o_filter_and_gallery
+        )
+
         #----------------------------------------------------------------
         # Edit Caption of Selected Image tab
 
@@ -1007,8 +1023,8 @@ def on_ui_tabs():
         )
 
         btn_hidden_save_caption.click(
-            fn=lambda iprev, e, t, inext: dialog_selected_save_caption_change(iprev, e) + [get_current_move_or_delete_target_num(t, inext)],
-            inputs=[nb_hidden_image_index_prev, tb_hidden_edit_caption] + [rb_move_or_delete_target_data, nb_hidden_image_index],
+            fn=lambda iprev, e, s, t, inext: dialog_selected_save_caption_change(iprev, e, s) + [get_current_move_or_delete_target_num(t, inext)],
+            inputs=[nb_hidden_image_index_prev, tb_hidden_edit_caption, cb_sort_caption_on_save] + [rb_move_or_delete_target_data, nb_hidden_image_index],
             outputs=o_filter_and_gallery + [ta_move_or_delete_target_dataset_num]
         )
 
@@ -1056,7 +1072,7 @@ def on_ui_tabs():
 
         btn_apply_changes_selected_image.click(
             fn=change_selected_image_caption,
-            inputs=[tb_edit_caption_selected_image, nb_hidden_image_index],
+            inputs=[tb_edit_caption_selected_image, nb_hidden_image_index, cb_sort_caption_on_save],
             outputs=o_filter_and_gallery
         )
         btn_apply_changes_selected_image.click(
