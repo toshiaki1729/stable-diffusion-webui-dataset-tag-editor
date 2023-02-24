@@ -3,7 +3,7 @@ from modules import shared, script_callbacks, scripts
 from modules.shared import opts
 import gradio as gr
 import json
-import os
+from pathlib import Path
 from collections import namedtuple
 
 from scripts.dynamic_import import dynamic_import
@@ -34,7 +34,7 @@ show_only_selected_tags = True
 # General Callbacks
 # ================================================================
 
-CONFIG_PATH = os.path.join(scripts.basedir(), 'config.json')
+CONFIG_PATH = Path(scripts.basedir(), 'config.json')
 
 
 GeneralConfig = namedtuple('GeneralConfig', [
@@ -73,19 +73,19 @@ class Config:
         self.config = dict()
 
     def load(self):
-        if not os.path.exists(CONFIG_PATH) or not os.path.isfile(CONFIG_PATH):
+        if not CONFIG_PATH.is_file():
             self.config = dict()
             return
-        with open(CONFIG_PATH, 'r') as f:
-            try:
-                j = json.load(f) or dict()
-            except:
-                j = dict()
-            self.config = j
+        try:
+            self.config = json.loads(CONFIG_PATH.read_text('utf8'))
+        except:
+            print('[tag-editor] Error on loading config.json. Default settings will be loaded.')
+            self.config = dict()
+        else:
+            print('[tag-editor] Settings has been read from config.json')
 
     def save(self):
-        with open(CONFIG_PATH, 'w') as f:
-            f.write(json.dumps(self.config))
+        CONFIG_PATH.write_text(json.dumps(self.config, indent=4), 'utf8')
     
     def read(self, name: str):
         return self.config.get(name)
@@ -530,7 +530,6 @@ def delete_files(target_data: str, target_file: List[str], caption_ext: str, idx
 def on_ui_tabs():
     global tag_filter_ui, tag_filter_ui_neg, tag_select_ui_remove
     config.load()
-    print('[tag-editor] Settings has been read from config.json')
 
     cfg_general = read_general_config()
     cfg_filter_p, cfg_filter_n = read_filter_config()

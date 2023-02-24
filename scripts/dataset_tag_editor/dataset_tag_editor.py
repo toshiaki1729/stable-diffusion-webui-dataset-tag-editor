@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import re
 import glob
 from typing import List, Set, Optional
@@ -354,36 +354,36 @@ class DatasetTagEditor:
         if img_path not in self.dataset.datas.keys():
             return
         
+        img_path_obj = Path(img_path)
+        
         if delete_image:
             try:
-                if os.path.exists(img_path) and os.path.isfile(img_path):
+                if img_path_obj.is_file():
                     if img_path in self.images:
                         self.images[img_path].close()
                         del self.images[img_path]
-                    os.remove(img_path)
+                    img_path_obj.unlink()
                     self.dataset.remove_by_path(img_path)
-                    print(f'[tag-editor] Deleted {img_path}')
+                    print(f'[tag-editor] Deleted {img_path_obj.absolute()}')
             except Exception as e:
                 print(e)
         
         if delete_caption:
             try:
-                filepath_noext, _ = os.path.splitext(img_path)
-                txt_path = filepath_noext + caption_ext
-                if os.path.exists(txt_path) and os.path.isfile(txt_path):
-                    os.remove(txt_path)
-                    print(f'[tag-editor] Deleted {txt_path}')
+                txt_path_obj = img_path_obj.with_suffix(caption_ext)
+                if txt_path_obj.is_file():
+                    txt_path_obj.unlink()
+                    print(f'[tag-editor] Deleted {txt_path_obj.absolute()}')
             except Exception as e:
                 print(e)
         
         if delete_backup:
             try:
-                filepath_noext, _ = os.path.splitext(img_path)
                 for extnum in range(1000):
-                    bak_path = filepath_noext + f'.{extnum:0>3d}'
-                    if os.path.exists(bak_path) and os.path.isfile(bak_path):
-                        os.remove(bak_path)
-                        print(f'[tag-editor] Deleted {bak_path}')
+                    bak_path_obj = img_path_obj.with_suffix(f'.{extnum:0>3d}')
+                    if bak_path_obj.is_file():
+                        bak_path_obj.unlink()
+                        print(f'[tag-editor] Deleted {bak_path_obj.absolute()}')
             except Exception as e:
                 print(e)
     
@@ -392,55 +392,59 @@ class DatasetTagEditor:
         if img_path not in self.dataset.datas.keys():
             return
         
-        if (move_image or move_caption or move_backup) and not os.path.exists(dest_dir):
-            os.mkdir(dest_dir)
+        img_path_obj = Path(img_path)
+        dest_dir_obj = Path(dest_dir)
+
+        if (move_image or move_caption or move_backup) and not dest_dir_obj.exists():
+            dest_dir_obj.mkdir()
 
         if move_image:
             try:
-                dst_path = os.path.join(dest_dir, os.path.basename(img_path))
-                if os.path.exists(img_path) and os.path.isfile(img_path):
+                dst_path_obj = dest_dir_obj / img_path_obj.name
+                if dst_path_obj.is_file():
                     if img_path in self.images:
                         self.images[img_path].close()
                         del self.images[img_path]
-                    os.replace(img_path, dst_path)
+                    img_path_obj.replace(dst_path_obj)
                     self.dataset.remove_by_path(img_path)
-                    print(f'[tag-editor] Moved {img_path} -> {dst_path}')
+                    print(f'[tag-editor] Moved {img_path_obj.absolute()} -> {dst_path_obj.absolute()}')
             except Exception as e:
                 print(e)
         
         if move_caption:
             try:
-                filepath_noext, _ = os.path.splitext(img_path)
-                txt_path = filepath_noext + caption_ext
-                dst_path = os.path.join(dest_dir, os.path.basename(txt_path))
-                if os.path.exists(txt_path) and os.path.isfile(txt_path):
-                    os.replace(txt_path, dst_path)
-                    print(f'[tag-editor] Moved {txt_path} -> {dst_path}')
+                txt_path_obj = img_path_obj.with_suffix(caption_ext)
+                dst_path_obj = dest_dir_obj / txt_path_obj.name
+                if txt_path_obj.is_file():
+                    txt_path_obj.replace(dst_path_obj)
+                    print(f'[tag-editor] Moved {txt_path_obj.absolute()} -> {dst_path_obj.absolute()}')
             except Exception as e:
                 print(e)
         
         if move_backup:
             try:
-                filepath_noext, _ = os.path.splitext(img_path)
                 for extnum in range(1000):
-                    bak_path = filepath_noext + f'.{extnum:0>3d}'
-                    dst_path = os.path.join(dest_dir, os.path.basename(bak_path))
-                    if os.path.exists(bak_path) and os.path.isfile(bak_path):
-                        os.replace(bak_path, dst_path)
-                        print(f'[tag-editor] Moved {bak_path} -> {dst_path}')
+                    bak_path_obj = img_path_obj.with_suffix(f'.{extnum:0>3d}')
+                    dst_path_obj = dest_dir_obj / bak_path_obj.name
+                    if bak_path_obj.is_file():
+                        bak_path_obj.replace(dst_path_obj)
+                        print(f'[tag-editor] Moved {bak_path_obj.absolute()} -> {dst_path_obj.absolute()}')
             except Exception as e:
                 print(e)
 
 
     def load_dataset(self, img_dir: str, caption_ext:str, recursive: bool, load_caption_from_filename: bool, interrogate_method: InterrogateMethod, interrogator_names: List[str], threshold_booru: float, threshold_waifu: float, use_temp_dir: bool):
         self.clear()
-        print(f'[tag-editor] Loading dataset from {img_dir}')
+
+        img_dir_obj = Path(img_dir)
+
+        print(f'[tag-editor] Loading dataset from {img_dir_obj.absolute()}')
         if recursive:
             print(f'[tag-editor] Also loading from subdirectories.')
         
         try:
-            load_dir = glob.escape(os.path.abspath(img_dir))
-            filepaths = [p for p in glob.glob(os.path.join(load_dir, '**'), recursive=recursive) if os.path.isfile(p)]
+            filepaths = img_dir_obj.glob('**/*') if recursive else img_dir_obj.glob('*')
+            filepaths = [p for p in filepaths if p.is_file()]
         except Exception as e:
             print(e)
             print('[tag-editor] Loading Aborted.')
@@ -450,11 +454,9 @@ class DatasetTagEditor:
 
         print(f'[tag-editor] Total {len(filepaths)} files under the directory including not image files.')
 
-        def load_images(filepaths: List[str], captionings: List[captioning.Captioning], taggers: List[tagger.Tagger]):
+        def load_images(filepaths: List[Path], captionings: List[captioning.Captioning], taggers: List[tagger.Tagger]):
             for img_path in filepaths:
-                img_dir = os.path.dirname(img_path)
-                img_filename, img_ext = os.path.splitext(os.path.basename(img_path))
-                if img_ext == caption_ext:
+                if img_path.suffix == caption_ext:
                     continue
 
                 try:
@@ -463,18 +465,17 @@ class DatasetTagEditor:
                     continue
                 else:
                     if not use_temp_dir:
-                        img.already_saved_as = img_path
+                        img.already_saved_as = str(img_path.absolute())
                     self.images[img_path] = img
                 
-                text_filename = os.path.join(img_dir, img_filename+caption_ext)
+                text_path = img_path.with_suffix(caption_ext)
                 caption_text = ''
                 if interrogate_method != InterrogateMethod.OVERWRITE:
                     # from modules/textual_inversion/dataset.py, modified
-                    if os.path.exists(text_filename) and os.path.isfile(text_filename):
-                        with open(text_filename, "r", encoding="utf8") as ftxt:
-                            caption_text = ftxt.read()
+                    if text_path.is_file():
+                        caption_text = text_path.read_text('utf8')
                     elif load_caption_from_filename:
-                        caption_text = img_filename
+                        caption_text = img_path.stem
                         caption_text = re.sub(re_numbers_at_start, '', caption_text)
                         if self.re_word:
                             tokens = self.re_word.findall(caption_text)
@@ -537,17 +538,14 @@ class DatasetTagEditor:
 
         saved_num = 0
         backup_num = 0
-        img_dir = ''
         for data in self.dataset.datas.values():
-            img_path, tags = data.imgpath, data.tags
-            img_dir = os.path.dirname(img_path)
-            img_path_noext, _ = os.path.splitext(os.path.basename(img_path))
-            txt_path = os.path.join(img_dir, img_path_noext + caption_ext)
+            img_path, tags = Path(data.imgpath), data.tags
+            txt_path = img_path.with_suffix(caption_ext)
             # make backup
-            if backup and os.path.exists(txt_path) and os.path.isfile(txt_path):
+            if backup and txt_path.is_file():
                 for extnum in range(1000):
-                    bak_path = os.path.join(img_dir, f'{img_path_noext}.{extnum:0>3d}')
-                    if not os.path.exists(bak_path) or not os.path.isfile(bak_path):
+                    bak_path = img_path.with_suffix(f'.{extnum:0>3d}')
+                    if not bak_path.is_file():
                         break
                     else:
                         bak_path = None
@@ -555,7 +553,7 @@ class DatasetTagEditor:
                     print(f"[tag-editor] There are too many backup files with same filename. A backup file of {txt_path} cannot be created.")
                 else:
                     try:
-                        os.rename(txt_path, bak_path)
+                        txt_path.rename(bak_path)
                     except Exception as e:
                         print(e)
                         print(f"[tag-editor] A backup file of {txt_path} cannot be created.")
@@ -563,8 +561,7 @@ class DatasetTagEditor:
                         backup_num += 1
             # save
             try:
-                with open(txt_path, "w", encoding="utf8") as file:
-                    file.write(', '.join(tags))
+                txt_path.write_text(', '.join(tags), 'utf8')
             except Exception as e:
                 print(e)
                 print(f"[tag-editor] Warning: {txt_path} cannot be saved.")
