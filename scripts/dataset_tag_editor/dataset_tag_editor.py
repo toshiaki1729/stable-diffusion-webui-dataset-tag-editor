@@ -432,7 +432,7 @@ class DatasetTagEditor:
                 print(e)
 
 
-    def load_dataset(self, img_dir: str, caption_ext:str, recursive: bool, load_caption_from_filename: bool, interrogate_method: InterrogateMethod, interrogator_names: List[str], threshold_booru: float, threshold_waifu: float):
+    def load_dataset(self, img_dir: str, caption_ext:str, recursive: bool, load_caption_from_filename: bool, interrogate_method: InterrogateMethod, interrogator_names: List[str], threshold_booru: float, threshold_waifu: float, use_temp_dir: bool):
         self.clear()
         print(f'[tag-editor] Loading dataset from {img_dir}')
         if recursive:
@@ -462,7 +462,8 @@ class DatasetTagEditor:
                 except:
                     continue
                 else:
-                    img.already_saved_as = img_path
+                    if not use_temp_dir:
+                        img.already_saved_as = img_path
                     self.images[img_path] = img
                 
                 text_filename = os.path.join(img_dir, img_filename+caption_ext)
