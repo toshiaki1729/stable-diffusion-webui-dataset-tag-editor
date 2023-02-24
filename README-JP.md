@@ -34,6 +34,7 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 - 複数タグで絞り込んでキャプションの編集ができます
   - 絞り込み方法として、AND/OR/NOT検索ができます
 - タグを一括で置換・削除・追加できます
+- タグを一括で並べ替えできます
 - タグまたはキャプション全体について一括置換ができます
   - [正規表現](https://docs.python.org/ja/3/library/re.html#regular-expression-syntax) が利用可能です
 - Interrogatorを使用してタグの追加や編集ができます
