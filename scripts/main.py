@@ -404,7 +404,7 @@ def gallery_index_changed(prev_idx: int, next_idx: int, edit_caption: str, copy_
 
 def dialog_selected_save_caption_change(prev_idx: int, edit_caption: str, sort: bool = False):
     prev_idx = int(prev_idx)
-    return change_selected_image_caption(edit_caption, prev_idx)
+    return change_selected_image_caption(edit_caption, prev_idx, sort)
 
 
 def change_selected_image_caption(tags_text: str, idx: int, sort: bool = False):
