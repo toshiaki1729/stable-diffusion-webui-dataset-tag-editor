@@ -61,7 +61,7 @@ BatchEditConfig = namedtuple('BatchEditConfig', ['show_only_selected', 'prepend'
 EditSelectedConfig = namedtuple('EditSelectedConfig', ['auto_copy', 'sort_on_save', 'warn_change_not_saved', 'use_interrogator_name'])
 MoveDeleteConfig = namedtuple('MoveDeleteConfig', ['range', 'target', 'caption_ext', 'destination'])
 
-CFG_GENERAL_DEFAULT = GeneralConfig(True, '', '.txt', False, True, 'No', [], False, 0.7, False, 0.5, False, '', '', True, False, False)
+CFG_GENERAL_DEFAULT = GeneralConfig(True, '', '.txt', False, True, 'No', [], False, 0.7, False, 0.35, False, '', '', True, False, False)
 CFG_FILTER_P_DEFAULT = FilterConfig(False, False, False, 'Alphabetical Order', 'Ascending', 'AND')
 CFG_FILTER_N_DEFAULT = FilterConfig(False, False, False, 'Alphabetical Order', 'Ascending', 'OR')
 CFG_BATCH_EDIT_DEFAULT = BatchEditConfig(True, False, False, 'Only Selected Tags', False, False, False, 'Alphabetical Order', 'Ascending')
@@ -226,7 +226,7 @@ def load_files_from_dir(
         interrogate_method = dte.InterrogateMethod.APPEND
 
     threshold_booru = custom_threshold_booru if use_custom_threshold_booru else shared.opts.interrogate_deepbooru_score_threshold
-    threshold_waifu = custom_threshold_waifu if use_custom_threshold_waifu else shared.opts.interrogate_deepbooru_score_threshold
+    threshold_waifu = custom_threshold_waifu if use_custom_threshold_waifu else -1
 
     dataset_tag_editor.load_dataset(dir, caption_file_ext, recursive, load_caption_from_filename, interrogate_method, use_interrogator_names, threshold_booru, threshold_waifu)
     imgs = dataset_tag_editor.get_filtered_imgs(filters=[])
@@ -425,7 +425,7 @@ def change_selected_image_caption(tags_text: str, idx: int, sort: bool = False):
 def interrogate_selected_image(interrogator_name: str, use_threshold_booru: bool, threshold_booru: float, use_threshold_waifu: bool, threshold_waifu: float):
     global gallery_selected_image_path
     threshold_booru = threshold_booru if use_threshold_booru else shared.opts.interrogate_deepbooru_score_threshold
-    threshold_waifu = threshold_waifu if use_threshold_waifu else shared.opts.interrogate_deepbooru_score_threshold
+    threshold_waifu = threshold_waifu if use_threshold_waifu else -1
     return dte.interrogate_image(gallery_selected_image_path, interrogator_name, threshold_booru, threshold_waifu)
 
 

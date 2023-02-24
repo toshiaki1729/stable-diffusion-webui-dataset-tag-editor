@@ -73,12 +73,11 @@ class DeepDanbooru(Tagger):
         return 'DeepDanbooru'
 
 
-WD_TAGGER_NAMES = ["wd-v1-4-vit-tagger", "wd-v1-4-convnext-tagger", "wd-v1-4-vit-tagger-v2", "wd-v1-4-convnext-tagger-v2", "wd-v1-4-swinv2-tagger-v2"]
-
 class WaifuDiffusion(Tagger):
-    def __init__(self, repo_name):
+    def __init__(self, repo_name, threshold):
         self.repo_name = repo_name
         self.tagger_inst = waifu_diffusion_tagger.WaifuDiffusionTagger("SmilingWolf/" + repo_name)
+        self.threshold = threshold
 
     def start(self):
         self.tagger_inst.load()
@@ -88,13 +87,16 @@ class WaifuDiffusion(Tagger):
         self.tagger_inst.unload()
 
     # brought from https://huggingface.co/spaces/SmilingWolf/wd-v1-4-tags/blob/main/app.py and modified
+    # set threshold<0 to use default value for now...
     def predict(self, image: Image.Image, threshold: Optional[float] = None):        
         # may not use ratings
         # rating = dict(labels[:4])
         
         labels = self.tagger_inst.apply(image)
         
-        if threshold:
+        if threshold is not None:
+            if threshold < 0:
+                threshold = self.threshold
             probability_dict = dict([(get_replaced_tag(x[0]), x[1]) for x in labels[4:] if x[1] > threshold])
         else:
             probability_dict = dict([(get_replaced_tag(x[0]), x[1]) for x in labels[4:]])

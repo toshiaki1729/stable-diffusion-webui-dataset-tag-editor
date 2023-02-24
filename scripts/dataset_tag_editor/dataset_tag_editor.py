@@ -17,7 +17,10 @@ kohya_metadata = dynamic_import('scripts/dataset_tag_editor/kohya-ss_finetune_me
 
 re_tags = re.compile(r'^(.+) \[\d+\]$')
 
-INTERROGATORS = [captioning.BLIP(), tagger.DeepDanbooru()] + [tagger.WaifuDiffusion(name) for name in tagger.WD_TAGGER_NAMES]
+WD_TAGGER_NAMES = ["wd-v1-4-vit-tagger", "wd-v1-4-convnext-tagger", "wd-v1-4-vit-tagger-v2", "wd-v1-4-convnext-tagger-v2", "wd-v1-4-swinv2-tagger-v2"]
+WD_TAGGER_THRESHOLDS = [0.35, 0.35, 0.3537, 0.3685, 0.3771] # v1: idk if it's okay  v2: P=R thresholds on each repo https://huggingface.co/SmilingWolf
+
+INTERROGATORS = [captioning.BLIP(), tagger.DeepDanbooru()] + [tagger.WaifuDiffusion(name, WD_TAGGER_THRESHOLDS[i]) for i, name in enumerate(WD_TAGGER_NAMES)]
 INTERROGATOR_NAMES = [it.name() for it in INTERROGATORS]
 
 class InterrogateMethod(Enum):
@@ -46,50 +49,6 @@ def interrogate_image(path: str, interrogator_name: str, threshold_booru, thresh
                     with it as cap:
                         res = cap.predict(img)
         return ', '.join(res)
-
-
-def interrogate_image_git(path):
-    try:
-        img = Image.open(path).convert('RGB')
-    except:
-        return ''
-    else:
-        with captioning.GITLarge() as cap:
-            res = cap.predict(img)
-        return ', '.join(res)
-
-
-def interrogate_image_booru(path, threshold):
-    try:
-        img = Image.open(path).convert('RGB')
-    except:
-        return ''
-    else:
-        with tagger.DeepDanbooru() as tg:
-            res = tg.predict(img, threshold=threshold)
-        return ', '.join(tagger.get_arranged_tags(res))
-
-
-def interrogate_image_waifu(path, threshold):
-    try:
-        img = Image.open(path).convert('RGB')
-    except:
-        return ''
-    else:
-        with tagger.WaifuDiffusion() as tg:
-            res = tg.predict(img, threshold=threshold)
-        return ', '.join(tagger.get_arranged_tags(res))
-
-
-def interrogate_image_waifu_v2(path, threshold):
-    try:
-        img = Image.open(path).convert('RGB')
-    except:
-        return ''
-    else:
-        with tagger.WaifuDiffusionV2() as tg:
-            res = tg.predict(img, threshold=threshold)
-        return ', '.join(tagger.get_arranged_tags(res))
             
 
 class DatasetTagEditor:
@@ -529,8 +488,7 @@ class DatasetTagEditor:
                         interrogate_tags += cap.predict(img)
                         
                     for tg, threshold in taggers:
-                        probs = tg.predict(img)
-                        interrogate_tags += [t for t, p in probs.items() if p > threshold]
+                        interrogate_tags += [t for t in tg.predict(img, threshold).keys()]
                 
                 if interrogate_method == InterrogateMethod.OVERWRITE:
                     tags = interrogate_tags
