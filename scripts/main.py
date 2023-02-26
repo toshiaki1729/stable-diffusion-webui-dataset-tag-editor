@@ -212,6 +212,7 @@ def load_files_from_dir(
     custom_threshold_booru: float,
     use_custom_threshold_waifu: bool,
     custom_threshold_waifu: float,
+    use_kohya_metadata: bool,
     kohya_json_path: str
     ):
     global total_image_num, displayed_image_num, tmp_selection_img_path_set, gallery_selected_image_path, selection_selected_image_path, path_filter
@@ -229,7 +230,7 @@ def load_files_from_dir(
     threshold_booru = custom_threshold_booru if use_custom_threshold_booru else shared.opts.interrogate_deepbooru_score_threshold
     threshold_waifu = custom_threshold_waifu if use_custom_threshold_waifu else -1
 
-    dataset_tag_editor.load_dataset(dir, caption_file_ext, recursive, load_caption_from_filename, interrogate_method, use_interrogator_names, threshold_booru, threshold_waifu, opts.dataset_editor_use_temp_files, kohya_json_path)
+    dataset_tag_editor.load_dataset(dir, caption_file_ext, recursive, load_caption_from_filename, interrogate_method, use_interrogator_names, threshold_booru, threshold_waifu, opts.dataset_editor_use_temp_files, kohya_json_path if use_kohya_metadata else None)
     imgs = dataset_tag_editor.get_filtered_imgs(filters=[])
     img_indices = dataset_tag_editor.get_filtered_imgindices(filters=[])
     path_filter = filters.PathFilter()
@@ -810,7 +811,7 @@ def on_ui_tabs():
 
         btn_load_datasets.click(
             fn=load_files_from_dir,
-            inputs=[tb_img_directory, tb_caption_file_ext, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, dd_intterogator_names, cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu, tb_metadata_output],
+            inputs=[tb_img_directory, tb_caption_file_ext, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, dd_intterogator_names, cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu, cb_save_kohya_metadata, tb_metadata_output],
             outputs=
             [gl_dataset_images, gl_filter_images, txt_gallery, txt_selection] +
             [cbg_hidden_dataset_filter, nb_hidden_dataset_filter_apply] +
