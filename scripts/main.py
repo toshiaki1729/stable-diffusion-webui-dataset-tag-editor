@@ -211,7 +211,8 @@ def load_files_from_dir(
     use_custom_threshold_booru: bool,
     custom_threshold_booru: float,
     use_custom_threshold_waifu: bool,
-    custom_threshold_waifu: float
+    custom_threshold_waifu: float,
+    kohya_json_path: str
     ):
     global total_image_num, displayed_image_num, tmp_selection_img_path_set, gallery_selected_image_path, selection_selected_image_path, path_filter
     
@@ -228,7 +229,7 @@ def load_files_from_dir(
     threshold_booru = custom_threshold_booru if use_custom_threshold_booru else shared.opts.interrogate_deepbooru_score_threshold
     threshold_waifu = custom_threshold_waifu if use_custom_threshold_waifu else -1
 
-    dataset_tag_editor.load_dataset(dir, caption_file_ext, recursive, load_caption_from_filename, interrogate_method, use_interrogator_names, threshold_booru, threshold_waifu, opts.dataset_editor_use_temp_files)
+    dataset_tag_editor.load_dataset(dir, caption_file_ext, recursive, load_caption_from_filename, interrogate_method, use_interrogator_names, threshold_booru, threshold_waifu, opts.dataset_editor_use_temp_files, kohya_json_path)
     imgs = dataset_tag_editor.get_filtered_imgs(filters=[])
     img_indices = dataset_tag_editor.get_filtered_imgindices(filters=[])
     path_filter = filters.PathFilter()
@@ -563,11 +564,11 @@ def on_ui_tabs():
                     cb_backup = gr.Checkbox(value=cfg_general.backup, label='Backup original text file (original file will be renamed like filename.000, .001, .002, ...)', interactive=True)
             gr.HTML(value='<b>Note:</b> New text file will be created if you are using filename as captions.')
             with gr.Row():
-                cb_save_kohya_metadata = gr.Checkbox(value=cfg_general.save_kohya_metadata, label="Save kohya-ss's finetuning metadata json", interactive=True)
+                cb_save_kohya_metadata = gr.Checkbox(value=cfg_general.save_kohya_metadata, label="Use kohya-ss's finetuning metadata json", interactive=True)
             with gr.Row():
                 with gr.Column(variant='panel', visible=cfg_general.save_kohya_metadata) as kohya_metadata:
-                    tb_metadata_output = gr.Textbox(label='json output path', placeholder='C:\\path\\to\\metadata.json',value=cfg_general.meta_output_path)
-                    tb_metadata_input = gr.Textbox(label='json input path (Optional)', placeholder='C:\\path\\to\\metadata.json',value=cfg_general.meta_input_path)
+                    tb_metadata_output = gr.Textbox(label='json path', placeholder='C:\\path\\to\\metadata.json',value=cfg_general.meta_output_path)
+                    tb_metadata_input = gr.Textbox(label='json input path (Optional, only for append results)', placeholder='C:\\path\\to\\metadata.json',value=cfg_general.meta_input_path)
                     with gr.Row():
                         cb_metadata_overwrite = gr.Checkbox(value=cfg_general.meta_overwrite, label="Overwrite if output file exists", interactive=True)
                         cb_metadata_as_caption = gr.Checkbox(value=cfg_general.meta_save_as_caption, label="Save metadata as caption", interactive=True)
@@ -809,7 +810,7 @@ def on_ui_tabs():
 
         btn_load_datasets.click(
             fn=load_files_from_dir,
-            inputs=[tb_img_directory, tb_caption_file_ext, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, dd_intterogator_names, cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu],
+            inputs=[tb_img_directory, tb_caption_file_ext, cb_load_recursive, cb_load_caption_from_filename, rb_use_interrogator, dd_intterogator_names, cb_use_custom_threshold_booru, sl_custom_threshold_booru, cb_use_custom_threshold_waifu, sl_custom_threshold_waifu, tb_metadata_output],
             outputs=
             [gl_dataset_images, gl_filter_images, txt_gallery, txt_selection] +
             [cbg_hidden_dataset_filter, nb_hidden_dataset_filter_apply] +

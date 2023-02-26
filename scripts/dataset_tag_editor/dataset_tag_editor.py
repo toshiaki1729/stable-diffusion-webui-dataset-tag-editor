@@ -1,6 +1,5 @@
 from pathlib import Path
 import re
-import glob
 from typing import List, Set, Optional
 from modules import shared
 from modules.textual_inversion.dataset import re_numbers_at_start
@@ -433,7 +432,7 @@ class DatasetTagEditor:
                 print(e)
 
 
-    def load_dataset(self, img_dir: str, caption_ext:str, recursive: bool, load_caption_from_filename: bool, interrogate_method: InterrogateMethod, interrogator_names: List[str], threshold_booru: float, threshold_waifu: float, use_temp_dir: bool):
+    def load_dataset(self, img_dir: str, caption_ext:str, recursive: bool, load_caption_from_filename: bool, interrogate_method: InterrogateMethod, interrogator_names: List[str], threshold_booru: float, threshold_waifu: float, use_temp_dir: bool, kohya_json_path:Optional[str]):
         self.clear()
 
         img_dir_obj = Path(img_dir)
@@ -454,11 +453,12 @@ class DatasetTagEditor:
 
         print(f'[tag-editor] Total {len(filepaths)} files under the directory including not image files.')
 
-        def load_images(filepaths: List[Path], captionings: List[captioning.Captioning], taggers: List[tagger.Tagger]):
+        def load_images(filepaths: List[Path]):
+            imgpaths = []
+            images = {}
             for img_path in filepaths:
                 if img_path.suffix == caption_ext:
                     continue
-
                 try:
                     img = Image.open(img_path)
                 except:
@@ -466,8 +466,14 @@ class DatasetTagEditor:
                 else:
                     if not use_temp_dir:
                         img.already_saved_as = str(img_path.absolute())
-                    self.images[img_path] = img
+                    images[img_path] = img
                 
+                imgpaths.append(img_path)
+            return imgpaths, images
+        
+        def load_captions(imgpaths: List[Path]):
+            taglists = []
+            for img_path in imgpaths:
                 text_path = img_path.with_suffix(caption_ext)
                 caption_text = ''
                 if interrogate_method != InterrogateMethod.OVERWRITE:
@@ -481,24 +487,11 @@ class DatasetTagEditor:
                             tokens = self.re_word.findall(caption_text)
                             caption_text = (shared.opts.dataset_filename_join_string or "").join(tokens)
                 
-                interrogate_tags = []
                 caption_tags =  [t.strip() for t in caption_text.split(',')]
                 caption_tags = [t for t in caption_tags if t]
-                if interrogate_method != InterrogateMethod.NONE and ((interrogate_method != InterrogateMethod.PREFILL) or (interrogate_method == InterrogateMethod.PREFILL and not caption_tags)):
-                    img = img.convert('RGB')
-                    for cap in captionings:
-                        interrogate_tags += cap.predict(img)
-                        
-                    for tg, threshold in taggers:
-                        interrogate_tags += [t for t in tg.predict(img, threshold).keys()]
-                
-                if interrogate_method == InterrogateMethod.OVERWRITE:
-                    tags = interrogate_tags
-                elif interrogate_method == InterrogateMethod.PREPEND:
-                    tags = interrogate_tags + caption_tags
-                else:
-                    tags = caption_tags + interrogate_tags
-                self.set_tags_by_image_path(img_path, tags)
+                taglists.append(caption_tags)
+
+            return taglists
         
         try:
             captionings = []
@@ -515,8 +508,34 @@ class DatasetTagEditor:
                         elif isinstance(it, captioning.Captioning):
                             captionings.append(it)
 
-
-            load_images(filepaths=filepaths, captionings=captionings, taggers=taggers)
+            if kohya_json_path:
+                imgpaths, self.images, taglists = kohya_metadata.read(img_dir, kohya_json_path, use_temp_dir)
+            else:
+                imgpaths, self.images = load_images(filepaths)
+                taglists = load_captions(imgpaths)
+            
+            for img_path, tags in zip(imgpaths, taglists):
+                interrogate_tags = []
+                img = self.images.get(img_path)
+                if interrogate_method != InterrogateMethod.NONE and ((interrogate_method != InterrogateMethod.PREFILL) or (interrogate_method == InterrogateMethod.PREFILL and not tags)):
+                    if img is None:
+                        print(f'Failed to load image {img_path}. Interrogating is aborted.')
+                    else:
+                        img = img.convert('RGB')
+                        for cap in captionings:
+                            interrogate_tags += cap.predict(img)
+                            
+                        for tg, threshold in taggers:
+                            interrogate_tags += [t for t in tg.predict(img, threshold).keys()]
+                
+                if interrogate_method == InterrogateMethod.OVERWRITE:
+                    tags = interrogate_tags
+                elif interrogate_method == InterrogateMethod.PREPEND:
+                    tags = interrogate_tags + tags
+                else:
+                    tags = tags + interrogate_tags
+                
+                self.set_tags_by_image_path(img_path, tags)
             
         finally:
             if interrogate_method != InterrogateMethod.NONE:

@@ -10,7 +10,9 @@
 # on commit hash: ae33d724793e14f16b4c68bdad79f836c86b1b8e
 
 import json
+from glob import glob
 from pathlib import Path
+from PIL import Image
 
 def write(dataset, dataset_dir, out_path, in_path=None, overwrite=False, save_as_caption=False, use_full_path=False):
     dataset_dir = Path(dataset_dir)
@@ -39,3 +41,53 @@ def write(dataset, dataset_dir, out_path, in_path=None, overwrite=False, save_as
 
     with open(out_path, 'w', encoding='utf-8', newline='') as f:
         json.dump(result, f, indent=2)
+
+
+def read(dataset_dir, json_path, use_temp_dir:bool):
+    dataset_dir = Path(dataset_dir)
+    json_path = Path(json_path)
+    metadata = json.loads(json_path.read_text('utf8'))
+    imgpaths = []
+    images = {}
+    taglists = []
+
+    for image_key, img_md in metadata.items():
+        img_path = Path(image_key)
+        if img_path.is_file():
+            try:
+                img = Image.open(img_path)
+            except:
+                continue
+            else:
+                abs_path = str(img_path.absolute())
+                if not use_temp_dir:
+                    img.already_saved_as = abs_path
+                images[abs_path] = img
+        else:
+            try:
+                for path in glob(str(dataset_dir.absolute() / (image_key + '.*'))):
+                    img_path = Path(path)
+                    try:
+                        img = Image.open(img_path)
+                    except:
+                        continue
+                    else:
+                        abs_path = str(img_path.absolute())
+                        if not use_temp_dir:
+                            img.already_saved_as = abs_path
+                        images[abs_path] = img
+                        break                    
+            except:
+                continue
+
+        caption = img_md.get('caption')
+        tags = img_md.get('tags')
+        if tags is None:
+            tags = []
+        if caption is not None and isinstance(caption, str):
+            caption = [s.strip() for s in caption.split(',')]
+            tags = [s for s in caption if s] + tags
+        imgpaths.append(abs_path)
+        taglists.append(tags)
+    
+    return imgpaths, images, taglists
