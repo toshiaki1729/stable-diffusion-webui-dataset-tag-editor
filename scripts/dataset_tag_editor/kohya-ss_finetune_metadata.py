@@ -51,34 +51,32 @@ def read(dataset_dir, json_path, use_temp_dir:bool):
     images = {}
     taglists = []
 
+    def load_image(img_path):
+        img_path = Path(path)
+        try:
+            img = Image.open(img_path)
+        except:
+            return None, None
+        else:
+            abs_path = str(img_path.absolute())
+            if not use_temp_dir:
+                img.already_saved_as = abs_path
+            return abs_path, img
+
     for image_key, img_md in metadata.items():
         img_path = Path(image_key)
         if img_path.is_file():
-            try:
-                img = Image.open(img_path)
-            except:
+            abs_path, img = load_image(img_path)
+            if abs_path is None or img is None:
                 continue
-            else:
-                abs_path = str(img_path.absolute())
-                if not use_temp_dir:
-                    img.already_saved_as = abs_path
-                images[abs_path] = img
+            images[abs_path] = img
         else:
-            try:
-                for path in glob(str(dataset_dir.absolute() / (image_key + '.*'))):
-                    img_path = Path(path)
-                    try:
-                        img = Image.open(img_path)
-                    except:
-                        continue
-                    else:
-                        abs_path = str(img_path.absolute())
-                        if not use_temp_dir:
-                            img.already_saved_as = abs_path
-                        images[abs_path] = img
-                        break                    
-            except:
-                continue
+            for path in glob(str(dataset_dir.absolute() / (image_key + '.*'))):
+                abs_path, img = load_image(path)
+                if abs_path is None or img is None:
+                    continue
+                images[abs_path] = img
+                break
 
         caption = img_md.get('caption')
         tags = img_md.get('tags')
