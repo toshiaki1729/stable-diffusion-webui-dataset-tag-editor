@@ -23,7 +23,7 @@ class WaifuDiffusionTagger():
             if 'all' in shared.cmd_opts.use_cpu or 'interrogate' in shared.cmd_opts.use_cpu:
                 providers = ['CPUExecutionProvider']
             else:
-                providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+                providers = ['CUDAExecutionProvider', 'DmlExecutionProvider', 'CPUExecutionProvider']
             
             def check_available_device():
                 import torch
