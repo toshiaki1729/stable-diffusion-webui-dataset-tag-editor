@@ -29,6 +29,7 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 
 ## 特徴
 以下、「タグ」はカンマ区切りされたキャプションの各部分を意味します。
+- テキスト形式（webUI方式）またはjson形式 ([kohya-ss sd-scripts metadata](https://github.com/kohya-ss/sd-scripts))のキャプションを編集できます
 - 画像を見ながらキャプションの編集ができます
 - タグの検索ができます
 - 複数タグで絞り込んでキャプションの編集ができます

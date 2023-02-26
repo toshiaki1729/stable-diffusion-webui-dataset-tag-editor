@@ -29,6 +29,7 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 
 ## Features
 Note. "tag" means each blocks of caption separated by commas.
+- Edit and save captions in text file (webUI style) or json file ([kohya-ss sd-scripts metadata](https://github.com/kohya-ss/sd-scripts))
 - Edit captions while viewing related images
 - Search tags
 - Filter images to edit their caption by tags
