@@ -464,16 +464,18 @@ class DatasetTagEditor:
                 except:
                     continue
                 else:
+                    abs_path = str(img_path.absolute())
                     if not use_temp_dir:
-                        img.already_saved_as = str(img_path.absolute())
-                    images[img_path] = img
+                        img.already_saved_as = abs_path
+                    images[abs_path] = img
                 
-                imgpaths.append(img_path)
+                imgpaths.append(abs_path)
             return imgpaths, images
         
-        def load_captions(imgpaths: List[Path]):
+        def load_captions(imgpaths: List[str]):
             taglists = []
-            for img_path in imgpaths:
+            for abs_path in imgpaths:
+                img_path = Path(abs_path)
                 text_path = img_path.with_suffix(caption_ext)
                 caption_text = ''
                 if interrogate_method != InterrogateMethod.OVERWRITE:

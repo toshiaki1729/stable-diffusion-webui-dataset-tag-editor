@@ -31,7 +31,7 @@ def write(dataset, dataset_dir, out_path, in_path=None, overwrite=False, save_as
     for data in dataset.datas.values():
         img_path, tags = Path(data.imgpath), data.tags
         
-        img_key = str(img_path) if use_full_path else img_path.stem
+        img_key = str(img_path.absolute()) if use_full_path else img_path.stem
         save_caption = ', '.join(tags) if save_as_caption else tags
         
         if img_key not in result:
@@ -65,6 +65,8 @@ def read(dataset_dir, json_path, use_temp_dir:bool):
 
     for image_key, img_md in metadata.items():
         img_path = Path(image_key)
+        abs_path = None
+        img = None
         if img_path.is_file():
             abs_path, img = load_image(img_path)
             if abs_path is None or img is None:
@@ -77,7 +79,8 @@ def read(dataset_dir, json_path, use_temp_dir:bool):
                     continue
                 images[abs_path] = img
                 break
-
+        if abs_path is None or img is None:
+            continue
         caption = img_md.get('caption')
         tags = img_md.get('tags')
         if tags is None:
