@@ -6,14 +6,20 @@ from scripts.dte_instance import dte_module
 from .ui_common import *
 from .uibase import UIBase
 
+SortBy = dte_instance.SortBy
+SortOrder = dte_instance.SortOrder
+
 class EditCaptionOfSelectedImageUI(UIBase):
+    def __init__(self):
+        self.change_is_saved = True
+    
     def create_ui(self, cfg_edit_selected):
         with gr.Row(visible=False):
             self.nb_hidden_image_index_save_or_not = gr.Number(value=-1, label='hidden_s_or_n')
             self.tb_hidden_edit_caption = gr.Textbox()
             self.btn_hidden_save_caption = gr.Button(elem_id="dataset_tag_editor_btn_hidden_save_caption")
         with gr.Tab(label='Read Caption from Selected Image'):
-            self.tb_caption = gr.Textbox(label='Caption of Selected Image', interactive=True, lines=6)
+            self.tb_caption = gr.Textbox(label='Caption of Selected Image', interactive=False, lines=6)
             with gr.Row():
                 self.btn_copy_caption = gr.Button(value='Copy and Overwrite')
                 self.btn_prepend_caption = gr.Button(value='Prepend')
@@ -30,6 +36,9 @@ class EditCaptionOfSelectedImageUI(UIBase):
                 self.btn_append_interrogate = gr.Button(value='Append')
         self.cb_copy_caption_automatically = gr.Checkbox(value=cfg_edit_selected.auto_copy, label='Copy caption from selected images automatically')
         self.cb_sort_caption_on_save = gr.Checkbox(value=cfg_edit_selected.sort_on_save, label='Sort caption on save')
+        with gr.Row(visible=cfg_edit_selected.sort_on_save) as self.sort_settings:
+            self.rb_sort_by = gr.Radio(choices=[e.value for e in SortBy], value=cfg_edit_selected.sort_by, interactive=True, label='Sort by')
+            self.rb_sort_order = gr.Radio(choices=[e.value for e in SortOrder], value=cfg_edit_selected.sort_order, interactive=True, label='Sort Order')
         self.cb_ask_save_when_caption_changed = gr.Checkbox(value=cfg_edit_selected.warn_change_not_saved, label='Warn if changes in caption is not saved')
         self.tb_edit_caption = gr.Textbox(label='Edit Caption', interactive=True, lines=6)
         self.btn_apply_changes_selected_image = gr.Button(value='Apply changes to selected image', variant='primary')
@@ -42,9 +51,9 @@ class EditCaptionOfSelectedImageUI(UIBase):
             outputs=[self.tb_caption, self.nb_hidden_image_index_save_or_not]
         )
 
-        def gallery_index_changed(next_idx:int, edit_caption: str, copy_automatically: bool, warn_change_not_saved: bool):
-            prev_idx = dataset_gallery.selected_index
-            next_idx = int(next_idx)
+        def gallery_index_changed(next_idx:int, prev_idx:int, edit_caption: str, copy_automatically: bool, warn_change_not_saved: bool):
+            next_idx = int(next_idx) if next_idx is not None else -1
+            prev_idx = int(prev_idx) if prev_idx is not None else -1
             img_paths = dte_instance.get_filtered_imgpaths(filters=get_filters())
             prev_tags_txt = ''
             if 0 <= prev_idx and prev_idx < len(img_paths):
@@ -57,7 +66,7 @@ class EditCaptionOfSelectedImageUI(UIBase):
                 next_tags_txt = ', '.join(dte_instance.get_tags_by_image_path(img_paths[next_idx]))
                 
             return\
-                [prev_idx if warn_change_not_saved and edit_caption != prev_tags_txt else -1] +\
+                [prev_idx if warn_change_not_saved and edit_caption != prev_tags_txt and not self.change_is_saved else -1] +\
                 [next_tags_txt, next_tags_txt if copy_automatically else edit_caption] +\
                 [edit_caption]
 
@@ -66,19 +75,29 @@ class EditCaptionOfSelectedImageUI(UIBase):
             _js='(a) => dataset_tag_editor_ask_save_change_or_not(a)',
             inputs=self.nb_hidden_image_index_save_or_not
         )
-        dataset_gallery.btn_hidden_set_index.click(
+        dataset_gallery.nb_hidden_image_index.change(
             fn=gallery_index_changed,
-            _js="(a, b, c, d) => [dataset_tag_editor_gl_dataset_images_selected_index(), b, c, d]",
-            inputs=[dataset_gallery.nb_hidden_image_index ,self.tb_edit_caption, self.cb_copy_caption_automatically, self.cb_ask_save_when_caption_changed],
+            inputs=[dataset_gallery.nb_hidden_image_index, dataset_gallery.nb_hidden_image_index_prev, self.tb_edit_caption, self.cb_copy_caption_automatically, self.cb_ask_save_when_caption_changed],
             outputs=[self.nb_hidden_image_index_save_or_not] + [self.tb_caption, self.tb_edit_caption] + [self.tb_hidden_edit_caption]
         )
 
-        def dialog_selected_save_caption_change(prev_idx:int, edit_caption: str, sort: bool = False):
-            return change_selected_image_caption(edit_caption, int(prev_idx), sort)
+        def change_selected_image_caption(tags_text: str, idx:int, sort: bool, sort_by:str, sort_order:str):
+            idx = int(idx)
+            img_paths = dte_instance.get_filtered_imgpaths(filters=get_filters())
+
+            edited_tags = [t.strip() for t in tags_text.split(',')]
+            edited_tags = [t for t in edited_tags if t]
+
+            if sort:
+                edited_tags = dte_instance.sort_tags(edited_tags, SortBy(sort_by), SortOrder(sort_order))
+
+            if 0 <= idx and idx < len(img_paths):
+                dte_instance.set_tags_by_image_path(imgpath=img_paths[idx], tags=edited_tags)
+            return update_filter_and_gallery()
         
         self.btn_hidden_save_caption.click(
-            fn=dialog_selected_save_caption_change,
-            inputs=[self.nb_hidden_image_index_save_or_not, self.tb_hidden_edit_caption, self.cb_sort_caption_on_save],
+            fn=change_selected_image_caption,
+            inputs=[self.tb_hidden_edit_caption, self.nb_hidden_image_index_save_or_not, self.cb_sort_caption_on_save, self.rb_sort_by, self.rb_sort_order],
             outputs=o_update_filter_and_gallery
         )
 
@@ -130,33 +149,31 @@ class EditCaptionOfSelectedImageUI(UIBase):
             inputs=[self.tb_interrogate_selected_image, self.tb_edit_caption],
             outputs=[self.tb_edit_caption]
         )
-        
-        def change_selected_image_caption(tags_text: str, prev_idx:int, sort: bool = False):
-            idx = prev_idx
-            img_paths = dte_instance.get_filtered_imgpaths(filters=get_filters())
 
-            edited_tags = [t.strip() for t in tags_text.split(',')]
-            edited_tags = [t for t in edited_tags if t]
+        def change_in_caption():
+            self.change_is_saved = False
 
-            if sort:
-                edited_tags = dte_instance.sort_tags(edited_tags)
-
-            if 0 <= idx and idx < len(img_paths):
-                dte_instance.set_tags_by_image_path(imgpath=img_paths[idx], tags=edited_tags)
-            return update_filter_and_gallery()
-
-        self.btn_apply_changes_selected_image.click(
-            fn=change_selected_image_caption,
-            inputs=[self.tb_edit_caption, self.cb_sort_caption_on_save],
-            outputs=o_update_filter_and_gallery
-        )
-        self.btn_apply_changes_selected_image.click(
-            fn=lambda a:a,
-            inputs=[self.tb_edit_caption],
-            outputs=[self.tb_caption]
-        )
-        self.btn_apply_changes_selected_image.click(
-            fn=None,
-            _js='() => dataset_tag_editor_gl_dataset_images_close()'
+        self.tb_edit_caption.change(
+            fn=change_in_caption
         )
 
+        self.tb_caption.change(
+            fn=change_in_caption
+        )
+
+        def apply_changes(edited:str, sort:bool, sort_by:str, sort_order:str):
+            self.change_is_saved = True
+            return change_selected_image_caption(edited, dataset_gallery.selected_index, sort, sort_by, sort_order)
+
+        self.btn_apply_changes_selected_image.click(
+            fn=apply_changes,
+            inputs=[self.tb_edit_caption, self.cb_sort_caption_on_save, self.rb_sort_by, self.rb_sort_order],
+            outputs=o_update_filter_and_gallery,
+            _js='(a,b,c,d) => {dataset_tag_editor_gl_dataset_images_close(); return [a, b, c, d]}'
+        )
+
+        self.cb_sort_caption_on_save.change(
+            fn=lambda x:gr.update(visible=x),
+            inputs=self.cb_sort_caption_on_save,
+            outputs=self.sort_settings
+        )

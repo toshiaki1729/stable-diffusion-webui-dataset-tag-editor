@@ -9,7 +9,7 @@ from .uibase import UIBase
 
 
 INTERROGATOR_NAMES = dte_module.INTERROGATOR_NAMES
-InterrogateMethod = dte_module.InterrogateMethod
+InterrogateMethod = dte_instance.InterrogateMethod
 
 
 class LoadDatasetUI(UIBase):

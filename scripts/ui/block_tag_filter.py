@@ -6,12 +6,17 @@ from .ui_common import *
 filters = dte_module.filters
 TagFilter = filters.TagFilter
 
+SortBy = dte_instance.SortBy
+SortOrder = dte_instance.SortOrder
+
+
+
 class TagFilterUI():
     def __init__(self, tag_filter_mode = TagFilter.Mode.INCLUSIVE):
         self.logic = TagFilter.Logic.AND
         self.filter_word = ''
-        self.sort_by = 'Alphabetical Order'
-        self.sort_order = 'Ascending'
+        self.sort_by = SortBy.ALPHA
+        self.sort_order = SortOrder.ASC
         self.selected_tags = set()
         self.filter_mode = tag_filter_mode
         self.filter = TagFilter(logic=self.logic, mode=self.filter_mode)
@@ -24,7 +29,7 @@ class TagFilterUI():
     def get_filter(self):
         return self.filter
 
-    def create_ui(self, get_filters: Callable[[], List[filters.Filter]], logic = TagFilter.Logic.AND, sort_by = 'Alphabetical Order', sort_order = 'Ascending', prefix=False, suffix=False, regex=False):
+    def create_ui(self, get_filters: Callable[[], List[filters.Filter]], logic = TagFilter.Logic.AND, sort_by = SortBy.ALPHA, sort_order = SortOrder.ASC, prefix=False, suffix=False, regex=False):
         self.get_filters = get_filters
         self.logic = logic
         self.filter = filters.TagFilter(logic=self.logic, mode=self.filter_mode)
@@ -40,8 +45,8 @@ class TagFilterUI():
             self.cb_suffix = gr.Checkbox(label='Suffix', value=self.suffix, interactive=True)
             self.cb_regex = gr.Checkbox(label='Use regex', value=self.regex, interactive=True)
         with gr.Row():
-            self.rb_sort_by = gr.Radio(choices=['Alphabetical Order', 'Frequency', 'Length'], value=sort_by, interactive=True, label='Sort by')
-            self.rb_sort_order = gr.Radio(choices=['Ascending', 'Descending'], value=sort_order, interactive=True, label='Sort Order')
+            self.rb_sort_by = gr.Radio(choices=[e.value for e in SortBy], value=sort_by, interactive=True, label='Sort by')
+            self.rb_sort_order = gr.Radio(choices=[e.value for e in SortOrder], value=sort_order, interactive=True, label='Sort Order')
         v = 'AND' if self.logic==TagFilter.Logic.AND else 'OR' if self.logic==TagFilter.Logic.OR else 'NONE'
         self.rb_logic = gr.Radio(choices=['AND', 'OR', 'NONE'], value=v, label='Filter Logic', interactive=True)
         self.cbg_tags = gr.CheckboxGroup(label='Filter Images by Tags', interactive=True)

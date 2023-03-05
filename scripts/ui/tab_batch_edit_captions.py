@@ -4,6 +4,9 @@ from .ui_common import *
 from .uibase import UIBase
 from .block_tag_select import TagSelectUI
 
+SortBy = dte_instance.SortBy
+SortOrder = dte_instance.SortOrder
+
 class BatchEditCaptionsUI(UIBase):
     def __init__(self):
         self.tag_select_ui_remove = TagSelectUI()
@@ -55,7 +58,10 @@ class BatchEditCaptionsUI(UIBase):
                 self.tag_select_ui_remove.create_ui(get_filters, cfg_batch_edit.sory_by, cfg_batch_edit.sort_order, cfg_batch_edit.sw_prefix, cfg_batch_edit.sw_suffix, cfg_batch_edit.sw_regex)
         with gr.Tab(label='Extras'):
             with gr.Column(variant='panel'):
-                gr.HTML('Sort tags from the images displayed.')
+                gr.HTML('Sort tags in the images displayed.')
+                with gr.Row():
+                    self.rb_sort_by = gr.Radio(choices=[e.value for e in SortBy], value=cfg_batch_edit.batch_sort_by, interactive=True, label='Sort by')
+                    self.rb_sort_order = gr.Radio(choices=[e.value for e in SortOrder], value=cfg_batch_edit.batch_sort_order, interactive=True, label='Sort Order')
                 self.btn_sort_selected = gr.Button(value='Sort selected tags', variant='primary')
     
     def set_callbacks(self, o_update_filter_and_gallery, load_dataset, filter_by_tags, get_filters, update_filter_and_gallery):
@@ -145,12 +151,15 @@ class BatchEditCaptionsUI(UIBase):
             outputs=o_update_filter_and_gallery
         )
 
-        def sort_selected_tags(**sort_args):
-            dte_instance.sort_filtered_tags(get_filters(), **sort_args)
+        def sort_selected_tags(sort_by:str, sort_order:str):
+            sort_by = SortBy(sort_by)
+            sort_order = SortOrder(sort_order)
+            dte_instance.sort_filtered_tags(get_filters(), sort_by=sort_by, sort_order=sort_order)
             return update_filter_and_gallery()
         
         self.btn_sort_selected.click(
             fn=sort_selected_tags,
+            inputs=[self.rb_sort_by, self.rb_sort_order],
             outputs=o_update_filter_and_gallery
         )
 

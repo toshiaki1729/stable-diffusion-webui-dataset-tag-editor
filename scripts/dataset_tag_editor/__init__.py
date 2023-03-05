@@ -6,6 +6,8 @@ from modules.textual_inversion.dataset import re_numbers_at_start
 from PIL import Image
 from enum import Enum
 
+from scripts.singleton import Singleton
+
 from . import dataset as ds
 from . import tagger
 from . import captioning
@@ -13,7 +15,7 @@ from . import filters
 from . import kohya_finetune_metadata as kohya_metadata
 
 
-__all__ = ["ds", "tagger", "captioning", "filters", "kohya_metadata", "INTERROGATOR_NAMES", "InterrogateMethod", "interrogate_image", "DatasetTagEditor"]
+__all__ = ["ds", "tagger", "captioning", "filters", "kohya_metadata", "INTERROGATOR_NAMES", "interrogate_image", "DatasetTagEditor"]
 
 re_tags = re.compile(r'^(.+) \[\d+\]$')
 
@@ -24,15 +26,7 @@ INTERROGATORS = [captioning.BLIP(), tagger.DeepDanbooru()] + [tagger.WaifuDiffus
 INTERROGATOR_NAMES = [it.name() for it in INTERROGATORS]
 
 
-class InterrogateMethod(Enum):
-    NONE = 0
-    PREFILL = 1
-    OVERWRITE = 2
-    PREPEND = 3
-    APPEND = 4
-
-
-def interrogate_image(path: str, interrogator_name: str, threshold_booru, threshold_wd):
+def interrogate_image(path:str, interrogator_name:str, threshold_booru, threshold_wd):
     try:
         img = Image.open(path).convert('RGB')
     except:
@@ -52,7 +46,23 @@ def interrogate_image(path: str, interrogator_name: str, threshold_booru, thresh
         return ', '.join(res)
             
 
-class DatasetTagEditor:
+class DatasetTagEditor(Singleton):
+    class SortBy(Enum):
+        ALPHA = 'Alphabetical Order'
+        FREQ = 'Frequency'
+        LEN = 'Length'
+
+    class SortOrder(Enum):
+        ASC = 'Ascending'
+        DESC = 'Descending'
+
+    class InterrogateMethod(Enum):
+        NONE = 0
+        PREFILL = 1
+        OVERWRITE = 2
+        PREPEND = 3
+        APPEND = 4
+    
     def __init__(self):
         # from modules.textual_inversion.dataset
         self.re_word = re.compile(shared.opts.dataset_filename_word_regex) if len(shared.opts.dataset_filename_word_regex) > 0 else None
@@ -74,16 +84,16 @@ class DatasetTagEditor:
         return {key for key in self.tag_counts.keys()}
 
 
-    def get_tags_by_image_path(self, imgpath: str):
+    def get_tags_by_image_path(self, imgpath:str):
         return self.dataset.get_data_tags(imgpath)
 
     
-    def set_tags_by_image_path(self, imgpath: str, tags: List[str]):
+    def set_tags_by_image_path(self, imgpath:str, tags:List[str]):
         self.dataset.append_data(ds.Data(imgpath, ','.join(tags)))
         self.construct_tag_counts()
     
 
-    def write_tags(self, tags: List[str]):
+    def write_tags(self, tags:List[str]):
         if tags:
             return [f'{tag} [{self.tag_counts.get(tag) or 0}]' for tag in tags if tag]
         else:
@@ -98,26 +108,28 @@ class DatasetTagEditor:
             return []
 
 
-    def sort_tags(self, tags: List[str], sort_by: str = 'Alphabetical Order', sort_order: str = 'Ascending'):
-        if sort_by == 'Alphabetical Order':
-            if sort_order == 'Ascending':
+    def sort_tags(self, tags:List[str], sort_by:SortBy=SortBy.ALPHA, sort_order:SortOrder=SortOrder.ASC):
+        sort_by = self.SortBy(sort_by)
+        sort_order = self.SortOrder(sort_order)
+        if sort_by == self.SortBy.ALPHA:
+            if sort_order == self.SortOrder.ASC:
                 return sorted(tags, reverse=False)
-            elif sort_order == 'Descending':
+            elif sort_order == self.SortOrder.DESC:
                 return sorted(tags, reverse=True)
-        elif sort_by == 'Frequency':
-            if sort_order == 'Ascending':
+        elif sort_by == self.SortBy.FREQ:
+            if sort_order == self.SortOrder.ASC:
                 return sorted(tags, key=lambda t:(self.tag_counts.get(t, 0), t), reverse=False)
-            elif sort_order == 'Descending':
+            elif sort_order == self.SortOrder.DESC:
                 return sorted(tags, key=lambda t:(-self.tag_counts.get(t, 0), t), reverse=False)
-        elif sort_by == 'Length':
-            if sort_order == 'Ascending':
+        elif sort_by == self.SortBy.LEN:
+            if sort_order == self.SortOrder.ASC:
                 return sorted(tags, key=lambda t:(len(t), t), reverse=False)
-            elif sort_order == 'Descending':
+            elif sort_order == self.SortOrder.DESC:
                 return sorted(tags, key=lambda t:(-len(t), t), reverse=False)
-        return tags
+        return list(tags)
 
 
-    def get_filtered_imgpaths(self, filters: List[filters.Filter] = []):
+    def get_filtered_imgpaths(self, filters:List[filters.Filter] = []):
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
@@ -127,7 +139,7 @@ class DatasetTagEditor:
         return img_paths
     
 
-    def get_filtered_imgs(self, filters: List[filters.Filter] = []):
+    def get_filtered_imgs(self, filters:List[filters.Filter] = []):
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
@@ -137,7 +149,7 @@ class DatasetTagEditor:
         return [self.images.get(path) for path in img_paths]
 
 
-    def get_filtered_imgindices(self, filters: List[filters.Filter] = []):
+    def get_filtered_imgindices(self, filters:List[filters.Filter] = []):
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
@@ -147,7 +159,7 @@ class DatasetTagEditor:
         return [self.img_idx.get(p) for p in img_paths]
 
 
-    def get_filtered_tags(self, filters: List[filters.Filter] = [], filter_word: str = '', filter_tags = True, prefix=False, suffix=False, regex=False):
+    def get_filtered_tags(self, filters:List[filters.Filter] = [], filter_word:str = '', filter_tags = True, prefix=False, suffix=False, regex=False):
         if filter_tags:
             filtered_set = self.dataset.copy()
             for filter in filters:
@@ -192,16 +204,16 @@ class DatasetTagEditor:
             return result
 
 
-    def cleanup_tags(self, tags: List[str]):
+    def cleanup_tags(self, tags:List[str]):
         current_dataset_tags = self.dataset.get_tagset()
         return [t for t in tags if t in current_dataset_tags]
     
-    def cleanup_tagset(self, tags: Set[str]):
+    def cleanup_tagset(self, tags:Set[str]):
         current_dataset_tagset = self.dataset.get_tagset()
         return tags & current_dataset_tagset
         
 
-    def get_common_tags(self, filters: List[filters.Filter] = []):
+    def get_common_tags(self, filters:List[filters.Filter] = []):
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
@@ -213,7 +225,7 @@ class DatasetTagEditor:
         return sorted(result)
     
 
-    def replace_tags(self, search_tags: List[str], replace_tags: List[str], filters: List[filters.Filter] = [], prepend: bool = False):
+    def replace_tags(self, search_tags:List[str], replace_tags:List[str], filters:List[filters.Filter] = [], prepend:bool = False):
         img_paths = self.get_filtered_imgpaths(filters=filters)
         tags_to_append = replace_tags[len(search_tags):]
         tags_to_remove = search_tags[len(replace_tags):]
@@ -230,7 +242,7 @@ class DatasetTagEditor:
         
         self.construct_tag_counts()
 
-    def get_replaced_tagset(self, tags: Set[str], search_tags: List[str], replace_tags: List[str]):
+    def get_replaced_tagset(self, tags:Set[str], search_tags:List[str], replace_tags:List[str]):
         tags_to_remove = search_tags[len(replace_tags):]
         tags_to_replace = {}
         for i in range(min(len(search_tags), len(replace_tags))):
@@ -243,7 +255,7 @@ class DatasetTagEditor:
         return {t for t in tags_replaced if t}
 
 
-    def search_and_replace_caption(self, search_text: str, replace_text: str, filters: List[filters.Filter] = [], use_regex: bool = False):
+    def search_and_replace_caption(self, search_text:str, replace_text:str, filters:List[filters.Filter] = [], use_regex:bool = False):
         img_paths = self.get_filtered_imgpaths(filters=filters)
         
         for img_path in img_paths:
@@ -258,7 +270,7 @@ class DatasetTagEditor:
         self.construct_tag_counts()
 
 
-    def search_and_replace_selected_tags(self, search_text: str, replace_text: str, selected_tags: Optional[Set[str]], filters: List[filters.Filter] = [], use_regex: bool = False):
+    def search_and_replace_selected_tags(self, search_text:str, replace_text:str, selected_tags:Optional[Set[str]], filters:List[filters.Filter] = [], use_regex:bool = False):
         img_paths = self.get_filtered_imgpaths(filters=filters)
 
         for img_path in img_paths:
@@ -269,7 +281,7 @@ class DatasetTagEditor:
         self.construct_tag_counts()
 
     
-    def search_and_replace_tag_list(self, search_text: str, replace_text: str, tags: List[str], selected_tags: Optional[Set[str]] = None, use_regex: bool = False):
+    def search_and_replace_tag_list(self, search_text:str, replace_text:str, tags:List[str], selected_tags:Optional[Set[str]] = None, use_regex:bool = False):
         if use_regex:
             if selected_tags is None:
                 tags = [re.sub(search_text, replace_text, t) for t in tags]
@@ -284,7 +296,7 @@ class DatasetTagEditor:
         return [t for t in tags if t]
 
 
-    def search_and_replace_tag_set(self, search_text: str, replace_text: str, tags: Set[str], selected_tags: Optional[Set[str]] = None, use_regex: bool = False):
+    def search_and_replace_tag_set(self, search_text:str, replace_text:str, tags:Set[str], selected_tags:Optional[Set[str]] = None, use_regex:bool = False):
         if use_regex:
             if selected_tags is None:
                 tags = {re.sub(search_text, replace_text, t) for t in tags}
@@ -299,7 +311,7 @@ class DatasetTagEditor:
         return {t for t in tags if t}
     
 
-    def remove_duplicated_tags(self, filters: List[filters.Filter] = []):
+    def remove_duplicated_tags(self, filters:List[filters.Filter] = []):
         img_paths = self.get_filtered_imgpaths(filters)
         for path in img_paths:
             tags = self.dataset.get_data_tags(path)
@@ -310,14 +322,14 @@ class DatasetTagEditor:
             self.set_tags_by_image_path(path, res)
     
 
-    def remove_tags(self, tags: Set[str], filters: List[filters.Filter] = []):
+    def remove_tags(self, tags:Set[str], filters:List[filters.Filter] = []):
         img_paths = self.get_filtered_imgpaths(filters)
         for path in img_paths:
             res = self.dataset.get_data_tags(path)
             res = [t for t in res if t not in tags]
             self.set_tags_by_image_path(path, res)
 
-    def sort_filtered_tags(self, filters: List[filters.Filter] = [], **sort_args):
+    def sort_filtered_tags(self, filters:List[filters.Filter] = [], **sort_args):
         img_paths = self.get_filtered_imgpaths(filters)
         for path in img_paths:
             tags = self.dataset.get_data_tags(path)
@@ -332,7 +344,7 @@ class DatasetTagEditor:
         return {k for k in self.dataset.datas.keys() if k}
 
 
-    def delete_dataset(self, caption_ext: str, filters: List[filters.Filter], delete_image: bool = False, delete_caption: bool = False, delete_backup: bool = False):
+    def delete_dataset(self, caption_ext:str, filters:List[filters.Filter], delete_image:bool = False, delete_caption:bool = False, delete_backup:bool = False):
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
@@ -344,7 +356,7 @@ class DatasetTagEditor:
             self.construct_tag_counts()
 
 
-    def move_dataset(self, dest_dir: str, caption_ext:str, filters: List[filters.Filter], move_image: bool = False, move_caption: bool = False, move_backup: bool = False):
+    def move_dataset(self, dest_dir:str, caption_ext:str, filters:List[filters.Filter], move_image:bool = False, move_caption:bool = False, move_backup:bool = False):
         filtered_set = self.dataset.copy()
         for filter in filters:
             filtered_set.filter(filter)
@@ -355,7 +367,7 @@ class DatasetTagEditor:
             self.construct_tag_counts()
 
     
-    def delete_dataset_file(self, img_path: str, caption_ext:str, delete_image: bool = False, delete_caption: bool = False, delete_backup: bool = False):
+    def delete_dataset_file(self, img_path:str, caption_ext:str, delete_image:bool = False, delete_caption:bool = False, delete_backup:bool = False):
         if img_path not in self.dataset.datas.keys():
             return
         
@@ -393,7 +405,7 @@ class DatasetTagEditor:
                 print(e)
     
 
-    def move_dataset_file(self, img_path: str, caption_ext: str, dest_dir: str, move_image: bool = False, move_caption: bool = False, move_backup: bool = False):
+    def move_dataset_file(self, img_path:str, caption_ext:str, dest_dir:str, move_image:bool = False, move_caption:bool = False, move_backup:bool = False):
         if img_path not in self.dataset.datas.keys():
             return
         
@@ -438,7 +450,7 @@ class DatasetTagEditor:
                 print(e)
 
 
-    def load_dataset(self, img_dir: str, caption_ext:str, recursive: bool, load_caption_from_filename: bool, interrogate_method: InterrogateMethod, interrogator_names: List[str], threshold_booru: float, threshold_waifu: float, use_temp_dir: bool, kohya_json_path:Optional[str]):
+    def load_dataset(self, img_dir:str, caption_ext:str, recursive:bool, load_caption_from_filename:bool, interrogate_method:InterrogateMethod, interrogator_names:List[str], threshold_booru:float, threshold_waifu:float, use_temp_dir:bool, kohya_json_path:Optional[str]):
         self.clear()
 
         img_dir_obj = Path(img_dir)
@@ -459,7 +471,7 @@ class DatasetTagEditor:
 
         print(f'[tag-editor] Total {len(filepaths)} files under the directory including not image files.')
 
-        def load_images(filepaths: List[Path]):
+        def load_images(filepaths:List[Path]):
             imgpaths = []
             images = {}
             for img_path in filepaths:
@@ -478,13 +490,13 @@ class DatasetTagEditor:
                 imgpaths.append(abs_path)
             return imgpaths, images
         
-        def load_captions(imgpaths: List[str]):
+        def load_captions(imgpaths:List[str]):
             taglists = []
             for abs_path in imgpaths:
                 img_path = Path(abs_path)
                 text_path = img_path.with_suffix(caption_ext)
                 caption_text = ''
-                if interrogate_method != InterrogateMethod.OVERWRITE:
+                if interrogate_method != self.InterrogateMethod.OVERWRITE:
                     # from modules/textual_inversion/dataset.py, modified
                     if text_path.is_file():
                         caption_text = text_path.read_text('utf8')
@@ -504,7 +516,7 @@ class DatasetTagEditor:
         try:
             captionings = []
             taggers = []
-            if interrogate_method != InterrogateMethod.NONE:
+            if interrogate_method != self.InterrogateMethod.NONE:
                 for it in INTERROGATORS:
                     if it.name() in interrogator_names:
                         it.start()
@@ -525,7 +537,7 @@ class DatasetTagEditor:
             for img_path, tags in zip(imgpaths, taglists):
                 interrogate_tags = []
                 img = self.images.get(img_path)
-                if interrogate_method != InterrogateMethod.NONE and ((interrogate_method != InterrogateMethod.PREFILL) or (interrogate_method == InterrogateMethod.PREFILL and not tags)):
+                if interrogate_method != self.InterrogateMethod.NONE and ((interrogate_method != self.InterrogateMethod.PREFILL) or (interrogate_method == InterrogateMethod.PREFILL and not tags)):
                     if img is None:
                         print(f'Failed to load image {img_path}. Interrogating is aborted.')
                     else:
@@ -536,9 +548,9 @@ class DatasetTagEditor:
                         for tg, threshold in taggers:
                             interrogate_tags += [t for t in tg.predict(img, threshold).keys()]
                 
-                if interrogate_method == InterrogateMethod.OVERWRITE:
+                if interrogate_method == self.InterrogateMethod.OVERWRITE:
                     tags = interrogate_tags
-                elif interrogate_method == InterrogateMethod.PREPEND:
+                elif interrogate_method == self.InterrogateMethod.PREPEND:
                     tags = interrogate_tags + tags
                 else:
                     tags = tags + interrogate_tags
@@ -546,7 +558,7 @@ class DatasetTagEditor:
                 self.set_tags_by_image_path(img_path, tags)
             
         finally:
-            if interrogate_method != InterrogateMethod.NONE:
+            if interrogate_method != self.InterrogateMethod.NONE:
                 for cap in captionings:
                     cap.stop()
                 for tg, _ in taggers:
@@ -559,7 +571,7 @@ class DatasetTagEditor:
         print(f'[tag-editor] Loading Completed: {len(self.dataset)} images found')
  
 
-    def save_dataset(self, backup: bool, caption_ext: str, write_kohya_metadata: bool, meta_out_path: str, meta_in_path: Optional[str], meta_overwrite:bool, meta_as_caption: bool, meta_full_path: bool):
+    def save_dataset(self, backup:bool, caption_ext:str, write_kohya_metadata:bool, meta_out_path:str, meta_in_path:Optional[str], meta_overwrite:bool, meta_as_caption:bool, meta_full_path:bool):
         if len(self.dataset) == 0:
             return (0, 0, '')
 

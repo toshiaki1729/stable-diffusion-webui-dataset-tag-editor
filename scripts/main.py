@@ -7,7 +7,7 @@ from pathlib import Path
 from collections import namedtuple
 
 import scripts.ui as ui
-
+from scripts.dte_instance import dte_instance
 
 # ================================================================
 # General Callbacks
@@ -15,6 +15,9 @@ import scripts.ui as ui
 
 CONFIG_PATH = Path(scripts.basedir(), 'config.json')
 
+
+SortBy = dte_instance.SortBy
+SortOrder = dte_instance.SortOrder
 
 GeneralConfig = namedtuple('GeneralConfig', [
     'backup',
@@ -36,15 +39,15 @@ GeneralConfig = namedtuple('GeneralConfig', [
     'meta_use_full_path'
     ])
 FilterConfig = namedtuple('FilterConfig', ['sw_prefix', 'sw_suffix', 'sw_regex','sort_by', 'sort_order', 'logic'])
-BatchEditConfig = namedtuple('BatchEditConfig', ['show_only_selected', 'prepend', 'use_regex', 'target', 'sw_prefix', 'sw_suffix', 'sw_regex', 'sory_by', 'sort_order'])
-EditSelectedConfig = namedtuple('EditSelectedConfig', ['auto_copy', 'sort_on_save', 'warn_change_not_saved', 'use_interrogator_name'])
+BatchEditConfig = namedtuple('BatchEditConfig', ['show_only_selected', 'prepend', 'use_regex', 'target', 'sw_prefix', 'sw_suffix', 'sw_regex', 'sory_by', 'sort_order', 'batch_sort_by', 'batch_sort_order'])
+EditSelectedConfig = namedtuple('EditSelectedConfig', ['auto_copy', 'sort_on_save', 'warn_change_not_saved', 'use_interrogator_name', 'sort_by', 'sort_order'])
 MoveDeleteConfig = namedtuple('MoveDeleteConfig', ['range', 'target', 'caption_ext', 'destination'])
 
 CFG_GENERAL_DEFAULT = GeneralConfig(True, '', '.txt', False, True, 'No', [], False, 0.7, False, 0.35, False, '', '', True, False, False)
-CFG_FILTER_P_DEFAULT = FilterConfig(False, False, False, 'Alphabetical Order', 'Ascending', 'AND')
-CFG_FILTER_N_DEFAULT = FilterConfig(False, False, False, 'Alphabetical Order', 'Ascending', 'OR')
-CFG_BATCH_EDIT_DEFAULT = BatchEditConfig(True, False, False, 'Only Selected Tags', False, False, False, 'Alphabetical Order', 'Ascending')
-CFG_EDIT_SELECTED_DEFAULT = EditSelectedConfig(False, False, False, '')
+CFG_FILTER_P_DEFAULT = FilterConfig(False, False, False, SortBy.ALPHA.value, SortOrder.ASC.value, 'AND')
+CFG_FILTER_N_DEFAULT = FilterConfig(False, False, False, SortBy.ALPHA.value, SortOrder.ASC.value, 'OR')
+CFG_BATCH_EDIT_DEFAULT = BatchEditConfig(True, False, False, 'Only Selected Tags', False, False, False, SortBy.ALPHA.value, SortOrder.ASC.value, SortBy.ALPHA.value, SortOrder.ASC.value)
+CFG_EDIT_SELECTED_DEFAULT = EditSelectedConfig(False, False, False, '', SortBy.ALPHA.value, SortOrder.ASC.value)
 CFG_MOVE_DELETE_DEFAULT = MoveDeleteConfig('Selected One', [], '.txt', '')
 
 class Config:
@@ -180,7 +183,8 @@ def update_filter_and_gallery():
         update_gallery() +\
         ui.batch_edit_captions.get_common_tags(get_filters, ui.filter_by_tags) +\
         [', '.join(ui.filter_by_tags.tag_filter_ui.filter.tags)] +\
-        [ui.batch_edit_captions.tag_select_ui_remove.cbg_tags_update()]
+        [ui.batch_edit_captions.tag_select_ui_remove.cbg_tags_update()] +\
+        ['', '']
 
 
 # ================================================================
@@ -243,9 +247,22 @@ def on_ui_tabs():
         components_filter = \
             [ui.filter_by_tags.tag_filter_ui.cb_prefix, ui.filter_by_tags.tag_filter_ui.cb_suffix, ui.filter_by_tags.tag_filter_ui.cb_regex, ui.filter_by_tags.tag_filter_ui.rb_sort_by, ui.filter_by_tags.tag_filter_ui.rb_sort_order, ui.filter_by_tags.tag_filter_ui.rb_logic] +\
             [ui.filter_by_tags.tag_filter_ui_neg.cb_prefix, ui.filter_by_tags.tag_filter_ui_neg.cb_suffix, ui.filter_by_tags.tag_filter_ui_neg.cb_regex, ui.filter_by_tags.tag_filter_ui_neg.rb_sort_by, ui.filter_by_tags.tag_filter_ui_neg.rb_sort_order, ui.filter_by_tags.tag_filter_ui_neg.rb_logic]
-        components_batch_edit = [ui.batch_edit_captions.cb_show_only_tags_selected, ui.batch_edit_captions.cb_prepend_tags, ui.batch_edit_captions.cb_use_regex, ui.batch_edit_captions.rb_sr_replace_target, ui.batch_edit_captions.tag_select_ui_remove.cb_prefix, ui.batch_edit_captions.tag_select_ui_remove.cb_suffix, ui.batch_edit_captions.tag_select_ui_remove.cb_regex, ui.batch_edit_captions.tag_select_ui_remove.rb_sort_by, ui.batch_edit_captions.tag_select_ui_remove.rb_sort_order]
-        components_edit_selected = [ui.edit_caption_of_selected_image.cb_copy_caption_automatically, ui.edit_caption_of_selected_image.cb_sort_caption_on_save, ui.edit_caption_of_selected_image.cb_ask_save_when_caption_changed, ui.edit_caption_of_selected_image.dd_intterogator_names_si]
-        components_move_delete = [ui.move_or_delete_files.rb_move_or_delete_target_data, ui.move_or_delete_files.cbg_move_or_delete_target_file, ui.move_or_delete_files.tb_move_or_delete_caption_ext, ui.move_or_delete_files.tb_move_or_delete_destination_dir]
+        components_batch_edit = [
+            ui.batch_edit_captions.cb_show_only_tags_selected, ui.batch_edit_captions.cb_prepend_tags, ui.batch_edit_captions.cb_use_regex,
+            ui.batch_edit_captions.rb_sr_replace_target,
+            ui.batch_edit_captions.tag_select_ui_remove.cb_prefix, ui.batch_edit_captions.tag_select_ui_remove.cb_suffix, ui.batch_edit_captions.tag_select_ui_remove.cb_regex,
+            ui.batch_edit_captions.tag_select_ui_remove.rb_sort_by, ui.batch_edit_captions.tag_select_ui_remove.rb_sort_order,
+            ui.batch_edit_captions.rb_sort_by, ui.batch_edit_captions.rb_sort_order
+        ]
+        components_edit_selected = [
+            ui.edit_caption_of_selected_image.cb_copy_caption_automatically, ui.edit_caption_of_selected_image.cb_sort_caption_on_save,
+            ui.edit_caption_of_selected_image.cb_ask_save_when_caption_changed, ui.edit_caption_of_selected_image.dd_intterogator_names_si,
+            ui.edit_caption_of_selected_image.rb_sort_by, ui.edit_caption_of_selected_image.rb_sort_order
+        ]
+        components_move_delete = [
+            ui.move_or_delete_files.rb_move_or_delete_target_data, ui.move_or_delete_files.cbg_move_or_delete_target_file,
+            ui.move_or_delete_files.tb_move_or_delete_caption_ext, ui.move_or_delete_files.tb_move_or_delete_destination_dir
+        ]
         
         configurable_components = components_general + components_filter + components_batch_edit + components_edit_selected + components_move_delete
 
@@ -301,7 +318,8 @@ def on_ui_tabs():
             o_update_gallery + \
             [ui.batch_edit_captions.tb_common_tags, ui.batch_edit_captions.tb_edit_tags] + \
             [ui.batch_edit_captions.tb_sr_selected_tags] +\
-            [ui.batch_edit_captions.tag_select_ui_remove.cbg_tags]
+            [ui.batch_edit_captions.tag_select_ui_remove.cbg_tags] +\
+            [ui.edit_caption_of_selected_image.tb_caption, ui.edit_caption_of_selected_image.tb_edit_caption]
         
         ui.toprow.set_callbacks(ui.load_dataset)
         ui.load_dataset.set_callbacks(o_update_filter_and_gallery,ui.toprow, ui.dataset_gallery, ui.filter_by_tags, ui.filter_by_selection, ui.batch_edit_captions, update_filter_and_gallery)
