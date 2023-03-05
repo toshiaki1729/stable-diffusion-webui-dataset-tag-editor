@@ -24,6 +24,3 @@ class GITLargeCaptioning():
         inputs = self.processor(images=image, return_tensors='pt').to(shared.device)
         ids = self.model.generate(pixel_values=inputs.pixel_values, max_length=shared.opts.interrogate_clip_max_length)
         return self.processor.batch_decode(ids, skip_special_tokens=True)[0]
-
-
-instance = GITLargeCaptioning()

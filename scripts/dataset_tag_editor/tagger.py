@@ -6,9 +6,8 @@ from typing import Optional, Dict
 from modules import devices, shared
 from modules import deepbooru as db
 
-from scripts.dataset_tag_editor.interrogator import Interrogator
-from scripts.dynamic_import import dynamic_import
-waifu_diffusion_tagger = dynamic_import('scripts/dataset_tag_editor/interrogators/waifu_diffusion_tagger.py')
+from .interrogator import Interrogator
+from .interrogators import WaifuDiffusionTagger
 
 
 class Tagger(Interrogator):
@@ -17,9 +16,9 @@ class Tagger(Interrogator):
     def stop(self):
         pass
     def predict(self, image: Image.Image, threshold: Optional[float]):
-        raise NotImplementedError
+        raise NotImplementedError()
     def name(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 def get_replaced_tag(tag: str):
@@ -76,7 +75,7 @@ class DeepDanbooru(Tagger):
 class WaifuDiffusion(Tagger):
     def __init__(self, repo_name, threshold):
         self.repo_name = repo_name
-        self.tagger_inst = waifu_diffusion_tagger.WaifuDiffusionTagger("SmilingWolf/" + repo_name)
+        self.tagger_inst = WaifuDiffusionTagger("SmilingWolf/" + repo_name)
         self.threshold = threshold
 
     def start(self):
