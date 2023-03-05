@@ -1,8 +1,8 @@
 import modules.shared as shared
 
-from scripts.dataset_tag_editor.interrogator import Interrogator
-from scripts.dynamic_import import dynamic_import
-git_large_captioning = dynamic_import('scripts/dataset_tag_editor/interrogators/git_large_captioning.py')
+from .interrogator import Interrogator
+from .interrogators import GITLargeCaptioning
+    
 
 class Captioning(Interrogator):
     def start(self):
@@ -10,9 +10,9 @@ class Captioning(Interrogator):
     def stop(self):
         pass
     def predict(self, image):
-        raise NotImplementedError
+        raise NotImplementedError()
     def name(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 class BLIP(Captioning):
@@ -31,14 +31,16 @@ class BLIP(Captioning):
 
 
 class GITLarge(Captioning):
+    def __init__(self):
+        self.interrogator = GITLargeCaptioning()
     def start(self):
-        git_large_captioning.instance.load()
+         self.interrogator.load()
     
     def stop(self):
-        git_large_captioning.instance.unload()
+         self.interrogator.unload()
     
     def predict(self, image):
-        tags = git_large_captioning.instance.apply(image).split(',')
+        tags = self.interrogator.apply(image).split(',')
         return [t for t in tags if t]
     
     def name(self):

@@ -16,8 +16,7 @@ DeepBooru interrogator で生成したような、カンマ区切り形式のキ
 ### WebUIのExtensionsタブからインストールする
 "Install from URL" タブに `https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-editor.git` をコピーしてインストールできます。  
 "Availables" タブにこの拡張機能が表示されている場合は、ワンクリックでインストール可能です。  
-~~web UI の "Extensions" タブから更新をした際、完全に更新を適用するには web UI を再起動する必要がある場合があります。~~  
-web UIの "Extensions" タブからの更新で問題なくリロードできるようになりました。
+**web UI の "Extensions" タブから更新をした際、完全に更新を適用するには web UI を再起動する必要がある場合があります。**  
 
 ### 手動でインストールする
 web UI の `extensions` フォルダにリポジトリのクローンを作成し再起動してください。

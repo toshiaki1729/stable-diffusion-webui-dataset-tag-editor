@@ -10,6 +10,6 @@ class Interrogator:
     def stop(self):
         pass
     def predict(self, image, **kwargs):
-        raise NotImplementedError
+        raise NotImplementedError()
     def name(self):
-        raise NotImplementedError
+        raise NotImplementedError()

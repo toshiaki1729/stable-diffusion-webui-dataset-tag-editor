@@ -6,13 +6,14 @@ from modules.textual_inversion.dataset import re_numbers_at_start
 from PIL import Image
 from enum import Enum
 
-from scripts.dynamic_import import dynamic_import
-ds = dynamic_import('scripts/dataset_tag_editor/dataset.py')
-tagger = dynamic_import('scripts/dataset_tag_editor/tagger.py')
-captioning = dynamic_import('scripts/dataset_tag_editor/captioning.py')
-filters = dynamic_import('scripts/dataset_tag_editor/filters.py')
-kohya_metadata = dynamic_import('scripts/dataset_tag_editor/kohya-ss_finetune_metadata.py')
+from . import dataset as ds
+from . import tagger
+from . import captioning
+from . import filters
+from . import kohya_finetune_metadata as kohya_metadata
 
+
+__all__ = ["ds", "tagger", "captioning", "filters", "kohya_metadata", "INTERROGATOR_NAMES", "InterrogateMethod", "interrogate_image", "DatasetTagEditor"]
 
 re_tags = re.compile(r'^(.+) \[\d+\]$')
 
@@ -21,6 +22,7 @@ WD_TAGGER_THRESHOLDS = [0.35, 0.35, 0.3537, 0.3685, 0.3771] # v1: idk if it's ok
 
 INTERROGATORS = [captioning.BLIP(), tagger.DeepDanbooru()] + [tagger.WaifuDiffusion(name, WD_TAGGER_THRESHOLDS[i]) for i, name in enumerate(WD_TAGGER_NAMES)]
 INTERROGATOR_NAMES = [it.name() for it in INTERROGATORS]
+
 
 class InterrogateMethod(Enum):
     NONE = 0
@@ -155,35 +157,39 @@ class DatasetTagEditor:
             tags:Set[str] = self.dataset.get_tagset()
         
         result = set()
-        for tag in tags:
-            if prefix:
-                if regex:
-                    if re.search("^" + filter_word, tag) is not None:
-                        result.add(tag)
-                        continue
-                else:
-                    if tag.startswith(filter_word):
-                        result.add(tag)
-                        continue
-            if suffix:
-                if regex:
-                    if re.search(filter_word + "$", tag) is not None:
-                        result.add(tag)
-                        continue
-                else:
-                    if tag.endswith(filter_word):
-                        result.add(tag)
-                        continue
-            if not prefix and not suffix:
-                if regex:
-                    if re.search(filter_word, tag) is not None:
-                        result.add(tag)
-                        continue
-                else:
-                    if filter_word in tag:
-                        result.add(tag)
-                        continue
-        return result
+        try:
+            for tag in tags:
+                if prefix:
+                    if regex:
+                        if re.search("^" + filter_word, tag) is not None:
+                            result.add(tag)
+                            continue
+                    else:
+                        if tag.startswith(filter_word):
+                            result.add(tag)
+                            continue
+                if suffix:
+                    if regex:
+                        if re.search(filter_word + "$", tag) is not None:
+                            result.add(tag)
+                            continue
+                    else:
+                        if tag.endswith(filter_word):
+                            result.add(tag)
+                            continue
+                if not prefix and not suffix:
+                    if regex:
+                        if re.search(filter_word, tag) is not None:
+                            result.add(tag)
+                            continue
+                    else:
+                        if filter_word in tag:
+                            result.add(tag)
+                            continue
+        except:
+            return tags
+        else:
+            return result
 
 
     def cleanup_tags(self, tags: List[str]):
@@ -400,7 +406,7 @@ class DatasetTagEditor:
         if move_image:
             try:
                 dst_path_obj = dest_dir_obj / img_path_obj.name
-                if dst_path_obj.is_file():
+                if img_path_obj.is_file():
                     if img_path in self.images:
                         self.images[img_path].close()
                         del self.images[img_path]
