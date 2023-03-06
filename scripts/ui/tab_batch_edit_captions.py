@@ -1,8 +1,13 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING, List, Callable
 import gradio as gr
 
 from .ui_common import *
 from .uibase import UIBase
 from .block_tag_select import TagSelectUI
+
+if TYPE_CHECKING:
+    from .ui_classes import *
 
 SortBy = dte_instance.SortBy
 SortOrder = dte_instance.SortOrder
@@ -12,7 +17,7 @@ class BatchEditCaptionsUI(UIBase):
         self.tag_select_ui_remove = TagSelectUI()
         self.show_only_selected_tags = False
 
-    def create_ui(self, cfg_batch_edit, get_filters):
+    def create_ui(self, cfg_batch_edit, get_filters:Callable[[], List[dte_module.filters.Filter]]):
         with gr.Tab(label='Search and Replace'):
             with gr.Column(variant='panel'):
                 gr.HTML('Edit common tags.')
@@ -64,7 +69,7 @@ class BatchEditCaptionsUI(UIBase):
                     self.rb_sort_order = gr.Radio(choices=[e.value for e in SortOrder], value=cfg_batch_edit.batch_sort_order, interactive=True, label='Sort Order')
                 self.btn_sort_selected = gr.Button(value='Sort selected tags', variant='primary')
     
-    def set_callbacks(self, o_update_filter_and_gallery, load_dataset, filter_by_tags, get_filters, update_filter_and_gallery):
+    def set_callbacks(self, o_update_filter_and_gallery:List[gr.components.Component], load_dataset:LoadDatasetUI, filter_by_tags:FilterByTagsUI, get_filters:Callable[[], List[dte_module.filters.Filter]], update_filter_and_gallery:Callable[[], List]):
         load_dataset.btn_load_datasets.click(
             fn=lambda:['', ''],
             outputs=[self.tb_common_tags, self.tb_edit_tags]
@@ -169,7 +174,7 @@ class BatchEditCaptionsUI(UIBase):
         )
 
         
-    def get_common_tags(self, get_filters, filter_by_tags):
+    def get_common_tags(self, get_filters:Callable[[], List[dte_module.filters.Filter]], filter_by_tags:FilterByTagsUI):
         if self.show_only_selected_tags:
             tags = ', '.join([t for t in dte_instance.get_common_tags(filters=get_filters()) if t in filter_by_tags.tag_filter_ui.filter.tags])
         else:

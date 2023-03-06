@@ -1,8 +1,12 @@
-from typing import List
+from __future__ import annotations
+from typing import TYPE_CHECKING, List, Callable
 import gradio as gr
 
 from .ui_common import *
 from .uibase import UIBase
+
+if TYPE_CHECKING:
+    from .ui_classes import *
 
 filters = dte_module.filters
 
@@ -17,7 +21,7 @@ class FilterBySelectionUI(UIBase):
     def get_current_txt_selection(self):
         return f"""Selected Image : {self.selected_path}"""
 
-    def create_ui(self, image_columns):
+    def create_ui(self, image_columns:int):
         with gr.Row(visible=False):
             self.btn_hidden_set_selection_index = gr.Button(elem_id="dataset_tag_editor_btn_hidden_set_selection_index")
             self.nb_hidden_selection_image_index = gr.Number(value=-1)
@@ -38,7 +42,7 @@ class FilterBySelectionUI(UIBase):
 
         self.btn_apply_image_selection_filter = gr.Button(value='Apply selection filter', variant='primary')
 
-    def set_callbacks(self, o_update_filter_and_gallery, dataset_gallery, filter_by_tags, get_filters, update_filter_and_gallery):
+    def set_callbacks(self, o_update_filter_and_gallery:List[gr.components.Component], dataset_gallery:DatasetGalleryUI, filter_by_tags:FilterByTagsUI, get_filters:Callable[[], List[dte_module.filters.Filter]], update_filter_and_gallery:Callable[[], List]):
         def selection_index_changed(idx:int = -1):
             idx = int(idx) if idx is not None else -1
             img_paths = arrange_selection_order(self.tmp_selection)
