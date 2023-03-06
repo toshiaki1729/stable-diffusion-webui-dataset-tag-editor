@@ -1,7 +1,13 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING, Callable, List
+
 import gradio as gr
 
 from .ui_common import *
 from .uibase import UIBase
+
+if TYPE_CHECKING:
+    from .ui_classes import *
 
 class DatasetGalleryUI(UIBase):
     def __init__(self):
@@ -16,7 +22,7 @@ class DatasetGalleryUI(UIBase):
             self.nb_hidden_image_index_prev = gr.Number(value=None, label='hidden_idx_prev')
         self.gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_dataset_gallery").style(grid=image_columns)
     
-    def set_callbacks(self, load_dataset, gallery_state, get_filters):
+    def set_callbacks(self, load_dataset:LoadDatasetUI, gallery_state:GalleryStateUI, get_filters:Callable[[], dte_module.filters.Filter]):
         gallery_state.register_value('Selected Image', self.selected_path)
 
         load_dataset.btn_load_datasets.click(

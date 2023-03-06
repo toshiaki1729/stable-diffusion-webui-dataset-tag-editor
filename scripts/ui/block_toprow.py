@@ -1,7 +1,12 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import gradio as gr
 
 from .ui_common import *
 from .uibase import UIBase
+
+if TYPE_CHECKING:
+    from .ui_classes import *
 
 
 class ToprowUI(UIBase):
@@ -26,7 +31,7 @@ class ToprowUI(UIBase):
             with gr.Row(visible=False):
                 self.txt_result = gr.Textbox(label='Results', interactive=False)
     
-    def set_callbacks(self, load_dataset):
+    def set_callbacks(self, load_dataset:LoadDatasetUI):
         
         def save_all_changes(backup: bool, save_kohya_metadata:bool, metadata_output:str, metadata_input:str, metadata_overwrite:bool, metadata_as_caption:bool, metadata_use_fullpath:bool):
             if not metadata_input:

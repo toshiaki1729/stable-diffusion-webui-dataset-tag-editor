@@ -1,7 +1,12 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import gradio as gr
 
 from .ui_common import *
 from .uibase import UIBase
+
+if TYPE_CHECKING:
+    from .ui_classes import *
 
 class GalleryStateUI(UIBase):
     def __init__(self):
@@ -22,7 +27,7 @@ class GalleryStateUI(UIBase):
     def create_ui(self):
         self.txt_gallery = gr.HTML(value=self.get_current_gallery_txt())
 
-    def set_callbacks(self, dataset_gallery):
+    def set_callbacks(self, dataset_gallery:DatasetGalleryUI):
         dataset_gallery.nb_hidden_image_index.change(
             fn=self.update_gallery_txt,
             inputs=None,

@@ -1,4 +1,5 @@
-from typing import List
+from __future__ import annotations
+from typing import TYPE_CHECKING, List, Callable
 import gradio as gr
 
 from modules import shared
@@ -7,6 +8,8 @@ from modules.shared import opts
 from .ui_common import *
 from .uibase import UIBase
 
+if TYPE_CHECKING:
+    from .ui_classes import *
 
 INTERROGATOR_NAMES = dte_module.INTERROGATOR_NAMES
 InterrogateMethod = dte_instance.InterrogateMethod
@@ -42,7 +45,7 @@ class LoadDatasetUI(UIBase):
                     self.cb_use_custom_threshold_waifu = gr.Checkbox(value=cfg_general.use_custom_threshold_waifu, label='Use Custom Threshold (WDv1.4 Tagger)', interactive=True)
                     self.sl_custom_threshold_waifu = gr.Slider(minimum=0, maximum=1, value=cfg_general.custom_threshold_waifu, step=0.01, interactive=True, label='WDv1.4 Tagger Score Threshold')
     
-    def set_callbacks(self, o_update_filter_and_gallery, toprow, dataset_gallery, filter_by_tags, filter_by_selection, batch_edit_captions, update_filter_and_gallery):
+    def set_callbacks(self, o_update_filter_and_gallery:List[gr.components.Component], toprow:ToprowUI, dataset_gallery:DatasetGalleryUI, filter_by_tags:FilterByTagsUI, filter_by_selection:FilterBySelectionUI, batch_edit_captions:BatchEditCaptionsUI, update_filter_and_gallery:Callable[[], List]):
         def load_files_from_dir(
             dir: str,
             caption_file_ext: str,

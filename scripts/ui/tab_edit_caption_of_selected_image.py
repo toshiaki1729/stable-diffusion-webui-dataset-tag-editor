@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING, List, Callable
 import gradio as gr
 
 from modules import shared
@@ -5,6 +7,9 @@ from scripts.dte_instance import dte_module
 
 from .ui_common import *
 from .uibase import UIBase
+
+if TYPE_CHECKING:
+    from .ui_classes import *
 
 SortBy = dte_instance.SortBy
 SortOrder = dte_instance.SortOrder
@@ -45,7 +50,7 @@ class EditCaptionOfSelectedImageUI(UIBase):
 
         gr.HTML("""Changes are not applied to the text files until the "Save all changes" button is pressed.""")
     
-    def set_callbacks(self, o_update_filter_and_gallery, dataset_gallery, load_dataset, get_filters, update_filter_and_gallery):
+    def set_callbacks(self, o_update_filter_and_gallery:List[gr.components.Component], dataset_gallery:DatasetGalleryUI, load_dataset:LoadDatasetUI, get_filters:Callable[[], List[dte_module.filters.Filter]], update_filter_and_gallery:Callable[[], List]):
         load_dataset.btn_load_datasets.click(
             fn=lambda:['', -1],
             outputs=[self.tb_caption, self.nb_hidden_image_index_save_or_not]

@@ -1,8 +1,13 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING, List, Callable
 import gradio as gr
 
 from .ui_common import *
 from .uibase import UIBase
 from .block_tag_filter import TagFilterUI
+
+if TYPE_CHECKING:
+    from .ui_classes import *
 
 filters = dte_module.filters
 
@@ -31,7 +36,7 @@ class FilterByTagsUI(UIBase):
                 logic_n = filters.TagFilter.Logic.AND if cfg_filter_n.logic=='AND' else filters.TagFilter.Logic.NONE if cfg_filter_n.logic=='NONE' else filters.TagFilter.Logic.OR
                 self.tag_filter_ui_neg.create_ui(get_filters, logic_n, cfg_filter_n.sort_by, cfg_filter_n.sort_order, cfg_filter_n.sw_prefix, cfg_filter_n.sw_suffix, cfg_filter_n.sw_regex)
     
-    def set_callbacks(self, o_update_gallery, o_update_filter_and_gallery, batch_edit_captions, move_or_delete_files, update_gallery, update_filter_and_gallery, get_filters):
+    def set_callbacks(self, o_update_gallery:List[gr.components.Component], o_update_filter_and_gallery:List[gr.components.Component], batch_edit_captions:BatchEditCaptionsUI, move_or_delete_files:MoveOrDeleteFilesUI, update_gallery:Callable[[], List], update_filter_and_gallery:Callable[[], List], get_filters:Callable[[], List[dte_module.filters.Filter]]):
         common_callback = lambda : \
             update_gallery() + \
             batch_edit_captions.get_common_tags(get_filters, self) + \

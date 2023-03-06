@@ -1,9 +1,14 @@
-from typing import List
+from __future__ import annotations
+from typing import TYPE_CHECKING, List, Callable
 
 import gradio as gr
 
 from .ui_common import *
 from .uibase import UIBase
+
+if TYPE_CHECKING:
+    from .ui_classes import *
+
 
 class MoveOrDeleteFilesUI(UIBase):
     def __init__(self):
@@ -25,7 +30,7 @@ class MoveOrDeleteFilesUI(UIBase):
     def get_current_move_or_delete_target_num(self):
         return self.current_target_txt
 
-    def set_callbacks(self, o_update_filter_and_gallery, dataset_gallery, filter_by_tags, batch_edit_captions, filter_by_selection, edit_caption_of_selected_image, get_filters, update_filter_and_gallery):
+    def set_callbacks(self, o_update_filter_and_gallery:List[gr.components.Component], dataset_gallery:DatasetGalleryUI, filter_by_tags:FilterByTagsUI, batch_edit_captions:BatchEditCaptionsUI, filter_by_selection:FilterBySelectionUI, edit_caption_of_selected_image:EditCaptionOfSelectedImageUI, get_filters:Callable[[], List[dte_module.filters.Filter]], update_filter_and_gallery:Callable[[], List]):
         def _get_current_move_or_delete_target_num():
             if self.target_data == 'Selected One':
                 self.current_target_txt = f'Target dataset num: {1 if dataset_gallery.selected_index != -1 else 0}'
