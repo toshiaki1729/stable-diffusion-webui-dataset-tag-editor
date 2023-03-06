@@ -1,0 +1,16 @@
+.token-counter-dte{
+    position: absolute;
+    display: inline-block;
+    right: 2em;
+    min-width: 0 !important;
+    width: auto;
+    z-index: 100;
+}
+
+.token-counter-dte div{
+    display: inline;
+}
+
+.token-counter-dte span{
+    padding: 0.1em 0.75em;
+}

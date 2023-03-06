@@ -137,6 +137,23 @@ document.addEventListener("DOMContentLoaded", function () {
             dteModifiedGallery_filter.addClickNextHandler(dataset_tag_editor_gl_filter_images_next_clicked)
             dteModifiedGallery_filter.addClickCloseHandler(dataset_tag_editor_gl_filter_images_close_clicked)
         }
+
+        function changeTokenCounterPos(id, id_counter){
+            var prompt = gradioApp().getElementById(id)
+            var counter = gradioApp().getElementById(id_counter)
+    
+            if(counter.parentElement == prompt.parentElement){
+                return
+            }
+    
+            prompt.parentElement.insertBefore(counter, prompt)
+            counter.classList.add("token-counter-dte")
+            prompt.parentElement.style.position = "relative"
+            counter.style.width = "auto"
+        }
+        changeTokenCounterPos('dte_caption', 'dte_caption_counter')
+        changeTokenCounterPos('dte_edit_caption', 'dte_edit_caption_counter')
+        changeTokenCounterPos('dte_interrogate', 'dte_interrogate_counter')
     });
     
     o.observe(gradioApp(), { childList: true, subtree: true })
