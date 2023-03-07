@@ -127,8 +127,8 @@ class TagFilterUI():
         tags_in_filter = dte_instance.sort_tags(tags=tags_in_filter, sort_by=self.sort_by, sort_order=self.sort_order)
 
         tags = tags_in_filter + [tag for tag in tags if tag not in self.filter.tags]
-        tags = dte_instance.write_tags(tags)
-        tags_in_filter = dte_instance.write_tags(tags_in_filter)
+        tags = dte_instance.write_tags(tags, self.sort_by)
+        tags_in_filter = dte_instance.write_tags(tags_in_filter, self.sort_by)
 
         return gr.CheckboxGroup.update(value=tags_in_filter, choices=tags)
 
