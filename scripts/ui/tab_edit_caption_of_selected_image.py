@@ -1,16 +1,14 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, List, Callable
-from functools import reduce
 import gradio as gr
 
-from modules import shared, extra_networks, prompt_parser
+from modules import shared
 from modules.call_queue import wrap_queued_call
-from modules.sd_hijack import model_hijack
 from scripts.dte_instance import dte_module
 
 from .ui_common import *
 from .uibase import UIBase
-from .tokenizer import clip_tokenizer
+from scripts.tokenizer import clip_tokenizer
 
 if TYPE_CHECKING:
     from .ui_classes import *
@@ -30,7 +28,6 @@ class EditCaptionOfSelectedImageUI(UIBase):
         with gr.Tab(label='Read Caption from Selected Image'):
             self.tb_caption = gr.Textbox(label='Caption of Selected Image', interactive=False, lines=6, elem_id='dte_caption')
             self.token_counter_caption = gr.HTML(value='<span></span>', elem_id='dte_caption_counter')
-            self.cb_use_raw_token = gr.Checkbox(value=cfg_edit_selected.use_raw_token, label='Use raw CLIP token for token count (without embeddings)')
             with gr.Row():
                 self.btn_copy_caption = gr.Button(value='Copy and Overwrite')
                 self.btn_prepend_caption = gr.Button(value='Prepend')
@@ -194,39 +191,27 @@ class EditCaptionOfSelectedImageUI(UIBase):
             outputs=self.sort_settings
         )
 
-        def update_token_counter(text:str, use_raw:bool):
-            if use_raw:
-                token_count = clip_tokenizer.token_count(text)
-                max_length = model_hijack.clip.get_target_prompt_token_count(token_count)
-            else:
-                try:
-                    text, _ = extra_networks.parse_prompt(text)
-                    _, prompt_flat_list, _ = prompt_parser.get_multicond_prompt_list([text])
-                    prompt = reduce(lambda list1, list2: list1+list2, prompt_flat_list)
-                except Exception:
-                    prompt = text
-                token_count, max_length = model_hijack.get_prompt_lengths(prompt)
+        def update_token_counter(text:str):
+            _, token_count = clip_tokenizer.tokenize(text, shared.opts.dataset_editor_use_raw_clip_token)
+            max_length = clip_tokenizer.get_target_token_count(token_count)
             return f"<span class='gr-box gr-text-input'>{token_count}/{max_length}</span>"
 
         update_caption_token_counter_args = {
             'fn' : wrap_queued_call(update_token_counter),
-            'inputs' : [self.tb_caption, self.cb_use_raw_token],
+            'inputs' : [self.tb_caption],
             'outputs' : [self.token_counter_caption]
         }
         update_edit_caption_token_counter_args = {
             'fn' : wrap_queued_call(update_token_counter),
-            'inputs' : [self.tb_edit_caption, self.cb_use_raw_token],
+            'inputs' : [self.tb_edit_caption],
             'outputs' : [self.token_counter_edit_caption]
         }
         update_interrogate_token_counter_args = {
             'fn' : wrap_queued_call(update_token_counter),
-            'inputs' : [self.tb_interrogate, self.cb_use_raw_token],
+            'inputs' : [self.tb_interrogate],
             'outputs' : [self.token_counter_interrogate]
         }
 
-        self.cb_use_raw_token.change(**update_caption_token_counter_args)
-        self.cb_use_raw_token.change(**update_edit_caption_token_counter_args)
-        self.cb_use_raw_token.change(**update_interrogate_token_counter_args)
         self.tb_caption.change(**update_caption_token_counter_args)
         self.tb_edit_caption.change(**update_edit_caption_token_counter_args)
         self.tb_interrogate.change(**update_interrogate_token_counter_args)

@@ -69,7 +69,7 @@ class MoveOrDeleteFilesUI(UIBase):
                 img_path = dataset_gallery.selected_path
                 if img_path:
                     dte_instance.move_dataset_file(img_path, caption_ext, dest_dir, move_img, move_txt, move_bak)
-                    dte_instance.construct_tag_counts()
+                    dte_instance.construct_tag_infos()
                 
             elif target_data == 'All Displayed Ones':
                 dte_instance.move_dataset(dest_dir, caption_ext, get_filters(), move_img, move_txt, move_bak)
@@ -95,7 +95,7 @@ class MoveOrDeleteFilesUI(UIBase):
                 img_path = dataset_gallery.selected_path
                 if img_path:
                     dte_instance.delete_dataset_file(img_path, delete_img, caption_ext, delete_txt, delete_bak)
-                    dte_instance.construct_tag_counts()
+                    dte_instance.construct_tag_infos()
             
             elif target_data == 'All Displayed Ones':
                 dte_instance.delete_dataset(caption_ext, get_filters(), delete_img, delete_txt, delete_bak)

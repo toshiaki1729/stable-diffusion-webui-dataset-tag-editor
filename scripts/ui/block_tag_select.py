@@ -6,6 +6,9 @@ from .ui_common import *
 TagFilter = dte_module.filters.TagFilter
 Filter = dte_module.filters.Filter
 
+SortBy = dte_instance.SortBy
+SortOrder = dte_instance.SortOrder
+
 
 class TagSelectUI():
     def __init__(self):
@@ -32,8 +35,8 @@ class TagSelectUI():
             self.cb_suffix = gr.Checkbox(label='Suffix', value=False, interactive=True)
             self.cb_regex = gr.Checkbox(label='Use regex', value=False, interactive=True)
         with gr.Row():
-            self.rb_sort_by = gr.Radio(choices=['Alphabetical Order', 'Frequency', 'Length'], value=sort_by, interactive=True, label='Sort by')
-            self.rb_sort_order = gr.Radio(choices=['Ascending', 'Descending'], value=sort_order, interactive=True, label='Sort Order')
+            self.rb_sort_by = gr.Radio(hoices=[e.value for e in SortBy], value=sort_by, interactive=True, label='Sort by')
+            self.rb_sort_order = gr.Radio(choices=[e.value for e in SortOrder], value=sort_order, interactive=True, label='Sort Order')
         with gr.Row():
             self.btn_select_visibles = gr.Button(value='Select visible tags')
             self.btn_deselect_visibles = gr.Button(value='Deselect visible tags')
@@ -105,6 +108,6 @@ class TagSelectUI():
         self.tags = set(dte_instance.get_filtered_tags(self.get_filters(), filter_tags=True, prefix=self.prefix, suffix=self.suffix, regex=self.regex))
         self.selected_tags &= self.tags
         tags = dte_instance.sort_tags(tags=tags, sort_by=self.sort_by, sort_order=self.sort_order)
-        tags = dte_instance.write_tags(tags)
-        selected_tags = dte_instance.write_tags(list(self.selected_tags))
+        tags = dte_instance.write_tags(tags, self.sort_by)
+        selected_tags = dte_instance.write_tags(list(self.selected_tags), self.sort_by)
         return gr.CheckboxGroup.update(value=selected_tags, choices=tags)
