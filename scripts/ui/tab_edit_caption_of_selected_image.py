@@ -55,6 +55,7 @@ class EditCaptionOfSelectedImageUI(UIBase):
             self.tb_edit_caption = gr.Textbox(label='Edit Caption', interactive=True, lines=6, elem_id= 'dte_edit_caption')
             self.token_counter_edit_caption = gr.HTML(value='<span></span>', elem_id='dte_edit_caption_counter')
         self.btn_apply_changes_selected_image = gr.Button(value='Apply changes to selected image', variant='primary')
+        self.btn_apply_changes_all_images = gr.Button(value='Apply changes to ALL displayed images', variant='primary')
 
         gr.HTML("""Changes are not applied to the text files until the "Save all changes" button is pressed.""")
     
@@ -180,6 +181,27 @@ class EditCaptionOfSelectedImageUI(UIBase):
 
         self.btn_apply_changes_selected_image.click(
             fn=apply_changes,
+            inputs=[self.tb_edit_caption, self.cb_sort_caption_on_save, self.rb_sort_by, self.rb_sort_order],
+            outputs=o_update_filter_and_gallery,
+            _js='(a,b,c,d) => {dataset_tag_editor_gl_dataset_images_close(); return [a, b, c, d]}'
+        )
+
+        def apply_chages_all(tags_text: str, sort: bool, sort_by:str, sort_order:str):
+            self.change_is_saved = True
+            img_paths = dte_instance.get_filtered_imgpaths(filters=get_filters())
+
+            edited_tags = [t.strip() for t in tags_text.split(',')]
+            edited_tags = [t for t in edited_tags if t]
+
+            if sort:
+                edited_tags = dte_instance.sort_tags(edited_tags, SortBy(sort_by), SortOrder(sort_order))
+
+            for img_path in img_paths:
+                dte_instance.set_tags_by_image_path(imgpath=img_path, tags=edited_tags)
+            return update_filter_and_gallery()
+
+        self.btn_apply_changes_all_images.click(
+            fn=apply_chages_all,
             inputs=[self.tb_edit_caption, self.cb_sort_caption_on_save, self.rb_sort_by, self.rb_sort_order],
             outputs=o_update_filter_and_gallery,
             _js='(a,b,c,d) => {dataset_tag_editor_gl_dataset_images_close(); return [a, b, c, d]}'
