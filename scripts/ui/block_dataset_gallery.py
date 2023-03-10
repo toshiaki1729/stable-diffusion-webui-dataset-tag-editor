@@ -17,7 +17,7 @@ class DatasetGalleryUI(UIBase):
 
     def create_ui(self, image_columns):
         with gr.Row(visible=False):
-            self.cbg_hidden_dataset_filter = gr.State(value=[])
+            self.cbg_hidden_dataset_filter = gr.CheckboxGroup(label='Dataset Filter')
             self.nb_hidden_dataset_filter_apply = gr.Number(label='Filter Apply', value=-1)
             self.btn_hidden_set_index = gr.Button(elem_id="dataset_tag_editor_btn_hidden_set_index")
             self.nb_hidden_image_index = gr.Number(value=None, label='hidden_idx_next')
