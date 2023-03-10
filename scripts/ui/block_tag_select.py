@@ -13,8 +13,8 @@ SortOrder = dte_instance.SortOrder
 class TagSelectUI():
     def __init__(self):
         self.filter_word = ''
-        self.sort_by = 'Alphabetical Order'
-        self.sort_order = 'Ascending'
+        self.sort_by = SortBy.ALPHA
+        self.sort_order = SortOrder.ASC
         self.selected_tags = set()
         self.tags = set()
         self.get_filters = lambda:[]
@@ -23,7 +23,7 @@ class TagSelectUI():
         self.regex = False
 
 
-    def create_ui(self, get_filters: Callable[[], List[Filter]], sort_by = 'Alphabetical Order', sort_order = 'Ascending', prefix=False, suffix=False, regex=False):
+    def create_ui(self, get_filters: Callable[[], List[Filter]], sort_by = SortBy.ALPHA, sort_order = SortOrder.ASC, prefix=False, suffix=False, regex=False):
         self.get_filters = get_filters
         self.prefix = prefix
         self.suffix = suffix
@@ -35,7 +35,7 @@ class TagSelectUI():
             self.cb_suffix = gr.Checkbox(label='Suffix', value=False, interactive=True)
             self.cb_regex = gr.Checkbox(label='Use regex', value=False, interactive=True)
         with gr.Row():
-            self.rb_sort_by = gr.Radio(hoices=[e.value for e in SortBy], value=sort_by, interactive=True, label='Sort by')
+            self.rb_sort_by = gr.Radio(choices=[e.value for e in SortBy], value=sort_by, interactive=True, label='Sort by')
             self.rb_sort_order = gr.Radio(choices=[e.value for e in SortOrder], value=sort_order, interactive=True, label='Sort Order')
         with gr.Row():
             self.btn_select_visibles = gr.Button(value='Select visible tags')
