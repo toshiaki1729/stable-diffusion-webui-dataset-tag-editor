@@ -312,7 +312,7 @@ def on_ui_tabs():
             outputs=configurable_components
         )
 
-        o_update_gallery = [ui.filter_by_tags.cbg_hidden_dataset_filter, ui.filter_by_tags.nb_hidden_dataset_filter_apply, ui.dataset_gallery.nb_hidden_image_index, ui.dataset_gallery.nb_hidden_image_index_prev, ui.edit_caption_of_selected_image.nb_hidden_image_index_save_or_not, ui.gallery_state.txt_gallery]
+        o_update_gallery = [ui.dataset_gallery.cbg_hidden_dataset_filter, ui.dataset_gallery.nb_hidden_dataset_filter_apply, ui.dataset_gallery.nb_hidden_image_index, ui.dataset_gallery.nb_hidden_image_index_prev, ui.edit_caption_of_selected_image.nb_hidden_image_index_save_or_not, ui.gallery_state.txt_gallery]
 
         o_update_filter_and_gallery = \
             [ui.filter_by_tags.tag_filter_ui.cbg_tags, ui.filter_by_tags.tag_filter_ui_neg.cbg_tags] + \

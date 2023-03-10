@@ -17,9 +17,6 @@ class FilterByTagsUI(UIBase):
         self.tag_filter_ui_neg = TagFilterUI(tag_filter_mode=filters.TagFilter.Mode.EXCLUSIVE)
 
     def create_ui(self, cfg_filter_p, cfg_filter_n, get_filters):
-        self.cbg_hidden_dataset_filter = gr.CheckboxGroup(label='Dataset Filter', visible=False)
-        self.nb_hidden_dataset_filter_apply = gr.Number(label='Filter Apply', value=-1, visible=False)
-        
         with gr.Row():
             self.btn_clear_tag_filters = gr.Button(value='Clear tag filters')
             self.btn_clear_all_filters = gr.Button(value='Clear ALL filters')
@@ -77,13 +74,6 @@ class FilterByTagsUI(UIBase):
         self.btn_clear_all_filters.click(
             fn=lambda:self.clear_filters(update_filter_and_gallery),
             outputs=o_update_filter_and_gallery
-        )
-        
-        self.nb_hidden_dataset_filter_apply.change(
-            fn=lambda a, b: [a, b],
-            _js='(x, y) => [y>=0 ? dataset_tag_editor_gl_dataset_images_filter(x) : x, -1]',
-            inputs=[self.cbg_hidden_dataset_filter, self.nb_hidden_dataset_filter_apply],
-            outputs=[self.cbg_hidden_dataset_filter, self.nb_hidden_dataset_filter_apply]
         )
 
     def clear_filters(self, update_filter_and_gallery):

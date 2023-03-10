@@ -81,7 +81,7 @@ class LoadDatasetUI(UIBase):
                 imgs,
                 []
             ] +\
-            [gr.CheckboxGroup.update(value=[str(i) for i in img_indices], choices=[str(i) for i in img_indices]), True] +\
+            [gr.CheckboxGroup.update(value=[str(i) for i in img_indices], choices=[str(i) for i in img_indices]), 1] +\
             filter_by_tags.clear_filters(update_filter_and_gallery) +\
             [batch_edit_captions.tag_select_ui_remove.cbg_tags_update()]
         
@@ -90,7 +90,7 @@ class LoadDatasetUI(UIBase):
             inputs=[self.tb_img_directory, self.tb_caption_file_ext, self.cb_load_recursive, self.cb_load_caption_from_filename, self.rb_use_interrogator, self.dd_intterogator_names, self.cb_use_custom_threshold_booru, self.sl_custom_threshold_booru, self.cb_use_custom_threshold_waifu, self.sl_custom_threshold_waifu, toprow.cb_save_kohya_metadata, toprow.tb_metadata_output],
             outputs=
             [dataset_gallery.gl_dataset_images, filter_by_selection.gl_filter_images] +
-            [filter_by_tags.cbg_hidden_dataset_filter, filter_by_tags.nb_hidden_dataset_filter_apply] +
+            [dataset_gallery.cbg_hidden_dataset_filter, dataset_gallery.nb_hidden_dataset_filter_apply] +
             o_update_filter_and_gallery
         )
 

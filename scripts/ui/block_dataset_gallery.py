@@ -17,6 +17,8 @@ class DatasetGalleryUI(UIBase):
 
     def create_ui(self, image_columns):
         with gr.Row(visible=False):
+            self.cbg_hidden_dataset_filter = gr.State(value=[])
+            self.nb_hidden_dataset_filter_apply = gr.Number(label='Filter Apply', value=-1)
             self.btn_hidden_set_index = gr.Button(elem_id="dataset_tag_editor_btn_hidden_set_index")
             self.nb_hidden_image_index = gr.Number(value=None, label='hidden_idx_next')
             self.nb_hidden_image_index_prev = gr.Number(value=None, label='hidden_idx_prev')
@@ -61,6 +63,10 @@ class DatasetGalleryUI(UIBase):
             fn=self.func_to_set_value('selected_index_prev', int),
             inputs=self.nb_hidden_image_index_prev
         )
-    
-
-
+        
+        self.nb_hidden_dataset_filter_apply.change(
+            fn=lambda a, b: [a, b],
+            _js='(x, y) => [y>=0 ? dataset_tag_editor_gl_dataset_images_filter(x) : x, -1]',
+            inputs=[self.cbg_hidden_dataset_filter, self.nb_hidden_dataset_filter_apply],
+            outputs=[self.cbg_hidden_dataset_filter, self.nb_hidden_dataset_filter_apply]
+        )
