@@ -137,7 +137,8 @@ document.addEventListener("DOMContentLoaded", function () {
             dteModifiedGallery_filter.addClickNextHandler(dataset_tag_editor_gl_filter_images_next_clicked)
             dteModifiedGallery_filter.addClickCloseHandler(dataset_tag_editor_gl_filter_images_close_clicked)
         }
-
+        
+        if(gradioApp().getElementById('settings_json') == null) return
         function changeTokenCounterPos(id, id_counter){
             var prompt = gradioApp().getElementById(id)
             var counter = gradioApp().getElementById(id_counter)
