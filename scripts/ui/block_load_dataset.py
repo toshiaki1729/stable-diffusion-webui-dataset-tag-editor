@@ -29,6 +29,8 @@ class LoadDatasetUI(UIBase):
                     self.caption_file_ext = cfg_general.caption_ext
                 with gr.Column(scale=1, min_width=80):
                     self.btn_load_datasets = gr.Button(value='Load')
+                with gr.Column(scale=1, min_width=80):
+                    self.btn_unload_datasets = gr.Button(value='Unload')
             with gr.Accordion(label='Dataset Load Settings'):
                 with gr.Row():
                     with gr.Column():
@@ -94,5 +96,21 @@ class LoadDatasetUI(UIBase):
             o_update_filter_and_gallery
         )
 
+        def unload_files():
+            dte_instance.clear()
+            return [
+                [],
+                []
+            ] +\
+            [gr.CheckboxGroup.update(value=[], choices=[]), 1] +\
+            filter_by_tags.clear_filters(update_filter_and_gallery) +\
+            [batch_edit_captions.tag_select_ui_remove.cbg_tags_update()]
 
+        self.btn_unload_datasets.click(
+            fn=unload_files,
+            outputs=
+            [dataset_gallery.gl_dataset_images, filter_by_selection.gl_filter_images] +
+            [dataset_gallery.cbg_hidden_dataset_filter, dataset_gallery.nb_hidden_dataset_filter_apply] +
+            o_update_filter_and_gallery
+        )
 

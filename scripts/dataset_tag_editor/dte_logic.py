@@ -652,6 +652,9 @@ class DatasetTagEditor(Singleton):
         self.tag_tokens.clear()
         self.img_idx.clear()
         self.dataset_dir = ''
+        for img in self.images:
+            if isinstance(img, Image.Image):
+                img.close()
         self.images.clear()
 
 
