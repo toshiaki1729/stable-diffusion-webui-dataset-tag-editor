@@ -18,7 +18,7 @@ WD_TAGGER_THRESHOLDS = [0.35, 0.35, 0.3537, 0.3685, 0.3771] # v1: idk if it's ok
 INTERROGATORS = [captioning.BLIP(), tagger.DeepDanbooru()] + [tagger.WaifuDiffusion(name, WD_TAGGER_THRESHOLDS[i]) for i, name in enumerate(WD_TAGGER_NAMES)]
 INTERROGATOR_NAMES = [it.name() for it in INTERROGATORS]
 
-re_tags = re.compile(r'^(.+?)( \[\d+\])?$')
+re_tags = re.compile(r'^([\s\S]+?)( \[\d+\])?$')
 
 
 def interrogate_image(path:str, interrogator_name:str, threshold_booru, threshold_wd):
