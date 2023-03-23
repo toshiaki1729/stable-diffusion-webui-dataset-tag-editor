@@ -35,6 +35,7 @@ class LoadDatasetUI(UIBase):
                     with gr.Column():
                         self.cb_load_recursive = gr.Checkbox(value=cfg_general.load_recursive, label='Load from subdirectories')
                         self.cb_load_caption_from_filename = gr.Checkbox(value=cfg_general.load_caption_from_filename, label='Load caption from filename if no text file exists')
+                        self.cb_replace_new_line_with_comma = gr.Checkbox(value=cfg_general.replace_new_line, label='Replace new-line character with comma')
                     with gr.Column():
                         self.rb_use_interrogator = gr.Radio(choices=['No', 'If Empty', 'Overwrite', 'Prepend', 'Append'], value=cfg_general.use_interrogator, label='Use Interrogator Caption')
                         self.dd_intterogator_names = gr.Dropdown(label = 'Interrogators', choices=INTERROGATOR_NAMES, value=cfg_general.use_interrogator_names, interactive=True, multiselect=True)
@@ -52,6 +53,7 @@ class LoadDatasetUI(UIBase):
             caption_file_ext: str,
             recursive: bool,
             load_caption_from_filename: bool,
+            replace_new_line: bool,
             use_interrogator: str,
             use_interrogator_names: List[str],
             use_custom_threshold_booru: bool,
@@ -75,7 +77,7 @@ class LoadDatasetUI(UIBase):
             threshold_booru = custom_threshold_booru if use_custom_threshold_booru else shared.opts.interrogate_deepbooru_score_threshold
             threshold_waifu = custom_threshold_waifu if use_custom_threshold_waifu else -1
 
-            dte_instance.load_dataset(dir, caption_file_ext, recursive, load_caption_from_filename, interrogate_method, use_interrogator_names, threshold_booru, threshold_waifu, opts.dataset_editor_use_temp_files, kohya_json_path if use_kohya_metadata else None)
+            dte_instance.load_dataset(dir, caption_file_ext, recursive, load_caption_from_filename, replace_new_line, interrogate_method, use_interrogator_names, threshold_booru, threshold_waifu, opts.dataset_editor_use_temp_files, kohya_json_path if use_kohya_metadata else None)
             imgs = dte_instance.get_filtered_imgs(filters=[])
             img_indices = dte_instance.get_filtered_imgindices(filters=[])
             return [
@@ -88,7 +90,7 @@ class LoadDatasetUI(UIBase):
         
         self.btn_load_datasets.click(
             fn=load_files_from_dir,
-            inputs=[self.tb_img_directory, self.tb_caption_file_ext, self.cb_load_recursive, self.cb_load_caption_from_filename, self.rb_use_interrogator, self.dd_intterogator_names, self.cb_use_custom_threshold_booru, self.sl_custom_threshold_booru, self.cb_use_custom_threshold_waifu, self.sl_custom_threshold_waifu, toprow.cb_save_kohya_metadata, toprow.tb_metadata_output],
+            inputs=[self.tb_img_directory, self.tb_caption_file_ext, self.cb_load_recursive, self.cb_load_caption_from_filename, self.cb_replace_new_line_with_comma, self.rb_use_interrogator, self.dd_intterogator_names, self.cb_use_custom_threshold_booru, self.sl_custom_threshold_booru, self.cb_use_custom_threshold_waifu, self.sl_custom_threshold_waifu, toprow.cb_save_kohya_metadata, toprow.tb_metadata_output],
             outputs=
             [dataset_gallery.gl_dataset_images, filter_by_selection.gl_filter_images] +
             [dataset_gallery.cbg_hidden_dataset_filter, dataset_gallery.nb_hidden_dataset_filter_apply] +

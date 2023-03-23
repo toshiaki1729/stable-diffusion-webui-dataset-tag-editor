@@ -19,6 +19,7 @@ INTERROGATORS = [captioning.BLIP(), tagger.DeepDanbooru()] + [tagger.WaifuDiffus
 INTERROGATOR_NAMES = [it.name() for it in INTERROGATORS]
 
 re_tags = re.compile(r'^([\s\S]+?)( \[\d+\])?$')
+re_newlines = re.compile(r'[\r\n]+')
 
 
 def interrogate_image(path:str, interrogator_name:str, threshold_booru, threshold_wd):
@@ -481,7 +482,7 @@ class DatasetTagEditor(Singleton):
                 print(e)
 
 
-    def load_dataset(self, img_dir:str, caption_ext:str, recursive:bool, load_caption_from_filename:bool, interrogate_method:InterrogateMethod, interrogator_names:List[str], threshold_booru:float, threshold_waifu:float, use_temp_dir:bool, kohya_json_path:Optional[str]):
+    def load_dataset(self, img_dir:str, caption_ext:str, recursive:bool, load_caption_from_filename:bool, replace_new_line:bool, interrogate_method:InterrogateMethod, interrogator_names:List[str], threshold_booru:float, threshold_waifu:float, use_temp_dir:bool, kohya_json_path:Optional[str]):
         self.clear()
 
         img_dir_obj = Path(img_dir)
@@ -537,6 +538,9 @@ class DatasetTagEditor(Singleton):
                         if self.re_word:
                             tokens = self.re_word.findall(caption_text)
                             caption_text = (shared.opts.dataset_filename_join_string or "").join(tokens)
+                
+                if replace_new_line:
+                    caption_text = re_newlines.sub(',', caption_text)
                 
                 caption_tags =  [t.strip() for t in caption_text.split(',')]
                 caption_tags = [t for t in caption_tags if t]
