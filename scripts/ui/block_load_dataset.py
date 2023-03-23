@@ -29,7 +29,6 @@ class LoadDatasetUI(UIBase):
                     self.caption_file_ext = cfg_general.caption_ext
                 with gr.Column(scale=1, min_width=80):
                     self.btn_load_datasets = gr.Button(value='Load')
-                with gr.Column(scale=1, min_width=80):
                     self.btn_unload_datasets = gr.Button(value='Unload')
             with gr.Accordion(label='Dataset Load Settings'):
                 with gr.Row():
