@@ -55,7 +55,7 @@ class LoadDatasetUI(UIBase):
             load_caption_from_filename: bool,
             replace_new_line: bool,
             use_interrogator: str,
-            use_interrogator_names: List[str],
+            use_interrogator_names, #: List[str], : to avoid error on gradio v3.23.0
             use_custom_threshold_booru: bool,
             custom_threshold_booru: float,
             use_custom_threshold_waifu: bool,
