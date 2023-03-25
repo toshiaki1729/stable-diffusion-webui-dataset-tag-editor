@@ -61,7 +61,11 @@ class MoveOrDeleteFilesUI(UIBase):
 
         self.rb_move_or_delete_target_data.change(**update_args)
 
-        def move_files(target_data: str, target_file: List[str], caption_ext: str, dest_dir: str):
+        def move_files(
+                target_data: str,
+                target_file, #: List[str], : to avoid error on gradio v3.23.0
+                caption_ext: str,
+                dest_dir: str):
             move_img = 'Image File' in target_file
             move_txt = 'Caption Text File' in target_file
             move_bak = 'Caption Backup File' in target_file
@@ -87,7 +91,10 @@ class MoveOrDeleteFilesUI(UIBase):
             _js='() => dataset_tag_editor_gl_dataset_images_close()'
         )
 
-        def delete_files(target_data: str, target_file: List[str], caption_ext: str):
+        def delete_files(
+                target_data: str,
+                target_file, #: List[str], : to avoid error on gradio v3.23.0
+                caption_ext: str):
             delete_img = 'Image File' in target_file
             delete_txt = 'Caption Text File' in target_file
             delete_bak = 'Caption Backup File' in target_file
