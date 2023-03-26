@@ -8,8 +8,10 @@ class DTEModifiedGallery{
 
     setElement(elem){
         this.#elem = elem;
-        this.#items_grid = this.#elem.querySelectorAll('div.grid button.gallery-item')
-        this.#items_selector = this.#elem.querySelectorAll('div.absolute.overflow-x-scroll button.gallery-item')
+        this.#items_grid = this.#elem.querySelectorAll('div.grid-wrap > div.grid-container > button.thumbnail-item')
+        this.#items_selector = this.#elem.querySelectorAll('div.preview > div.thumbnails > button.thumbnail-item')
+        console.log(this.#items_grid)
+        console.log(this.#items_selector)
     }
 
     updateFilter(){
@@ -51,7 +53,7 @@ class DTEModifiedGallery{
     getVisibleSelectedIndex(){
         if (!this.#elem || !this.#items_selector) return -1;
 
-        let button = this.#elem.querySelector('.gallery-item.\\!ring-2')
+        let button = this.#elem.querySelector('.gradio-gallery .thumbnail-item.selected')
         
         for (let i = 0; i < this.#items_selector.length; ++i){
             if (this.#items_selector[i] == button){
@@ -108,7 +110,7 @@ class DTEModifiedGallery{
                 }
             case 'Escape':
                 {
-                    let imgPreview_close = this.#elem.querySelector('div.modify-upload button')
+                    let imgPreview_close = this.#elem.querySelector('div.preview > div > button[class^="svelte"]')
                     if (imgPreview_close != null) {
                         imgPreview_close.click()
                     }
@@ -184,10 +186,10 @@ class DTEModifiedGallery{
     addClickNextHandler(callback_clicked){
         if (!this.#elem) return;
         
-        let fullImg_preview = this.#elem.querySelectorAll('img.w-full.object-contain')
+        let fullImg_preview = this.#elem.querySelectorAll('div.preview > img')
         if (fullImg_preview != null) {
             fullImg_preview.forEach(function (e) {
-                if (e && e.parentElement.tagName == 'DIV') {
+                if (e) {
                     e.addEventListener('click', callback_clicked, false);
                 }
             });
@@ -198,10 +200,10 @@ class DTEModifiedGallery{
     addClickCloseHandler(callback_clicked){
         if (!this.#elem) return;
         
-        let imgPreview_close = this.#elem.querySelectorAll('div.modify-upload button')
+        let imgPreview_close = this.#elem.querySelectorAll('div.preview > div > button[class^="svelte"]')
         if (imgPreview_close != null) {
             imgPreview_close.forEach(function (e) {
-                if (e && e.parentElement.tagName == 'DIV') {
+                if (e) {
                     e.addEventListener('click', callback_clicked, false);
                 }
             });
@@ -212,10 +214,10 @@ class DTEModifiedGallery{
     clickClose(){
         if (!this.#elem) return;
         
-        let imgPreview_close = this.#elem.querySelectorAll('div.modify-upload button')
+        let imgPreview_close = this.#elem.querySelectorAll('div.preview > div > button[class^="svelte"]')
         if (imgPreview_close != null) {
             imgPreview_close.forEach(function (e) {
-                if (e && e.parentElement.tagName == 'DIV') {
+                if (e) {
                     e.click()
                 }
             });

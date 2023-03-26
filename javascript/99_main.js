@@ -148,7 +148,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
     
             prompt.parentElement.insertBefore(counter, prompt)
-            counter.classList.add("token-counter-dte")
             prompt.parentElement.style.position = "relative"
             counter.style.width = "auto"
         }

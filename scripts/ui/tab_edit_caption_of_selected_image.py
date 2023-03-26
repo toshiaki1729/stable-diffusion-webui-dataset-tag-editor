@@ -27,7 +27,7 @@ class EditCaptionOfSelectedImageUI(UIBase):
             self.btn_hidden_save_caption = gr.Button(elem_id="dataset_tag_editor_btn_hidden_save_caption")
         with gr.Tab(label='Read Caption from Selected Image'):
             self.tb_caption = gr.Textbox(label='Caption of Selected Image', interactive=False, lines=6, elem_id='dte_caption')
-            self.token_counter_caption = gr.HTML(value='<span></span>', elem_id='dte_caption_counter')
+            self.token_counter_caption = gr.HTML(value='<span>0/75</span>', elem_id='dte_caption_counter', elem_classes=["token-counter-dte"])
             with gr.Row():
                 self.btn_copy_caption = gr.Button(value='Copy and Overwrite')
                 self.btn_prepend_caption = gr.Button(value='Prepend')
@@ -53,7 +53,7 @@ class EditCaptionOfSelectedImageUI(UIBase):
             self.cb_ask_save_when_caption_changed = gr.Checkbox(value=cfg_edit_selected.warn_change_not_saved, label='Warn if changes in caption is not saved')
         with gr.Column():
             self.tb_edit_caption = gr.Textbox(label='Edit Caption', interactive=True, lines=6, elem_id= 'dte_edit_caption')
-            self.token_counter_edit_caption = gr.HTML(value='<span></span>', elem_id='dte_edit_caption_counter')
+            self.token_counter_edit_caption = gr.HTML(value='<span>0/75</span>', elem_id='dte_edit_caption_counter', elem_classes=["token-counter-dte"])
         self.btn_apply_changes_selected_image = gr.Button(value='Apply changes to selected image', variant='primary')
         self.btn_apply_changes_all_images = gr.Button(value='Apply changes to ALL displayed images', variant='primary')
 
