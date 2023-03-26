@@ -108,7 +108,9 @@ class TagFilterUI():
         return self.cbg_tags_update()
 
 
-    def cbg_tags_changed(self, cbg_tags: List[str]):
+    def cbg_tags_changed(self,
+                         cbg_tags#: List[str]
+                         ):
         self.selected_tags = dte_instance.cleanup_tagset(set(dte_instance.read_tags(cbg_tags)))
         return self.cbg_tags_update()
 
