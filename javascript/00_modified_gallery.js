@@ -10,8 +10,6 @@ class DTEModifiedGallery{
         this.#elem = elem;
         this.#items_grid = this.#elem.querySelectorAll('div.grid-wrap > div.grid-container > button.thumbnail-item')
         this.#items_selector = this.#elem.querySelectorAll('div.preview > div.thumbnails > button.thumbnail-item')
-        console.log(this.#items_grid)
-        console.log(this.#items_selector)
     }
 
     updateFilter(){
