@@ -1,5 +1,8 @@
 # Dataset Tag Editor
 
+**Due to gradio update on webUI, the latest version don't support old webUI.**  
+Please see [Releases](https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-editor/releases) page and check the compatibility with webUI you are using.
+
 [日本語 Readme](README-JP.md)
 
 This is an extension to edit captions in training dataset for [Stable Diffusion web UI by AUTOMATIC1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui).
