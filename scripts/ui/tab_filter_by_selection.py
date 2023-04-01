@@ -56,7 +56,7 @@ class FilterBySelectionUI(UIBase):
         
         self.btn_hidden_set_selection_index.click(
             fn=selection_index_changed,
-            _js="(x) => [dataset_tag_editor_gl_filter_images_selected_index()]",
+            _js="(x) => dataset_tag_editor_gl_filter_images_selected_index()",
             inputs=[self.nb_hidden_selection_image_index],
             outputs=[self.txt_selection, self.nb_hidden_selection_image_index]
         )
