@@ -339,6 +339,7 @@ def on_ui_tabs():
 def on_ui_settings():
     section = ('dataset-tag-editor', "Dataset Tag Editor")
     shared.opts.add_option("dataset_editor_image_columns", shared.OptionInfo(6, "Number of columns on image gallery", section=section))
+    shared.opts.add_option("dataset_editor_max_res", shared.OptionInfo(0, "Max resolution of temporary files", section=section))
     shared.opts.add_option("dataset_editor_use_temp_files", shared.OptionInfo(False, "Force image gallery to use temporary files", section=section))
     shared.opts.add_option("dataset_editor_use_raw_clip_token", shared.OptionInfo(True, "Use raw CLIP token to calculate token count (without emphasis or embeddings)", section=section))
 

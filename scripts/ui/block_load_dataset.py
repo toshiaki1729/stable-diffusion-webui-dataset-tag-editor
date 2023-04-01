@@ -77,7 +77,7 @@ class LoadDatasetUI(UIBase):
             threshold_booru = custom_threshold_booru if use_custom_threshold_booru else shared.opts.interrogate_deepbooru_score_threshold
             threshold_waifu = custom_threshold_waifu if use_custom_threshold_waifu else -1
 
-            dte_instance.load_dataset(dir, caption_file_ext, recursive, load_caption_from_filename, replace_new_line, interrogate_method, use_interrogator_names, threshold_booru, threshold_waifu, opts.dataset_editor_use_temp_files, kohya_json_path if use_kohya_metadata else None)
+            dte_instance.load_dataset(dir, caption_file_ext, recursive, load_caption_from_filename, replace_new_line, interrogate_method, use_interrogator_names, threshold_booru, threshold_waifu, opts.dataset_editor_use_temp_files, kohya_json_path if use_kohya_metadata else None, opts.dataset_editor_max_res)
             imgs = dte_instance.get_filtered_imgs(filters=[])
             img_indices = dte_instance.get_filtered_imgindices(filters=[])
             return [
