@@ -482,7 +482,7 @@ class DatasetTagEditor(Singleton):
                 print(e)
 
 
-    def load_dataset(self, img_dir:str, caption_ext:str, recursive:bool, load_caption_from_filename:bool, replace_new_line:bool, interrogate_method:InterrogateMethod, interrogator_names:List[str], threshold_booru:float, threshold_waifu:float, use_temp_dir:bool, kohya_json_path:Optional[str]):
+    def load_dataset(self, img_dir:str, caption_ext:str, recursive:bool, load_caption_from_filename:bool, replace_new_line:bool, interrogate_method:InterrogateMethod, interrogator_names:List[str], threshold_booru:float, threshold_waifu:float, use_temp_dir:bool, kohya_json_path:Optional[str], max_res:float):
         self.clear()
 
         img_dir_obj = Path(img_dir)
@@ -511,11 +511,14 @@ class DatasetTagEditor(Singleton):
                     continue
                 try:
                     img = Image.open(img_path)
+                    if (max_res > 0):
+                        img_res = int(max_res), int(max_res)
+                        img.thumbnail(img_res)
                 except:
                     continue
                 else:
                     abs_path = str(img_path.absolute())
-                    if not use_temp_dir:
+                    if not use_temp_dir and max_res <= 0:
                         img.already_saved_as = abs_path
                     images[abs_path] = img
                 
