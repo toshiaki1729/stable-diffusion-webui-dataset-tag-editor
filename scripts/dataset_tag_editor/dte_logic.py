@@ -518,7 +518,7 @@ class DatasetTagEditor(Singleton):
                     continue
                 else:
                     abs_path = str(img_path.absolute())
-                    if not use_temp_dir:
+                    if not use_temp_dir and max_res <= 0:
                         img.already_saved_as = abs_path
                     images[abs_path] = img
                 
