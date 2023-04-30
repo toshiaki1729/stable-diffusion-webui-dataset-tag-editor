@@ -1,4 +1,6 @@
 # Dataset Tag Editor
+[**スタンドアロン版はこちらです**](https://github.com/toshiaki1729/dataset-tag-editor-standalone): いくつかの既知のバグを回避するのに有効かもしれません。
+
 
 [English Readme](README.md)
 
