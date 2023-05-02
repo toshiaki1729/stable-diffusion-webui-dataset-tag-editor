@@ -107,6 +107,13 @@ Please note that all batch editing will be applyed **only to displayed images (=
   A comma will be regarded as the sepalator of two tags.  
   By using regex, you can add/replace/remove tags according to more complex conditions.
 
+
+## Trouble shooting
+### Cannot see any image in dataset and saying "All files must contained within the Gradio python app working directory…"
+Set folder to store temporaly image in the "Settings" tab.
+Input path in "Directory to save temporary files" and check "Force using temporary file…"
+
+
 ## Description of Display
 
 Moved to [here](DESCRIPTION_OF_DISPLAY.md)

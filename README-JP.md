@@ -106,6 +106,12 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
   正規表現（regex）を使うと、複雑な条件に応じてタグの編集が可能です。
 
 
+## トラブルシューティング
+### ギャラリーに画像が表示されず、コンソールに "All files must contained within the Gradio python app working directory…" と出ている
+"Settings" タブで、サムネイル画像を一時保存するフォルダを指定してください。
+"Directory to save temporary files" にパスを指定して "Force using temporary file…" をチェックしてください。
+
+
 ## 表示内容
 
 [こちら](DESCRIPTION_OF_DISPLAY-JP.md)に移動しました
