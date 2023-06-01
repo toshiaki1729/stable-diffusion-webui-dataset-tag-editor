@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from collections import namedtuple
 
-import scripts.ui as ui
+import scripts.tag_editor_ui as ui
 from scripts.dte_instance import dte_instance
 
 # ================================================================
