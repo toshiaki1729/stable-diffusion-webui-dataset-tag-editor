@@ -32,7 +32,7 @@ class FilterBySelectionUI(UIBase):
                 self.btn_add_image_selection = gr.Button(value='Add selection [Enter]', elem_id='dataset_tag_editor_btn_add_image_selection')    
                 self.btn_add_all_displayed_image_selection = gr.Button(value='Add ALL Displayed')    
 
-            self.gl_filter_images = gr.Gallery(label='Filter Images', elem_id="dataset_tag_editor_filter_gallery").style(grid=image_columns)
+            self.gl_filter_images = gr.Gallery(label='Filter Images', elem_id="dataset_tag_editor_filter_gallery", grid=image_columns)
             self.txt_selection = gr.HTML(value=self.get_current_txt_selection())
 
             with gr.Row():

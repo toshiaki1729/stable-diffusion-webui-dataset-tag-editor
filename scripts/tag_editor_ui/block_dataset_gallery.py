@@ -22,7 +22,7 @@ class DatasetGalleryUI(UIBase):
             self.btn_hidden_set_index = gr.Button(elem_id="dataset_tag_editor_btn_hidden_set_index")
             self.nb_hidden_image_index = gr.Number(value=None, label='hidden_idx_next')
             self.nb_hidden_image_index_prev = gr.Number(value=None, label='hidden_idx_prev')
-        self.gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_dataset_gallery").style(grid=image_columns)
+        self.gl_dataset_images = gr.Gallery(label='Dataset Images', elem_id="dataset_tag_editor_dataset_gallery", grid=image_columns)
     
     def set_callbacks(self, load_dataset:LoadDatasetUI, gallery_state:GalleryStateUI, get_filters:Callable[[], dte_module.filters.Filter]):
         gallery_state.register_value('Selected Image', self.selected_path)
