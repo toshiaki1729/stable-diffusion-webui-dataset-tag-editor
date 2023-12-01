@@ -12,8 +12,8 @@ from scripts.singleton import Singleton
 from . import tagger, captioning, filters, dataset as ds, kohya_finetune_metadata as kohya_metadata
 from scripts.tokenizer import clip_tokenizer
 
-WD_TAGGER_NAMES = ["wd-v1-4-vit-tagger", "wd-v1-4-convnext-tagger", "wd-v1-4-vit-tagger-v2", "wd-v1-4-convnext-tagger-v2", "wd-v1-4-swinv2-tagger-v2"]
-WD_TAGGER_THRESHOLDS = [0.35, 0.35, 0.3537, 0.3685, 0.3771] # v1: idk if it's okay  v2: P=R thresholds on each repo https://huggingface.co/SmilingWolf
+WD_TAGGER_NAMES = ["wd-v1-4-vit-tagger", "wd-v1-4-convnext-tagger", "wd-v1-4-vit-tagger-v2", "wd-v1-4-convnext-tagger-v2", "wd-v1-4-convnextv2-tagger-v2", "wd-v1-4-swinv2-tagger-v2"]
+WD_TAGGER_THRESHOLDS = [0.35, 0.35, 0.3537, 0.3685, 0.3685, 0.3771] # v1: idk if it's okay  v2: P=R thresholds on each repo https://huggingface.co/SmilingWolf
 
 INTERROGATORS = [captioning.BLIP(), tagger.DeepDanbooru()] + [tagger.WaifuDiffusion(name, WD_TAGGER_THRESHOLDS[i]) for i, name in enumerate(WD_TAGGER_NAMES)]
 INTERROGATOR_NAMES = [it.name() for it in INTERROGATORS]
