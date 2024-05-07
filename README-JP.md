@@ -40,7 +40,9 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 - タグまたはキャプション全体について一括置換ができます
   - [正規表現](https://docs.python.org/ja/3/library/re.html#regular-expression-syntax) が利用可能です
 - Interrogatorを使用してタグの追加や編集ができます
-  - BLIP、DeepDanbooru、[WDv1.4 Tagger](https://huggingface.co/SmilingWolf)の各ネットワークによる学習結果（v1, v2）が使用可能です
+  - BLIP、DeepDanbooru、[Z3D-E621-Convnext](https://huggingface.co/toynya/Z3D-E621-Convnext)、 [WDv1.4 Tagger](https://huggingface.co/SmilingWolf)の各ネットワークによる学習結果（v1, v2, v3）が使用可能です
+- お好みのTaggerを `userscripts/taggers` に追加できます (`scripts.tagger.Tagger`を継承したクラスでラップしてください)
+  - 当該フォルダにAesthetic Scoreに基づいたTaggerをいくつか実装しています
 - 画像やキャプションファイルの一括移動・削除ができます
 
 
