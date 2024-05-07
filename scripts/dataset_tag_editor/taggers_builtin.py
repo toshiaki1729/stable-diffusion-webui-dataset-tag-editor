@@ -19,7 +19,6 @@ class BLIP(Tagger):
         shared.interrogator.unload()
 
     def predict(self, image:Image.Image, threshold=None):
-        print(image)
         tags = shared.interrogator.generate_caption(image).split(',')
         return [t for t in tags if t]
     
