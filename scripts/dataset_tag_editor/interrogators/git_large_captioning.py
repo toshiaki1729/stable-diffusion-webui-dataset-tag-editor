@@ -1,6 +1,8 @@
 from transformers import AutoProcessor, AutoModelForCausalLM
 from modules import shared, devices, lowvram
 
+from scripts.paths import paths
+
 
 # brought from https://huggingface.co/docs/transformers/main/en/model_doc/git and modified
 class GITLargeCaptioning:
@@ -12,10 +14,12 @@ class GITLargeCaptioning:
 
     def load(self):
         if self.model is None or self.processor is None:
-            self.processor = AutoProcessor.from_pretrained(self.MODEL_REPO)
-            self.model = AutoModelForCausalLM.from_pretrained(self.MODEL_REPO).to(
-                shared.device
+            self.processor = AutoProcessor.from_pretrained(
+                self.MODEL_REPO, cache_dir=paths.model_path
             )
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.MODEL_REPO, cache_dir=paths.model_path
+            ).to(shared.device)
         lowvram.send_everything_to_cpu()
 
     def unload(self):

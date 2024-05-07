@@ -4,6 +4,8 @@ from typing import List, Tuple
 from modules import shared, devices
 import launch
 
+from scripts.paths import paths
+
 
 class WaifuDiffusionTagger:
     # brought from https://huggingface.co/spaces/SmilingWolf/wd-v1-4-tags/blob/main/app.py and modified
@@ -24,7 +26,7 @@ class WaifuDiffusionTagger:
 
         if not self.model:
             path_model = huggingface_hub.hf_hub_download(
-                self.MODEL_REPO, self.MODEL_FILENAME
+                self.MODEL_REPO, self.MODEL_FILENAME, cache_dir=paths.model_path
             )
             if (
                 "all" in shared.cmd_opts.use_cpu
