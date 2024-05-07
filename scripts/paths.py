@@ -13,5 +13,6 @@ class Paths(Singleton):
         self.base_path:Path = base_dir_path()
         self.script_path: Path = self.base_path / "scripts"
         self.userscript_path: Path = self.base_path / "userscripts"
+        self.model_path = self.base_path / "models"
 
 paths = Paths()

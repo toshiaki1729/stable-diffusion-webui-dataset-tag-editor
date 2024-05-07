@@ -13,10 +13,10 @@ class BLIP2Captioning:
     def load(self):
         if self.model is None or self.processor is None:
             self.processor = Blip2Processor.from_pretrained(
-                self.MODEL_REPO, cache_dir=paths.setting_model_path
+                self.MODEL_REPO, cache_dir=paths.model_path / "aesthetic"
             )
             self.model = Blip2ForConditionalGeneration.from_pretrained(
-                self.MODEL_REPO, cache_dir=paths.setting_model_path
+                self.MODEL_REPO, cache_dir=paths.model_path / "aesthetic"
             ).to(devices.device)
 
     def unload(self):
