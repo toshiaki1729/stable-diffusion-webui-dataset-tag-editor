@@ -32,7 +32,7 @@ class FilterBySelectionUI(UIBase):
                 self.btn_add_image_selection = gr.Button(value='Add selection [Enter]', elem_id='dataset_tag_editor_btn_add_image_selection')    
                 self.btn_add_all_displayed_image_selection = gr.Button(value='Add ALL Displayed')    
 
-            self.gl_filter_images = gr.Gallery(label='Filter Images', elem_id="dataset_tag_editor_filter_gallery").style(grid=image_columns)
+            self.gl_filter_images = gr.Gallery(label='Filter Images', elem_id="dataset_tag_editor_filter_gallery", columns=image_columns)
             self.txt_selection = gr.HTML(value=self.get_current_txt_selection())
 
             with gr.Row():
@@ -130,7 +130,7 @@ class FilterBySelectionUI(UIBase):
             self.path_filter = filters.PathFilter()
             return clear_image_selection() + update_filter_and_gallery()
 
-        filter_by_tags.btn_clear_all_filters.click(
+        filter_by_tags.btn_clear_all_filters.click(lambda:None).then(
             fn=clear_image_filter,
             outputs=
             [self.gl_filter_images, self.txt_selection, self.nb_hidden_selection_image_index] +
@@ -147,8 +147,7 @@ class FilterBySelectionUI(UIBase):
         self.btn_apply_image_selection_filter.click(
             fn=apply_image_selection_filter,
             outputs=o_update_filter_and_gallery
-        )
-        self.btn_apply_image_selection_filter.click(
+        ).then(
             fn=None,
             _js='() => dataset_tag_editor_gl_dataset_images_close()'
         )

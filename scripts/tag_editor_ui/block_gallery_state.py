@@ -28,7 +28,7 @@ class GalleryStateUI(UIBase):
         self.txt_gallery = gr.HTML(value=self.get_current_gallery_txt())
 
     def set_callbacks(self, dataset_gallery:DatasetGalleryUI):
-        dataset_gallery.nb_hidden_image_index.change(
+        dataset_gallery.nb_hidden_image_index.change(fn=lambda:None).then(
             fn=self.update_gallery_txt,
             inputs=None,
             outputs=self.txt_gallery

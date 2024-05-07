@@ -95,8 +95,7 @@ class BatchEditCaptionsUI(UIBase):
             fn=apply_edit_tags,
             inputs=[self.tb_common_tags, self.tb_edit_tags, self.cb_prepend_tags],
             outputs=o_update_filter_and_gallery
-        )
-        self.btn_apply_edit_tags.click(
+        ).then(
             fn=None,
             _js='() => dataset_tag_editor_gl_dataset_images_close()'
         )
@@ -124,8 +123,7 @@ class BatchEditCaptionsUI(UIBase):
             fn=search_and_replace,
             inputs=[self.tb_sr_search_tags, self.tb_sr_replace_tags, self.rb_sr_replace_target, self.cb_use_regex],
             outputs=o_update_filter_and_gallery
-        )
-        self.btn_apply_sr_tags.click(
+        ).then(
             fn=None,
             _js='() => dataset_tag_editor_gl_dataset_images_close()'
         )

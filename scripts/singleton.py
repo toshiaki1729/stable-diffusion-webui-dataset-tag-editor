@@ -1,6 +1,6 @@
 class Singleton(object):
-    @classmethod
-    def get_instance(cls):
-        if not hasattr(cls, "_instance"):
-            cls._instance = cls()
-        return cls._instance
+    _instance = None
+    def __new__(class_, *args, **kwargs):
+        if not isinstance(class_._instance, class_):
+            class_._instance = object.__new__(class_, *args, **kwargs)
+        return class_._instance

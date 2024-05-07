@@ -66,10 +66,10 @@ class TagFilterUI():
 
         self.rb_logic.change(fn=self.rd_logic_changed, inputs=[self.rb_logic], outputs=[self.cbg_tags])
         for fn, inputs, outputs, _js in self.on_filter_update_callbacks:
-            self.rb_logic.change(fn=fn, inputs=inputs, outputs=outputs, _js=_js)
+            self.rb_logic.change(fn=lambda:None).then(fn=fn, inputs=inputs, outputs=outputs, _js=_js)
         self.cbg_tags.change(fn=self.cbg_tags_changed, inputs=[self.cbg_tags], outputs=[self.cbg_tags])
         for fn, inputs, outputs, _js in self.on_filter_update_callbacks:
-            self.cbg_tags.change(fn=fn, inputs=inputs, outputs=outputs, _js=_js)
+            self.cbg_tags.change(fn=lambda:None).then(fn=fn, inputs=inputs, outputs=outputs, _js=_js)
 
 
     def tb_search_tags_changed(self, tb_search_tags: str):
