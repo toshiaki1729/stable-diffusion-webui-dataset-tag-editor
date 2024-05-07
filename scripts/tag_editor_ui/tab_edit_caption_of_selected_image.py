@@ -35,7 +35,7 @@ class EditCaptionOfSelectedImageUI(UIBase):
             
         with gr.Tab(label='Interrogate Selected Image'):
             with gr.Row():
-                self.dd_intterogator_names_si = gr.Dropdown(label = 'Interrogator', choices=dte_module.INTERROGATOR_NAMES, value=cfg_edit_selected.use_interrogator_name, interactive=True, multiselect=False)
+                self.dd_intterogator_names_si = gr.Dropdown(label = 'Interrogator', choices=dte_instance.INTERROGATOR_NAMES, value=cfg_edit_selected.use_interrogator_name, interactive=True, multiselect=False)
                 self.btn_interrogate_si = gr.Button(value='Interrogate')
             with gr.Column():
                 self.tb_interrogate = gr.Textbox(label='Interrogate Result', interactive=True, lines=6, elem_id='dte_interrogate')
@@ -89,7 +89,7 @@ class EditCaptionOfSelectedImageUI(UIBase):
             _js='(a) => dataset_tag_editor_ask_save_change_or_not(a)',
             inputs=self.nb_hidden_image_index_save_or_not
         )
-        dataset_gallery.nb_hidden_image_index.change(
+        dataset_gallery.nb_hidden_image_index.change(lambda:None).then(
             fn=gallery_index_changed,
             inputs=[dataset_gallery.nb_hidden_image_index, dataset_gallery.nb_hidden_image_index_prev, self.tb_edit_caption, self.cb_copy_caption_automatically, self.cb_ask_save_when_caption_changed],
             outputs=[self.nb_hidden_image_index_save_or_not] + [self.tb_caption, self.tb_edit_caption] + [self.tb_hidden_edit_caption]
@@ -138,7 +138,7 @@ class EditCaptionOfSelectedImageUI(UIBase):
                 return ''
             threshold_booru = threshold_booru if use_threshold_booru else shared.opts.interrogate_deepbooru_score_threshold
             threshold_waifu = threshold_waifu if use_threshold_waifu else -1
-            return dte_module.interrogate_image(dataset_gallery.selected_path, interrogator_name, threshold_booru, threshold_waifu)
+            return dte_instance.interrogate_image(dataset_gallery.selected_path, interrogator_name, threshold_booru, threshold_waifu)
 
         self.btn_interrogate_si.click(
             fn=interrogate_selected_image,

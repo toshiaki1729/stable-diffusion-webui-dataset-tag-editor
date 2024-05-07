@@ -47,17 +47,17 @@ class MoveOrDeleteFilesUI(UIBase):
             'outputs' : [self.ta_move_or_delete_target_dataset_num]
         }
 
-        batch_edit_captions.btn_apply_edit_tags.click(**update_args)
+        batch_edit_captions.btn_apply_edit_tags.click(lambda:None).then(**update_args)
 
-        batch_edit_captions.btn_apply_sr_tags.click(**update_args)
+        batch_edit_captions.btn_apply_sr_tags.click(lambda:None).then(**update_args)
 
-        filter_by_selection.btn_apply_image_selection_filter.click(**update_args)
+        filter_by_selection.btn_apply_image_selection_filter.click(lambda:None).then(**update_args)
 
-        filter_by_tags.btn_clear_tag_filters.click(**update_args)
+        filter_by_tags.btn_clear_tag_filters.click(lambda:None).then(**update_args)
 
-        filter_by_tags.btn_clear_all_filters.click(**update_args)
+        filter_by_tags.btn_clear_all_filters.click(lambda:None).then(**update_args)
         
-        edit_caption_of_selected_image.btn_apply_changes_selected_image.click(**update_args)
+        edit_caption_of_selected_image.btn_apply_changes_selected_image.click(lambda:None).then(**update_args)
 
         self.rb_move_or_delete_target_data.change(**update_args)
 
@@ -84,9 +84,7 @@ class MoveOrDeleteFilesUI(UIBase):
             fn=move_files,
             inputs=[self.rb_move_or_delete_target_data, self.cbg_move_or_delete_target_file, self.tb_move_or_delete_caption_ext, self.tb_move_or_delete_destination_dir],
             outputs=o_update_filter_and_gallery
-        )
-        self.btn_move_or_delete_move_files.click(**update_args)
-        self.btn_move_or_delete_move_files.click(
+        ).then(**update_args).then(
             fn=None,
             _js='() => dataset_tag_editor_gl_dataset_images_close()'
         )
@@ -114,8 +112,7 @@ class MoveOrDeleteFilesUI(UIBase):
             inputs=[self.rb_move_or_delete_target_data, self.cbg_move_or_delete_target_file, self.tb_move_or_delete_caption_ext],
             outputs=o_update_filter_and_gallery
         )
-        self.btn_move_or_delete_delete_files.click(**update_args)
-        self.btn_move_or_delete_delete_files.click(
+        self.btn_move_or_delete_delete_files.click(**update_args).then(
             fn=None,
             _js='() => dataset_tag_editor_gl_dataset_images_close()'
         )
