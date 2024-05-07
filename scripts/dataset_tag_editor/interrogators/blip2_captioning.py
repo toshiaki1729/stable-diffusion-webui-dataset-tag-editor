@@ -12,12 +12,8 @@ class BLIP2Captioning:
 
     def load(self):
         if self.model is None or self.processor is None:
-            self.processor = Blip2Processor.from_pretrained(
-                self.MODEL_REPO, cache_dir=paths.model_path
-            )
-            self.model = Blip2ForConditionalGeneration.from_pretrained(
-                self.MODEL_REPO, cache_dir=paths.model_path
-            ).to(devices.device)
+            self.processor = Blip2Processor.from_pretrained(self.MODEL_REPO)
+            self.model = Blip2ForConditionalGeneration.from_pretrained(self.MODEL_REPO).to(devices.device)
 
     def unload(self):
         if not shared.opts.interrogate_keep_models_in_memory:

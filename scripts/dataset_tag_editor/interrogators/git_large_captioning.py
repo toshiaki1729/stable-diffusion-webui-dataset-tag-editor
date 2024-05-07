@@ -14,12 +14,8 @@ class GITLargeCaptioning:
 
     def load(self):
         if self.model is None or self.processor is None:
-            self.processor = AutoProcessor.from_pretrained(
-                self.MODEL_REPO, cache_dir=paths.model_path
-            )
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.MODEL_REPO, cache_dir=paths.model_path
-            ).to(shared.device)
+            self.processor = AutoProcessor.from_pretrained(self.MODEL_REPO)
+            self.model = AutoModelForCausalLM.from_pretrained(self.MODEL_REPO).to(shared.device)
         lowvram.send_everything_to_cpu()
 
     def unload(self):

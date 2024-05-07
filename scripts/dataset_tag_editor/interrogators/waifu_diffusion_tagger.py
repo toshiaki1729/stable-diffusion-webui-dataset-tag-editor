@@ -26,7 +26,7 @@ class WaifuDiffusionTagger:
 
         if not self.model:
             path_model = huggingface_hub.hf_hub_download(
-                self.MODEL_REPO, self.MODEL_FILENAME, cache_dir=paths.model_path
+                self.MODEL_REPO, self.MODEL_FILENAME
             )
             if (
                 "all" in shared.cmd_opts.use_cpu
