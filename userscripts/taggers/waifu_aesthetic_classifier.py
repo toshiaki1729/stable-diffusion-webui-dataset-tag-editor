@@ -67,7 +67,8 @@ class WaifuAesthetic(Tagger):
     def predict(self, image: Image.Image, threshold=None):
         image_embeds = image_embeddings(image, self.clip_model, self.clip_processor)
         prediction:torch.Tensor = self.model(torch.from_numpy(image_embeds).float().to(devices.device))
-        return [f"score_{math.floor(prediction.item()*10)}"]
+        # edit here to change tag
+        return [f"[WD]score_{math.floor(prediction.item()*10)}"]
 
     def name(self):
         return "wd aesthetic classifier"

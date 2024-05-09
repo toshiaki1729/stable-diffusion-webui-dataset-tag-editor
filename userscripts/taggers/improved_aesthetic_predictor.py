@@ -69,7 +69,8 @@ class ImprovedAestheticPredictor(Tagger):
     def predict(self, image: Image.Image, threshold=None):
         image_embeds = image_embeddings(image, self.clip_model, self.clip_processor)
         prediction:torch.Tensor = self.model(torch.from_numpy(image_embeds).float().to(devices.device))
-        return [f"score_{math.floor(prediction.item())}"]
+        # edit here to change tag
+        return [f"[IAP]score_{math.floor(prediction.item())}"]
 
     def name(self):
         return "Improved Aesthetic Predictor"
