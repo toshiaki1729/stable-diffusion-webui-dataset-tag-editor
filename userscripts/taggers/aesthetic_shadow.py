@@ -1,3 +1,6 @@
+# This code is using the image classification "aesthetic-shadow-v2" by shadowlilac (https://huggingface.co/shadowlilac/aesthetic-shadow-v2)
+# and "aesthetic-shadow-v2" is licensed under CC-BY-NC 4.0 (https://spdx.org/licenses/CC-BY-NC-4.0)
+
 import math
 
 from PIL import Image
