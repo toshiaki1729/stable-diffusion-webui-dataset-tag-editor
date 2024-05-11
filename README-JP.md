@@ -113,6 +113,12 @@ git clone https://github.com/toshiaki1729/stable-diffusion-webui-dataset-tag-edi
 "Settings" タブで、サムネイル画像を一時保存するフォルダを指定してください。
 "Directory to save temporary files" にパスを指定して "Force using temporary file…" をチェックしてください。
 
+### 大量の画像や巨大な画像を開いたときに動作が遅くなる
+"Settings" タブで、"Force image gallery to use temporary files" にチェックを入れて、 "Maximum resolution of ..." に希望の解像度を入れてください。  
+数百万もの画像を含むなど、あまりにも巨大なデータセットでは効果がないかもしれません。  
+もしくは、[**スタンドアロン版**](https://github.com/toshiaki1729/dataset-tag-editor-standalone)を試してください。  
+![](pic/ss12.png) 
+
 
 ## 表示内容
 

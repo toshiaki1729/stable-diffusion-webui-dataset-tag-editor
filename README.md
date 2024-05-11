@@ -115,6 +115,12 @@ Please note that all batch editing will be applyed **only to displayed images (=
 Set folder to store temporaly image in the "Settings" tab.
 Input path in "Directory to save temporary files" and check "Force using temporary file…"
 
+### So laggy when opening many images or extremely large image
+Check "Force image gallery to use temporary files" and input number in "Maximum resolution of ..." in the "Settings" tab.  
+It may not work with dataset with millions of images.  
+If it doesn't work, please consider using [**stand alone version**](https://github.com/toshiaki1729/dataset-tag-editor-standalone).  
+![](pic/ss12.png) 
+
 
 ## Description of Display
 
