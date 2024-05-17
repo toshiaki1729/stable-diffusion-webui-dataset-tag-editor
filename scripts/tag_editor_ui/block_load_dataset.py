@@ -199,6 +199,7 @@ class LoadDatasetUI(UIBase):
                 self.sl_custom_threshold_booru,
                 self.cb_use_custom_threshold_waifu,
                 self.sl_custom_threshold_waifu,
+                self.sl_custom_threshold_z3d,
                 toprow.cb_save_kohya_metadata,
                 toprow.tb_metadata_output,
             ],
