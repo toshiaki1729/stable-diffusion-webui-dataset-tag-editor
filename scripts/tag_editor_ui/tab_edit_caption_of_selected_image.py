@@ -134,7 +134,7 @@ class EditCaptionOfSelectedImageUI(UIBase):
         )
 
         def interrogate_selected_image(interrogator_name: str, use_threshold_booru: bool, threshold_booru: float, use_threshold_waifu: bool, threshold_waifu: float, threshold_z3d: float):
-            print("INFO::::",interrogator_name, use_threshold_booru, threshold_booru, use_threshold_waifu, threshold_waifu, threshold_z3d)
+            
             if not interrogator_name:
                 return ''
             threshold_booru = threshold_booru if use_threshold_booru else shared.opts.interrogate_deepbooru_score_threshold
