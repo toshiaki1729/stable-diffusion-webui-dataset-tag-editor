@@ -133,16 +133,17 @@ class EditCaptionOfSelectedImageUI(UIBase):
             outputs=[self.tb_edit_caption]
         )
 
-        def interrogate_selected_image(interrogator_name: str, use_threshold_booru: bool, threshold_booru: float, use_threshold_waifu: bool, threshold_waifu: float):
+        def interrogate_selected_image(interrogator_name: str, use_threshold_booru: bool, threshold_booru: float, use_threshold_waifu: bool, threshold_waifu: float, threshold_z3d: float):
+            
             if not interrogator_name:
                 return ''
             threshold_booru = threshold_booru if use_threshold_booru else shared.opts.interrogate_deepbooru_score_threshold
             threshold_waifu = threshold_waifu if use_threshold_waifu else -1
-            return dte_instance.interrogate_image(dataset_gallery.selected_path, interrogator_name, threshold_booru, threshold_waifu)
+            return dte_instance.interrogate_image(dataset_gallery.selected_path, interrogator_name, threshold_booru, threshold_waifu, threshold_z3d)
 
         self.btn_interrogate_si.click(
             fn=interrogate_selected_image,
-            inputs=[self.dd_intterogator_names_si, load_dataset.cb_use_custom_threshold_booru, load_dataset.sl_custom_threshold_booru, load_dataset.cb_use_custom_threshold_waifu, load_dataset.sl_custom_threshold_waifu],
+            inputs=[self.dd_intterogator_names_si, load_dataset.cb_use_custom_threshold_booru, load_dataset.sl_custom_threshold_booru, load_dataset.cb_use_custom_threshold_waifu, load_dataset.sl_custom_threshold_waifu, load_dataset.sl_custom_threshold_z3d],
             outputs=[self.tb_interrogate]
         )
 
