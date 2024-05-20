@@ -768,7 +768,13 @@ class DatasetTagEditor(Singleton):
             taglists = load_captions(imgpaths)
         
         interrogate_tags = {img_path : [] for img_path in imgpaths}
-        if interrogate_method != self.InterrogateMethod.NONE:
+        
+        img_to_interrogate = [
+        img_path for i, img_path in enumerate(imgpaths) 
+            if (not taglists[i] or interrogate_method != self.InterrogateMethod.PREFILL)
+        ]
+
+        if interrogate_method != self.InterrogateMethod.NONE and img_to_interrogate:
             logger.write("Preprocess images...")
             max_workers = shared.opts.dataset_editor_num_cpu_workers
             if max_workers < 0:
@@ -781,7 +787,7 @@ class DatasetTagEditor(Singleton):
             
             from concurrent.futures import ThreadPoolExecutor
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                result = list(executor.map(convert_rgb, gen_data(imgpaths, self.images)))
+                result = list(executor.map(convert_rgb, gen_data(img_to_interrogate, self.images)))
             logger.write("Preprocess completed")
             
             for tg, th in tqdm(tagger_thresholds):
@@ -798,10 +804,10 @@ class DatasetTagEditor(Singleton):
                     continue
                 try:
                     if use_pipe:
-                        for img_path, tags in tqdm(zip(imgpaths, tg.predict_pipe(result, th)), desc=tg.name(), total=len(imgpaths)):
+                        for img_path, tags in tqdm(zip(img_to_interrogate, tg.predict_pipe(result, th)), desc=tg.name(), total=len(img_to_interrogate)):
                             interrogate_tags[img_path] += tags
                     else:
-                        for img_path, data in tqdm(zip(imgpaths, result), desc=tg.name(), total=len(imgpaths)):
+                        for img_path, data in tqdm(zip(img_to_interrogate, result), desc=tg.name(), total=len(img_to_interrogate)):
                             interrogate_tags[img_path] += tg.predict(data, th)
                 except Exception as e:
                     tb = sys.exc_info()[2]
@@ -814,7 +820,7 @@ class DatasetTagEditor(Singleton):
                 tags = interrogate_tags[img_path]
             elif interrogate_method == self.InterrogateMethod.PREPEND:
                 tags = interrogate_tags[img_path] + tags
-            else:
+            elif interrogate_method != self.InterrogateMethod.PREFILL:
                 tags = tags + interrogate_tags[img_path]
 
             self.set_tags_by_image_path(img_path, tags)
