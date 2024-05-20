@@ -472,6 +472,33 @@ def on_ui_settings():
         ),
     )
 
+    shared.opts.add_option(
+        "dataset_editor_batch_size_vit",
+        shared.OptionInfo(
+            4,
+            "Inference batch size for ViT taggers",
+            section=section,
+        ),
+    )
+
+    shared.opts.add_option(
+        "dataset_editor_batch_size_convnext",
+        shared.OptionInfo(
+            4,
+            "Inference batch size for ConvNeXt taggers",
+            section=section,
+        ),
+    )
+
+    shared.opts.add_option(
+        "dataset_editor_batch_size_swinv2",
+        shared.OptionInfo(
+            4,
+            "Inference batch size for SwinTransformerV2 taggers",
+            section=section,
+        ),
+    )
+
 
 script_callbacks.on_ui_settings(on_ui_settings)
 script_callbacks.on_ui_tabs(on_ui_tabs)
