@@ -33,14 +33,14 @@ class ToprowUI(UIBase):
     
     def set_callbacks(self, load_dataset:LoadDatasetUI):
         
-        def save_all_changes(backup: bool, save_kohya_metadata:bool, metadata_output:str, metadata_input:str, metadata_overwrite:bool, metadata_as_caption:bool, metadata_use_fullpath:bool):
+        def save_all_changes(backup: bool, save_kohya_metadata:bool, metadata_output:str, metadata_input:str, metadata_overwrite:bool, metadata_as_caption:bool, metadata_use_fullpath:bool, caption_file_ext:str):
             if not metadata_input:
                 metadata_input = None
-            dte_instance.save_dataset(backup, load_dataset.caption_file_ext, save_kohya_metadata, metadata_output, metadata_input, metadata_overwrite, metadata_as_caption, metadata_use_fullpath)
+            dte_instance.save_dataset(backup, caption_file_ext, save_kohya_metadata, metadata_output, metadata_input, metadata_overwrite, metadata_as_caption, metadata_use_fullpath)
 
         self.btn_save_all_changes.click(
             fn=save_all_changes,
-            inputs=[self.cb_backup, self.cb_save_kohya_metadata, self.tb_metadata_output, self.tb_metadata_input, self.cb_metadata_overwrite, self.cb_metadata_as_caption, self.cb_metadata_use_fullpath]
+            inputs=[self.cb_backup, self.cb_save_kohya_metadata, self.tb_metadata_output, self.tb_metadata_input, self.cb_metadata_overwrite, self.cb_metadata_as_caption, self.cb_metadata_use_fullpath, load_dataset.tb_caption_file_ext]
         )
 
         self.cb_save_kohya_metadata.change(
