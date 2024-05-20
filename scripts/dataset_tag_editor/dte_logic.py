@@ -21,6 +21,7 @@ from . import (
     taggers_builtin
 )
 from .custom_scripts import CustomScripts
+from .interrogator_names import BLIP2_CAPTIONING_NAMES, WD_TAGGERS, WD_TAGGERS_TIMM
 from scripts.tokenizer import clip_tokenizer
 from scripts.tagger import Tagger
 
@@ -68,39 +69,26 @@ class DatasetTagEditor(Singleton):
         custom_taggers:list[Tagger] = custom_tagger_scripts.load_derived_classes(Tagger)
         logger.write(f"Custom taggers loaded: {[tagger().name() for tagger in custom_taggers]}")
 
-        self.BLIP2_CAPTIONING_NAMES = [
-            "blip2-opt-2.7b",
-            "blip2-opt-2.7b-coco",
-            "blip2-opt-6.7b",
-            "blip2-opt-6.7b-coco",
-            "blip2-flan-t5-xl",
-            "blip2-flan-t5-xl-coco",
-            "blip2-flan-t5-xxl",
-        ]
-
-        self.WD_TAGGERS = {
-            "wd-v1-4-vit-tagger" : 0.35,
-            "wd-v1-4-convnext-tagger" : 0.35,
-            "wd-v1-4-vit-tagger-v2" : 0.3537,
-            "wd-v1-4-convnext-tagger-v2" : 0.3685,
-            "wd-v1-4-convnextv2-tagger-v2" : 0.371,
-            "wd-v1-4-swinv2-tagger-v2" : 0.3771,
-            "wd-v1-4-moat-tagger-v2" : 0.3771,
-            "wd-vit-tagger-v3" : 0.2614,
-            "wd-convnext-tagger-v3" : 0.2682,
-            "wd-swinv2-tagger-v3" : 0.2653,
-        }
-        # {tagger name : default tagger threshold}
-        # v1: idk if it's okay  v2: P=R thresholds on each repo https://huggingface.co/SmilingWolf
-
+        def read_wd_batchsize(name:str):
+            if "vit" in name:
+                return shared.opts.dataset_editor_batch_size_vit
+            elif "convnext" in name:
+                return shared.opts.dataset_editor_batch_size_convnext
+            elif "swinv2" in name:
+                return shared.opts.dataset_editor_batch_size_swinv2
+        
         self.INTERROGATORS = (
             [taggers_builtin.BLIP()]
-            + [taggers_builtin.BLIP2(name) for name in self.BLIP2_CAPTIONING_NAMES]
+            + [taggers_builtin.BLIP2(name) for name in BLIP2_CAPTIONING_NAMES]
             + [taggers_builtin.GITLarge()]
             + [taggers_builtin.DeepDanbooru()]
             + [
                 taggers_builtin.WaifuDiffusion(name, threshold)
-                for name, threshold in self.WD_TAGGERS.items()
+                for name, threshold in WD_TAGGERS.items()
+            ]
+            + [
+                taggers_builtin.WaifuDiffusionTimm(name, threshold, int(read_wd_batchsize(name)))
+                for name, threshold in WD_TAGGERS_TIMM.items()
             ]
             + [taggers_builtin.Z3D_E621()]
             + [cls_tagger() for cls_tagger in custom_taggers]
@@ -118,7 +106,7 @@ class DatasetTagEditor(Singleton):
                     if isinstance(it, taggers_builtin.DeepDanbooru):
                         with it as tg:
                             res = tg.predict(img, threshold_booru)
-                    elif isinstance(it, taggers_builtin.WaifuDiffusion):
+                    elif isinstance(it, taggers_builtin.WaifuDiffusion) or isinstance(it, taggers_builtin.WaifuDiffusionTimm):
                         with it as tg:
                             res = tg.predict(img, threshold_wd)
                     elif isinstance(it, taggers_builtin.Z3D_E621):
@@ -752,7 +740,7 @@ class DatasetTagEditor(Singleton):
                 if it.name() in interrogator_names:
                     if isinstance(it, taggers_builtin.DeepDanbooru):
                         tagger_thresholds.append((it, threshold_booru))
-                    elif isinstance(it, taggers_builtin.WaifuDiffusion):
+                    elif isinstance(it, taggers_builtin.WaifuDiffusion) or isinstance(it, taggers_builtin.WaifuDiffusionTimm):
                         tagger_thresholds.append((it, threshold_waifu))
                     elif isinstance(it, taggers_builtin.Z3D_E621):
                         tagger_thresholds.append((it, threshold_z3d))

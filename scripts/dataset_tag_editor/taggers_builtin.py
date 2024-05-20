@@ -8,7 +8,7 @@ from modules import devices, shared
 from modules import deepbooru as db
 
 from scripts.tagger import Tagger, get_replaced_tag
-from .interrogators import BLIP2Captioning, GITLargeCaptioning, WaifuDiffusionTagger
+from .interrogators import BLIP2Captioning, GITLargeCaptioning, WaifuDiffusionTagger, WaifuDiffusionTaggerTimm
 
 
 class BLIP(Tagger):
@@ -140,6 +140,28 @@ class WaifuDiffusion(Tagger):
 
     def name(self):
         return self.repo_name
+
+
+class WaifuDiffusionTimm(WaifuDiffusion):
+    def __init__(self, repo_name, threshold, batch_size=4):
+        super().__init__(repo_name, threshold)
+        self.tagger_inst = WaifuDiffusionTaggerTimm("SmilingWolf/" + repo_name)
+        self.batch_size = batch_size
+    
+    def predict_pipe(self, data: list[Image.Image], threshold: Optional[float] = None):
+        for labels_list in self.tagger_inst.apply_multi(data, batch_size=self.batch_size):
+            for labels in labels_list:
+                if not shared.opts.dataset_editor_use_rating:
+                    labels = labels[4:]
+
+                if threshold is not None:
+                    if threshold < 0:
+                        threshold = self.threshold
+                    tags = [get_replaced_tag(tag) for tag, value in labels if value > threshold]
+                else:
+                    tags = [get_replaced_tag(tag) for tag, _ in labels]
+
+                yield tags
 
 
 class Z3D_E621(Tagger):
