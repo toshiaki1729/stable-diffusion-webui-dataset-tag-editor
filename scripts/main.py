@@ -413,10 +413,6 @@ def on_ui_tabs():
         ui.move_or_delete_files.set_callbacks(
             o_update_filter_and_gallery,
             ui.dataset_gallery,
-            ui.filter_by_tags,
-            ui.batch_edit_captions,
-            ui.filter_by_selection,
-            ui.edit_caption_of_selected_image,
             get_filters,
             update_filter_and_gallery,
         )
