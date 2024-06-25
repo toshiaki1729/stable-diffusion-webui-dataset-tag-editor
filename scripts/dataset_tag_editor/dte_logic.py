@@ -3,6 +3,8 @@ import re, sys
 from typing import List, Set, Optional
 from enum import Enum
 
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 from PIL import Image
 from tqdm import tqdm
 
