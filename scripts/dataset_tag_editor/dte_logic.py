@@ -11,7 +11,7 @@ from modules.textual_inversion.dataset import re_numbers_at_start
 
 from scripts.singleton import Singleton
 
-from scripts import logger
+from scripts import logger, utilities
 from scripts.paths import paths
 
 from . import (
@@ -28,8 +28,10 @@ from scripts.tagger import Tagger
 re_tags = re.compile(r"^([\s\S]+?)( \[\d+\])?$")
 re_newlines = re.compile(r"[\r\n]+")
 
-def convert_rgb(data:Image.Image):
-    return data.convert("RGB")
+def get_square_rgb(data:Image.Image):
+    data_rgb = utilities.get_rgb_image(data)
+    size = max(data.size)
+    return utilities.resize_and_fill(data_rgb, (size, size))
 
 class DatasetTagEditor(Singleton):
     class SortBy(Enum):
@@ -97,7 +99,7 @@ class DatasetTagEditor(Singleton):
 
     def interrogate_image(self, path: str, interrogator_name: str, threshold_booru, threshold_wd, threshold_z3d):
         try:
-            img = Image.open(path).convert("RGB")
+            img = get_rgb_image(Image.open(path))
         except:
             return ""
         else:
@@ -692,19 +694,27 @@ class DatasetTagEditor(Singleton):
                     continue
                 try:
                     img = Image.open(img_path)
-                    if (max_res > 0):
-                        img_res = int(max_res), int(max_res)
-                        img.thumbnail(img_res)
                 except:
                     continue
                 else:
                     abs_path = str(img_path.absolute())
-                    if not use_temp_dir and max_res <= 0:
-                        img.already_saved_as = abs_path
                     images[abs_path] = img
-
-                imgpaths.append(abs_path)
+                    imgpaths.append(abs_path)
             return imgpaths, images
+        
+        def load_thumbnails(images_raw: dict[str, Image.Image]):
+            images = {}
+            if max_res > 0:
+                for img_path, img in images_raw.items():
+                    img_res = int(max_res), int(max_res)
+                    images[img_path] = img.copy()
+                    images[img_path].thumbnail(img_res)
+            else:
+                for img_path, img in images_raw.items():
+                    if not use_temp_dir:
+                        img.already_saved_as = img_path
+                    images[img_path] = img
+            return images
 
         def load_captions(imgpaths: list[str]):
             taglists = []
@@ -748,12 +758,14 @@ class DatasetTagEditor(Singleton):
                         tagger_thresholds.append((it, None))
 
         if kohya_json_path:
-            imgpaths, self.images, taglists = kohya_metadata.read(
+            imgpaths, images_raw, taglists = kohya_metadata.read(
                 img_dir, kohya_json_path, use_temp_dir
             )
         else:
-            imgpaths, self.images = load_images(filepaths)
+            imgpaths, images_raw = load_images(filepaths)
             taglists = load_captions(imgpaths)
+        
+        self.images = load_thumbnails(images_raw)
         
         interrogate_tags = {img_path : [] for img_path in imgpaths}
         
@@ -771,11 +783,11 @@ class DatasetTagEditor(Singleton):
             
             def gen_data(paths:list[str], images:dict[str, Image.Image]):
                 for img_path in paths:
-                    yield images.get(img_path)
+                    yield images[img_path]
             
             from concurrent.futures import ThreadPoolExecutor
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                result = list(executor.map(convert_rgb, gen_data(img_to_interrogate, self.images)))
+                result = list(executor.map(get_square_rgb, gen_data(img_to_interrogate, images_raw)))
             logger.write("Preprocess completed")
             
             for tg, th in tqdm(tagger_thresholds):
