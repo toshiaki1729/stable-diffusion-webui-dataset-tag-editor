@@ -101,7 +101,7 @@ class DatasetTagEditor(Singleton):
 
     def interrogate_image(self, path: str, interrogator_name: str, threshold_booru, threshold_wd, threshold_z3d):
         try:
-            img = get_rgb_image(Image.open(path))
+            img = get_square_rgb(Image.open(path))
         except:
             return ""
         else:
